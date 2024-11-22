@@ -1,0 +1,16 @@
+{
+  "fixedLayout": [
+    { "word": "SATURN", "startRow": 6, "startCol": 2, "horizontal": true },
+    { "word": "EARTH", "startRow": 3, "startCol": 4, "horizontal": false },
+    { "word": "VENUS", "startRow": 3, "startCol": 5, "horizontal": false },
+    { "word": "MARS", "startRow": 4, "startCol": 6, "horizontal": false },
+    { "word": "SUN", "startRow": 6, "startCol": 2, "horizontal": false }
+  ],
+  "wordClues": [
+    { "word": "SATURN", "clue": "big ring" },
+    { "word": "EARTH", "clue": "blue planet" },
+    { "word": "VENUS", "clue": "hottest planet" },
+    { "word": "MARS", "clue": "red planet" },
+    { "word": "SUN", "clue": "center" }
+  ]
+}

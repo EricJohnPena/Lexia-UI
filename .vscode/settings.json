@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Lexia UI.sln"
+    "dotnet.defaultSolution": "Lexia-UI.sln"
 }
