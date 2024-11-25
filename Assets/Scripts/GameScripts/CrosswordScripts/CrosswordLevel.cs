@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class CrosswordLevel
 {
     public List<WordPlacement> fixedLayout;
-    public List<WordClue> wordClues;  // Change to List
+    public List<WordClue> wordClues;
 }
 
 [System.Serializable]

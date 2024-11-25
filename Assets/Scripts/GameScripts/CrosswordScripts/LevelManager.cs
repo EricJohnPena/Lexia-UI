@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-
 public class LevelManager : MonoBehaviour
 {
     public string levelDirectory = "Assets/Levels";
@@ -14,7 +13,7 @@ public class LevelManager : MonoBehaviour
         if (File.Exists(filePath))
         {
             string json = File.ReadAllText(filePath);
-            Debug.Log("Loaded JSON: " + json);  // Log the content of the JSON
+            Debug.Log("Loaded JSON: " + json);
             return JsonUtility.FromJson<CrosswordLevel>(json);
         }
 

@@ -946,6 +946,7 @@ GameObject:
   - component: {fileID: 584705971}
   - component: {fileID: 584705972}
   - component: {fileID: 584705973}
+  - component: {fileID: 584705974}
   m_Layer: 5
   m_Name: CrosswordManager
   m_TagString: Untagged
@@ -987,6 +988,7 @@ MonoBehaviour:
   gridCellPrefab: {fileID: 6117475963737123552, guid: f0e772626a997324881593a9c752fb29, type: 3}
   gridContainer: {fileID: 1537507048}
   cluesPanelText: {fileID: 751133837}
+  currentClueText: {fileID: 751133837}
   gridSize: 10
   levelFileName: level1.json
 --- !u!114 &584705973
@@ -1002,6 +1004,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   levelDirectory: Assets/Levels
+--- !u!114 &584705974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584705970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75ab8e002346e06478cc07e1a1800299, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &649233526
 GameObject:
   m_ObjectHideFlags: 0
