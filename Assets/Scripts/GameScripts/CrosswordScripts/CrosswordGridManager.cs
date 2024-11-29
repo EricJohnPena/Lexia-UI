@@ -313,44 +313,47 @@ public class CrosswordGridManager : MonoBehaviour
     }
 
     void HandleCellClick(GridCell cell)
-    {
-        ClearHighlights();
-        
-        WordPlacement horizontalWord = FindWordAtCell(cell.Row, cell.Col, true);
-        WordPlacement verticalWord = FindWordAtCell(cell.Row, cell.Col, false);
+{
+    Debug.Log($"Cell clicked: Row {cell.Row}, Col {cell.Col}");
+    
+    ClearHighlights();
+    
+    WordPlacement horizontalWord = FindWordAtCell(cell.Row, cell.Col, true);
+    WordPlacement verticalWord = FindWordAtCell(cell.Row, cell.Col, false);
 
-        if (horizontalWord != null && verticalWord != null)
+    Debug.Log($"Horizontal Word: {(horizontalWord != null ? horizontalWord.word : "None")}");
+    Debug.Log($"Vertical Word: {(verticalWord != null ? verticalWord.word : "None")}");
+
+    if (horizontalWord != null && verticalWord != null)
+    {
+        if (currentWord != null && currentWord.horizontal && verticalWord != null)
         {
-            if (currentWord != null && currentWord.horizontal && verticalWord != null)
-            {
-                currentWord = verticalWord;
-                isHorizontalInput = false;
-            }
-            else
-            {
-                currentWord = horizontalWord;
-                isHorizontalInput = true;
-            }
+            currentWord = verticalWord;
+            isHorizontalInput = false;
         }
         else
         {
-            currentWord = horizontalWord ?? verticalWord;
-            isHorizontalInput = currentWord?.horizontal ?? true;
+            currentWord = horizontalWord;
+            isHorizontalInput = true;
         }
-        currentWord = FindWordAtCell(cell.Row, cell.Col, isHorizontalInput);
-    if (currentWord != null)
-    {
-        SelectCell(cell); // This sets the selectedCell and highlights the word.
     }
     else
     {
-        Debug.LogWarning("No word found for the selected cell.");
+        currentWord = horizontalWord ?? verticalWord;
+        isHorizontalInput = currentWord?.horizontal ?? true;
     }
-        if (currentWord != null)
-        {
-            SelectCell(cell);
-        }
+
+    Debug.Log($"Selected Word: {(currentWord != null ? currentWord.word : "None")}");
+
+    if (currentWord != null)
+    {
+        SelectCell(cell);
     }
+    else
+    {
+        Debug.LogWarning("No word found at this cell");
+    }
+}
 
     WordPlacement FindWordAtCell(int row, int col, bool horizontal)
     {
