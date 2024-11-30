@@ -21,6 +21,7 @@ public class CrosswordGridManager : MonoBehaviour
     private WordPlacement currentWord;
     private CrosswordLevel currentLevel;
     private Dictionary<WordPlacement, int> wordNumbers = new Dictionary<WordPlacement, int>();
+    private CrosswordKeyboard crosswordKeyboard;
 
     void Start()
     {
@@ -56,6 +57,12 @@ public class CrosswordGridManager : MonoBehaviour
         }
         
         TouchScreenKeyboard.hideInput = true;
+        crosswordKeyboard = FindObjectOfType<CrosswordKeyboard>();
+        
+        if (crosswordKeyboard == null)
+        {
+            Debug.LogWarning("CrosswordKeyboard not found in the scene!");
+        }
     }
 
     void Update()
@@ -85,6 +92,29 @@ public class CrosswordGridManager : MonoBehaviour
             RemoveLastLetter();
         }
     }
+    // Method to handle key input from on-screen keyboard
+    public void HandleKeyInput(char letter)
+    {
+        if (selectedCell == null || currentWord == null) return;
+
+        InputLetter(char.ToUpper(letter));
+    }
+
+    // Method to handle backspace from on-screen keyboard
+    public void HandleBackspace()
+    {
+        RemoveLastLetter();
+    }
+
+    // Method to handle space input (optional, depending on your game design)
+    public void HandleSpaceInput()
+    {
+        // You can define how space should be handled
+        // For example, move to next word or clear current input
+        Debug.Log("Space input handled");
+    }
+
+
 
     void InputLetter(char letter)
     {
@@ -347,7 +377,12 @@ public class CrosswordGridManager : MonoBehaviour
 
     if (currentWord != null)
     {
-        SelectCell(cell);
+        // Find the first cell of the current word
+        int firstRow = currentWord.startRow;
+        int firstCol = currentWord.startCol;
+        
+        // Select the first cell of the word
+        SelectCell(gridCells[firstRow, firstCol]);
     }
     else
     {
@@ -470,4 +505,49 @@ public class CrosswordGridManager : MonoBehaviour
             cluesPanelText.text = acrossClues + downClues;
         }
     }
+    public void NavigateToNextWord()
+{
+    if (currentWord == null || currentLevel.fixedLayout == null) return;
+
+    // Find the index of the current word
+    int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
+    if (currentIndex < 0)
+    {
+        Debug.LogWarning("Current word not found in the layout.");
+        return;
+    }
+
+    // Move to the next word, or wrap around to the first word
+    int nextIndex = (currentIndex + 1) % currentLevel.fixedLayout.Count;
+    currentWord = currentLevel.fixedLayout[nextIndex];
+
+    // Select the first cell of the next word
+    int firstRow = currentWord.startRow;
+    int firstCol = currentWord.startCol;
+    SelectCell(gridCells[firstRow, firstCol]);
+}
+
+public void NavigateToPreviousWord()
+{
+    if (currentWord == null || currentLevel.fixedLayout == null) return;
+
+    // Find the index of the current word
+    int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
+    if (currentIndex < 0)
+    {
+        Debug.LogWarning("Current word not found in the layout.");
+        return;
+    }
+
+    // Move to the previous word, or wrap around to the last word
+    int previousIndex = (currentIndex - 1 + currentLevel.fixedLayout.Count) % currentLevel.fixedLayout.Count;
+    currentWord = currentLevel.fixedLayout[previousIndex];
+
+    // Select the first cell of the previous word
+    int firstRow = currentWord.startRow;
+    int firstCol = currentWord.startCol;
+    SelectCell(gridCells[firstRow, firstCol]);
+}
+
+
 }
