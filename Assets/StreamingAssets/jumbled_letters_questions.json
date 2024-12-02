@@ -1,0 +1,16 @@
+{
+    "questions": [
+        {
+            "questionText": "What is the capital of France?",
+            "answer": "PARIS"
+        },
+        {
+            "questionText": "What is 2 + 2?",
+            "answer": "FOUR"
+        },
+        {
+            "questionText": "Largest planet in our solar system",
+            "answer": "JUPITER"
+        }
+    ]
+}

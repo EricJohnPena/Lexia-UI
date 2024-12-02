@@ -1,0 +1,19 @@
+{
+    "questions": [
+        {
+            "questionText": "What is at the center of the solar system?",
+            "answer": "SUN",
+            "imagePath": "Images/sun.jpg"
+        },
+        {
+            "questionText": "What is the third planet from the Sun and the fifth largest planet in the solar system in terms of size and mass?",
+            "answer": "EARTH",
+            "imagePath": "Images/earth.jpg"
+        },
+        {
+            "questionText": "Largest planet in our solar system",
+            "answer": "JUPITER",
+            "imagePath": "Images/jupiter.jpg"
+        }
+    ]
+}

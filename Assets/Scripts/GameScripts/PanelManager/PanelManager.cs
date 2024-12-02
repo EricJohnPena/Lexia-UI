@@ -1,12 +1,12 @@
 using UnityEngine;
 
-
 public enum GamePanel
 {
     GameManagerPanel,
     ClassicGamePanel,
     JumbledLettersGamePanel,
-    CrosswordGamePanel
+    CrosswordGamePanel,
+    GameComplete
 }
 
 public class PanelManager : MonoBehaviour
@@ -17,15 +17,9 @@ public class PanelManager : MonoBehaviour
     // Current active panel
     private GamePanel _currentActivePanel = GamePanel.GameManagerPanel;
 
-    // Reference to panel game objects
+    // Array of panel game objects
     [SerializeField]
-    public GameObject panel0;
-    [SerializeField]
-    public GameObject panel1;
-    [SerializeField]
-    public GameObject panel2;
-    [SerializeField]
-    public GameObject panel3;
+    private GameObject[] panels; // Ensure these are assigned in the Unity Editor in order of GamePanel enum
 
     private void Awake()
     {
@@ -40,39 +34,87 @@ public class PanelManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        // Initially activate only the first panel
+        // Initially activate the Game Manager Panel
         ActivatePanel(GamePanel.GameManagerPanel);
     }
 
     // Method to activate a specific panel
     public void ActivatePanel(GamePanel panelToActivate)
     {
-        // Deactivate all panels first
-        panel0.SetActive(false);
-        panel1.SetActive(false);
-        panel2.SetActive(false);
-        panel3.SetActive(false);
-
-        // Activate the selected panel
-        switch (panelToActivate)
+        if (panels == null || panels.Length == 0)
         {
-            case GamePanel.GameManagerPanel:
-                panel0.SetActive(true);
-                break;
-            case GamePanel.ClassicGamePanel:
-                panel1.SetActive(true);
-                break;
-            case GamePanel.JumbledLettersGamePanel:
-                panel2.SetActive(true);
-                break;
-            case GamePanel.CrosswordGamePanel:
-                panel3.SetActive(true);
-                break;
+            Debug.LogError("Panel array is not assigned or empty!");
+            return;
         }
 
-        // Update current active panel
+        // Deactivate all panels
+        DeactivateAllPanels();
+
+        // Activate the selected panel
+        int panelIndex = (int)panelToActivate;
+
+        if (panelIndex < 0 || panelIndex >= panels.Length)
+        {
+            Debug.LogError($"Invalid panel index: {panelIndex}");
+            return;
+        }
+
+        panels[panelIndex].SetActive(true);
+        Debug.Log($"{panelToActivate} activated");
+
+        // Perform specific initialization for each panel
+        InitializePanel(panelToActivate);
+
+        // Update the current active panel
         _currentActivePanel = panelToActivate;
     }
+
+    // Method to deactivate all panels
+    private void DeactivateAllPanels()
+    {
+        foreach (var panel in panels)
+        {
+            if (panel != null)
+            {
+                panel.SetActive(false);
+            }
+            else
+            {
+                Debug.LogWarning("One of the panels is null!");
+            }
+        }
+    }
+
+    // Method to initialize a specific panel
+    private void InitializePanel(GamePanel panelToInitialize)
+    {
+        switch (panelToInitialize)
+        {
+            case GamePanel.GameManagerPanel:
+                Debug.Log("Game Manager Panel initialized");
+                break;
+
+            case GamePanel.ClassicGamePanel:
+                Debug.Log("Classic Game Panel initialized");
+                break;
+
+            case GamePanel.JumbledLettersGamePanel:
+                
+                break;
+
+            case GamePanel.CrosswordGamePanel:
+                Debug.Log("Crossword Game Panel initialized");
+                break;
+            case GamePanel.GameComplete:
+                Debug.Log("Crossword Game Panel initialized");
+                break;
+
+            default:
+                Debug.LogError($"No initialization logic for panel: {panelToInitialize}");
+                break;
+        }
+    }
+
 
     // Method to get the current active panel
     public GamePanel GetCurrentActivePanel()

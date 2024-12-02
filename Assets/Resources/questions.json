@@ -1,0 +1,20 @@
+{
+    "questions": [
+      {
+        "question": "What is the center of the solar system?",
+        "answer": "SUN",
+        "image": "Assets/StreamingAssets/ClassicLevels/Images/sun.jpg"
+      },
+      {
+        "question": "What is the largest planet in the solar system?",
+        "answer": "JUPITER",
+        "image": "Assets/StreamingAssets/ClassicLevels/Images/jupiter.jpg"
+      },
+      {
+        "question": "Third planet from the Sun and the fifth largest planet in the solar system in terms of size and mass.",
+        "answer": "EARTH",
+        "image": "Assets/StreamingAssets/ClassicLevels/Images/earth.jpg"
+      }
+    ]
+  }
+  
