@@ -12,7 +12,7 @@ public class MenuManager : MonoBehaviour
 
     [SerializeField] Button goToLoginBtn;
     [SerializeField] Button goToSignupBtn;
-    //[SerializeField] Button loginBtn;
+    [SerializeField] Button loginBtn;
     [SerializeField] Button goToLoginBtn1; //from signup page
     [SerializeField] Button goToSignupBtn1; //from login page
    
@@ -23,6 +23,7 @@ public class MenuManager : MonoBehaviour
     public Canvas StartingPage;
     public Canvas LoginPage;
     public Canvas SignupPage;
+    public Canvas LoadingScene;
 
    
    void Start(){
@@ -30,6 +31,7 @@ public class MenuManager : MonoBehaviour
     goToLoginBtn1.onClick.AddListener(() => OpenPage(LoginPage));
     goToSignupBtn.onClick.AddListener(() => OpenPage(SignupPage));
     goToSignupBtn1.onClick.AddListener(() => OpenPage(SignupPage));
+    loginBtn.onClick.AddListener(() => OpenPage(LoadingScene));
     //loginBtn.onClick.AddListener(ToMenuScene);//for testing purposes only
 
    }
@@ -38,6 +40,7 @@ public class MenuManager : MonoBehaviour
     StartingPage.gameObject.SetActive(false);
     LoginPage.gameObject.SetActive(false);
     SignupPage.gameObject.SetActive(false);
+    LoadingScene.gameObject.SetActive(false);
     canvas.gameObject.SetActive(true);
    }
 

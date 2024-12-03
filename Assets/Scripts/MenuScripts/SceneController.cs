@@ -29,7 +29,7 @@ public class SceneController : MonoBehaviour
     }
 
     public void GoToMainMenu(){
-        SceneManager.LoadScene(Scene.GameScene.ToString());
+        SceneManager.LoadScene(Scene.LoadingScene.ToString());
         
     }
 
