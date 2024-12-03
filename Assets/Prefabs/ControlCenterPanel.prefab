@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 3277509488545631114}
   - component: {fileID: 8212368007547330127}
   m_Layer: 5
-  m_Name: Button (Legacy) (2)
+  m_Name: ProfilePageBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -120,7 +120,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3277509488545631114}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &594855483021105894
 GameObject:
   m_ObjectHideFlags: 0
@@ -361,7 +373,7 @@ GameObject:
   - component: {fileID: 9071667099010452995}
   - component: {fileID: 1858542581358900579}
   m_Layer: 5
-  m_Name: Button (Legacy)
+  m_Name: StudentDashboardBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -468,7 +480,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 9071667099010452995}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &2249702983617049490
 GameObject:
   m_ObjectHideFlags: 0
@@ -482,7 +506,7 @@ GameObject:
   - component: {fileID: 2938738814839396185}
   - component: {fileID: 5897368932365963677}
   m_Layer: 5
-  m_Name: Button (Legacy) (1)
+  m_Name: StudentLeaderboardBtn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -589,7 +613,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2938738814839396185}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &3183014906471573857
 GameObject:
   m_ObjectHideFlags: 0

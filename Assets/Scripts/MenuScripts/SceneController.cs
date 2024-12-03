@@ -13,28 +13,20 @@ public class SceneController : MonoBehaviour
     }
 }
     public enum Scene{
-        LoginScene,
-        MenuScene, 
-        LoadingScene,
+        StartingScene,
         GameScene
+
     }
     
-    public void GoToScene(Scene sceneName)
-    {
-        SceneManager.LoadScene(sceneName.ToString());
-      
-    }
+   
     public void GoToStartingScene(){
-        SceneManager.LoadScene(Scene.LoginScene.ToString());
+        SceneManager.LoadScene(Scene.StartingScene.ToString());
     }
 
-    public void GoToMainMenu(){
-        SceneManager.LoadScene(Scene.LoadingScene.ToString());
-        
-    }
 
     public void CreateNewGame(){
         SceneManager.LoadScene(Scene.GameScene.ToString());
         
      }
+     
 }
