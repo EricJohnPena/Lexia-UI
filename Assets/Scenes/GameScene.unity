@@ -1046,7 +1046,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &363326137
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2788,6 +2788,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 62737756}
     m_Modifications:
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 363326140}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SwitchToGameManagerPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PanelSwitcher, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 2926314749937565642, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
       propertyPath: m_Text
       value: Jumbled Letters
@@ -4522,7 +4538,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1248055203
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6932,6 +6948,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1223677339}
     m_Modifications:
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 363326140}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: SwitchToGameManagerPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: PanelSwitcher, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 494872902519598929, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 6117475963737123552, guid: c14d2d09fa146f245a86a8d1d73b20ce, type: 3}
       propertyPath: m_Name
       value: BackBtnPrefab
