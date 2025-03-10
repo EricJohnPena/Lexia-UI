@@ -7,10 +7,10 @@
     { "word": "SUN", "startRow": 6, "startCol": 2, "horizontal": false }
   ],
   "wordClues": [
-    { "word": "SATURN", "clue": "big ring" },
-    { "word": "EARTH", "clue": "blue planet" },
-    { "word": "VENUS", "clue": "hottest planet" },
-    { "word": "MARS", "clue": "red planet" },
-    { "word": "SUN", "clue": "center" }
+    { "word": "SATURN", "clue": "It is a gas giant, and the second largest and second most massive planet in our Solar System." },
+    { "word": "EARTH", "clue": "the third planet from the Sun and the only astronomical object known to harbor life." },
+    { "word": "VENUS", "clue": "It's the hottest planet in our solar system." },
+    { "word": "MARS", "clue": "The second smallest planet in the solar system, only larger than Mercury and slightly more than half the size of Earth." },
+    { "word": "SUN", "clue": "The star that provides light and heat for the earth and around which the earth moves." }
   ]
 }

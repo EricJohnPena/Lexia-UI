@@ -99,7 +99,7 @@ public class PanelManager : MonoBehaviour
                 break;
 
             case GamePanel.JumbledLettersGamePanel:
-                
+
                 break;
 
             case GamePanel.CrosswordGamePanel:

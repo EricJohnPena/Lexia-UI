@@ -1,16 +1,16 @@
 {
     "questions": [
         {
-            "questionText": "What is the capital of France?",
-            "answer": "PARIS"
+            "questionText": "Having made a firm decision and being resolved to do something.",
+            "answer": "DETERMINED"
         },
         {
-            "questionText": "What is 2 + 2?",
-            "answer": "FOUR"
+            "questionText": "Being the only one of its kind.",
+            "answer": "UNIQUE"
         },
         {
-            "questionText": "Largest planet in our solar system",
-            "answer": "JUPITER"
+            "questionText": "To light up or make something clear",
+            "answer": "ILLUMINATE"
         }
     ]
 }

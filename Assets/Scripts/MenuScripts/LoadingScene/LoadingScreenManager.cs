@@ -4,7 +4,7 @@ using System.Collections;
 
 public class LoadingScreenManager : MonoBehaviour
 {
-    public string nextSceneName; // Set the name of the next scene in the Inspector
+    
     public float loadingDelay = 3f; // Duration to show loading screen (e.g., 3 seconds)
 
     void Start()
@@ -15,6 +15,6 @@ public class LoadingScreenManager : MonoBehaviour
     IEnumerator LoadNextSceneAfterDelay()
     {
         yield return new WaitForSeconds(loadingDelay);
-        SceneManager.LoadScene(nextSceneName);
+        MenuManager.InstanceMenu.LogintoPage();
     }
 }

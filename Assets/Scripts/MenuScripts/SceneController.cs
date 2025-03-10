@@ -4,29 +4,55 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour
-{ 
+{
     public static SceneController Instance { get; private set; }
-   void Awake() {
-    if (Instance == null) {
-        Instance = this;
-        
+    public GameObject lessonsPage;
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
     }
-}
-    public enum Scene{
+
+    public enum Scene
+    {
         StartingScene,
         GameScene
-
     }
-    
-   
-    public void GoToStartingScene(){
+
+    public void GoToStartingScene(string canvasName)
+    {
+        SceneManager.sceneLoaded += (scene, mode) => OnSceneLoaded(scene, mode, canvasName);
         SceneManager.LoadScene(Scene.StartingScene.ToString());
     }
 
+    public Canvas studentDashboardCanvas; // Assign this in the Inspector
 
-    public void CreateNewGame(){
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode, string canvasName)
+    {
+        if (scene.name == Scene.StartingScene.ToString())
+        {
+            if (canvasName == "StudentDashboardCanvas")
+            {
+                studentDashboardCanvas.gameObject.SetActive(true);
+                lessonsPage.SetActive(true); // Activate lessonsPage when returning to StartingScene
+                Debug.Log("lessonspage activated.");
+            }
+            else
+            {
+                Debug.LogWarning("Canvas not found: " + canvasName);
+            }
+        }
+        else if (scene.name == Scene.GameScene.ToString())
+        {
+            lessonsPage.SetActive(false); // Optionally deactivate lessonsPage when entering GameScene
+        }
+    }
+
+    public void CreateNewGame()
+    {
         SceneManager.LoadScene(Scene.GameScene.ToString());
-        
-     }
-     
+    }
 }

@@ -5,16 +5,17 @@ using UnityEngine.UI;
 
 public class CrosswordGridManager : MonoBehaviour
 {
+    private Trie wordTrie;
     public GameObject gridCellPrefab;
     public Transform gridContainer;
     public Text cluesPanelText;
     public Text currentClueText;
     public int gridSize = 10;
-    
+
     private GridCell[,] gridCells;
     private LevelManager levelManager;
     public string levelFileName = "level1.json";
-    
+
     private GridCell selectedCell;
     private List<GridCell> highlightedCells = new List<GridCell>();
     private bool isHorizontalInput = true;
@@ -26,7 +27,7 @@ public class CrosswordGridManager : MonoBehaviour
     void Start()
     {
         levelManager = GetComponent<LevelManager>();
-        
+
         if (levelManager == null)
         {
             Debug.LogError("LevelManager not found! Ensure it is attached to the same GameObject.");
@@ -45,20 +46,26 @@ public class CrosswordGridManager : MonoBehaviour
         {
             Debug.LogError("Word clues in level data are null or empty!");
         }
+        // Initialize the Trie and insert words
+        wordTrie = new Trie();
+        foreach (var placement in currentLevel.fixedLayout)
+        {
+            wordTrie.Insert(placement.word.ToUpper());
+        }
 
         GenerateGrid();
         AssignWordNumbers();
         PlaceWords(currentLevel.fixedLayout);
         DisplayClues(currentLevel.wordClues);
-        
+
         if (currentClueText != null)
         {
             currentClueText.text = "Tap a cell to begin";
         }
-        
+
         TouchScreenKeyboard.hideInput = true;
         crosswordKeyboard = FindObjectOfType<CrosswordKeyboard>();
-        
+
         if (crosswordKeyboard == null)
         {
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
@@ -68,10 +75,10 @@ public class CrosswordGridManager : MonoBehaviour
     void Update()
     {
         if (selectedCell == null)
-    {
-        Debug.Log("No selected cell.");
-        return;
-    }
+        {
+            Debug.Log("No selected cell.");
+            return;
+        }
         HandleKeyboardInput();
     }
 
@@ -185,8 +192,8 @@ public class CrosswordGridManager : MonoBehaviour
     int GetCellIndexInWord(GridCell cell)
     {
         if (currentWord == null) return -1;
-        
-        return currentWord.horizontal ? 
+
+        return currentWord.horizontal ?
             cell.Col - currentWord.startCol :
             cell.Row - currentWord.startRow;
     }
@@ -204,20 +211,20 @@ public class CrosswordGridManager : MonoBehaviour
     {
         string enteredWord = "";
         var cells = GetCurrentWordCells();
-        
+
         foreach (var cell in cells)
         {
             enteredWord += cell.GetCurrentLetter();
         }
 
-        if (enteredWord == currentWord.word.ToUpper())
+        if (wordTrie.Search(enteredWord.ToUpper()))
         {
             // Word is correct - lock it in
             foreach (var cell in cells)
             {
                 cell.LockCell();
             }
-            
+
             // Move to next word if available
             SelectNextWord();
         }
@@ -229,7 +236,7 @@ public class CrosswordGridManager : MonoBehaviour
                 cell.FlashRed(0.5f);
                 cell.SetInputLetter(' ');
             }
-            
+
             // Return to first cell of word
             SelectCell(cells[0]);
         }
@@ -259,14 +266,14 @@ public class CrosswordGridManager : MonoBehaviour
             {
                 int row = placement.startRow + (placement.horizontal ? 0 : i);
                 int col = placement.startCol + (placement.horizontal ? i : 0);
-                
+
                 if (!gridCells[row, col].IsLocked)
                 {
                     isUnlocked = true;
                     break;
                 }
             }
-            
+
             if (isUnlocked)
                 return placement;
         }
@@ -343,52 +350,52 @@ public class CrosswordGridManager : MonoBehaviour
     }
 
     void HandleCellClick(GridCell cell)
-{
-    Debug.Log($"Cell clicked: Row {cell.Row}, Col {cell.Col}");
-    
-    ClearHighlights();
-    
-    WordPlacement horizontalWord = FindWordAtCell(cell.Row, cell.Col, true);
-    WordPlacement verticalWord = FindWordAtCell(cell.Row, cell.Col, false);
-
-    Debug.Log($"Horizontal Word: {(horizontalWord != null ? horizontalWord.word : "None")}");
-    Debug.Log($"Vertical Word: {(verticalWord != null ? verticalWord.word : "None")}");
-
-    if (horizontalWord != null && verticalWord != null)
     {
-        if (currentWord != null && currentWord.horizontal && verticalWord != null)
+        Debug.Log($"Cell clicked: Row {cell.Row}, Col {cell.Col}");
+
+        ClearHighlights();
+
+        WordPlacement horizontalWord = FindWordAtCell(cell.Row, cell.Col, true);
+        WordPlacement verticalWord = FindWordAtCell(cell.Row, cell.Col, false);
+
+        Debug.Log($"Horizontal Word: {(horizontalWord != null ? horizontalWord.word : "None")}");
+        Debug.Log($"Vertical Word: {(verticalWord != null ? verticalWord.word : "None")}");
+
+        if (horizontalWord != null && verticalWord != null)
         {
-            currentWord = verticalWord;
-            isHorizontalInput = false;
+            if (currentWord != null && currentWord.horizontal && verticalWord != null)
+            {
+                currentWord = verticalWord;
+                isHorizontalInput = false;
+            }
+            else
+            {
+                currentWord = horizontalWord;
+                isHorizontalInput = true;
+            }
         }
         else
         {
-            currentWord = horizontalWord;
-            isHorizontalInput = true;
+            currentWord = horizontalWord ?? verticalWord;
+            isHorizontalInput = currentWord?.horizontal ?? true;
+        }
+
+        Debug.Log($"Selected Word: {(currentWord != null ? currentWord.word : "None")}");
+
+        if (currentWord != null)
+        {
+            // Find the first cell of the current word
+            int firstRow = currentWord.startRow;
+            int firstCol = currentWord.startCol;
+
+            // Select the first cell of the word
+            SelectCell(gridCells[firstRow, firstCol]);
+        }
+        else
+        {
+            Debug.LogWarning("No word found at this cell");
         }
     }
-    else
-    {
-        currentWord = horizontalWord ?? verticalWord;
-        isHorizontalInput = currentWord?.horizontal ?? true;
-    }
-
-    Debug.Log($"Selected Word: {(currentWord != null ? currentWord.word : "None")}");
-
-    if (currentWord != null)
-    {
-        // Find the first cell of the current word
-        int firstRow = currentWord.startRow;
-        int firstCol = currentWord.startCol;
-        
-        // Select the first cell of the word
-        SelectCell(gridCells[firstRow, firstCol]);
-    }
-    else
-    {
-        Debug.LogWarning("No word found at this cell");
-    }
-}
 
     WordPlacement FindWordAtCell(int row, int col, bool horizontal)
     {
@@ -401,7 +408,7 @@ public class CrosswordGridManager : MonoBehaviour
             {
                 int checkRow = placement.startRow + (placement.horizontal ? 0 : i);
                 int checkCol = placement.startCol + (placement.horizontal ? i : 0);
-                
+
                 if (checkRow == row && checkCol == col)
                 {
                     return placement;
@@ -431,7 +438,7 @@ public class CrosswordGridManager : MonoBehaviour
         {
             int row = word.startRow + (word.horizontal ? 0 : i);
             int col = word.startCol + (word.horizontal ? i : 0);
-            
+
             GridCell cell = gridCells[row, col];
             cell.Highlight();
             highlightedCells.Add(cell);
@@ -459,7 +466,7 @@ public class CrosswordGridManager : MonoBehaviour
                 GridCell cell = gridCells[row, col];
                 cell.SetCorrectLetter(placement.word[i]);
                 cell.SetActive(true);
-                
+
                 // Set number for first cell of word
                 if (i == 0 && wordNumbers.ContainsKey(placement))
                 {
@@ -475,7 +482,7 @@ public class CrosswordGridManager : MonoBehaviour
         {
             string acrossClues = "ACROSS:\n";
             string downClues = "\nDOWN:\n";
-            
+
             // First, match clues with their placements and sort them
             var sortedClues = new Dictionary<WordPlacement, WordClue>();
             foreach (var placement in currentLevel.fixedLayout)
@@ -506,48 +513,48 @@ public class CrosswordGridManager : MonoBehaviour
         }
     }
     public void NavigateToNextWord()
-{
-    if (currentWord == null || currentLevel.fixedLayout == null) return;
-
-    // Find the index of the current word
-    int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
-    if (currentIndex < 0)
     {
-        Debug.LogWarning("Current word not found in the layout.");
-        return;
+        if (currentWord == null || currentLevel.fixedLayout == null) return;
+
+        // Find the index of the current word
+        int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
+        if (currentIndex < 0)
+        {
+            Debug.LogWarning("Current word not found in the layout.");
+            return;
+        }
+
+        // Move to the next word, or wrap around to the first word
+        int nextIndex = (currentIndex + 1) % currentLevel.fixedLayout.Count;
+        currentWord = currentLevel.fixedLayout[nextIndex];
+
+        // Select the first cell of the next word
+        int firstRow = currentWord.startRow;
+        int firstCol = currentWord.startCol;
+        SelectCell(gridCells[firstRow, firstCol]);
     }
 
-    // Move to the next word, or wrap around to the first word
-    int nextIndex = (currentIndex + 1) % currentLevel.fixedLayout.Count;
-    currentWord = currentLevel.fixedLayout[nextIndex];
-
-    // Select the first cell of the next word
-    int firstRow = currentWord.startRow;
-    int firstCol = currentWord.startCol;
-    SelectCell(gridCells[firstRow, firstCol]);
-}
-
-public void NavigateToPreviousWord()
-{
-    if (currentWord == null || currentLevel.fixedLayout == null) return;
-
-    // Find the index of the current word
-    int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
-    if (currentIndex < 0)
+    public void NavigateToPreviousWord()
     {
-        Debug.LogWarning("Current word not found in the layout.");
-        return;
+        if (currentWord == null || currentLevel.fixedLayout == null) return;
+
+        // Find the index of the current word
+        int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
+        if (currentIndex < 0)
+        {
+            Debug.LogWarning("Current word not found in the layout.");
+            return;
+        }
+
+        // Move to the previous word, or wrap around to the last word
+        int previousIndex = (currentIndex - 1 + currentLevel.fixedLayout.Count) % currentLevel.fixedLayout.Count;
+        currentWord = currentLevel.fixedLayout[previousIndex];
+
+        // Select the first cell of the previous word
+        int firstRow = currentWord.startRow;
+        int firstCol = currentWord.startCol;
+        SelectCell(gridCells[firstRow, firstCol]);
     }
-
-    // Move to the previous word, or wrap around to the last word
-    int previousIndex = (currentIndex - 1 + currentLevel.fixedLayout.Count) % currentLevel.fixedLayout.Count;
-    currentWord = currentLevel.fixedLayout[previousIndex];
-
-    // Select the first cell of the previous word
-    int firstRow = currentWord.startRow;
-    int firstCol = currentWord.startCol;
-    SelectCell(gridCells[firstRow, firstCol]);
-}
 
 
 }

@@ -7,8 +7,9 @@ using UnityEngine.Networking;
 
 public class JumbledLettersManager : MonoBehaviour
 {
+    private Trie wordTrie;
     public static JumbledLettersManager instance;
-    
+
     [SerializeField]
     private Text questionText;
     [SerializeField]
@@ -19,17 +20,17 @@ public class JumbledLettersManager : MonoBehaviour
     private WordData[] optionWordArray;
 
     // Embedded default questions as a fallback
-    private JLQuestionList defaultQuestionData = new JLQuestionList 
+    private JLQuestionList defaultQuestionData = new JLQuestionList
     {
-        questions = new List<JLQuestion> 
+        questions = new List<JLQuestion>
         {
-            new JLQuestion { 
-                questionText = "Unscramble this word", 
-                answer = "UNITY" 
+            new JLQuestion {
+                questionText = "Unscramble this word",
+                answer = "UNITY"
             },
-            new JLQuestion { 
-                questionText = "Another word to solve", 
-                answer = "GAME" 
+            new JLQuestion {
+                questionText = "Another word to solve",
+                answer = "GAME"
             }
             // Add more default questions as needed
         }
@@ -38,7 +39,7 @@ public class JumbledLettersManager : MonoBehaviour
     private JLQuestionList questionData;
     private char[] charArray = new char[12];
     private int currentAnswerIndex = 0;
-    private bool correctAnswer = true;
+    private bool correctAnswer = false;
     private List<int> selectedWordIndex;
     private int currentQuestionIndex = 0;
     private GameStatus gameStatus = GameStatus.Playing;
@@ -46,32 +47,77 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void Awake()
     {
-        if(instance == null) instance = this;
+        if (instance == null) instance = this;
         else Destroy(gameObject);
 
         selectedWordIndex = new List<int>();
-        
+        // Initialize the Trie
+        wordTrie = new Trie();
+
+        // Load valid words into the Trie
+        LoadValidWords();
         // Start loading questions
         StartCoroutine(LoadQuestionData());
     }
-
-    private IEnumerator LoadQuestionData()
+    private void LoadValidWords()
     {
-        // Attempt to load from StreamingAssets first
+        // Load valid words from the JSON file
         string path = System.IO.Path.Combine(Application.streamingAssetsPath, "jumbled_letters_questions.json");
-        
+
+        // Use UnityWebRequest to read the JSON file
+        StartCoroutine(LoadWordsFromJson(path));
+    }
+
+    private IEnumerator LoadWordsFromJson(string path)
+    {
         using (UnityWebRequest www = UnityWebRequest.Get(path))
         {
             yield return www.SendWebRequest();
 
             if (www.result == UnityWebRequest.Result.Success)
             {
-                try 
+                try
+                {
+                    // Parse the JSON data
+                    string jsonText = www.downloadHandler.text;
+                    JLQuestionList questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
+
+                    // Insert each answer into the Trie
+                    foreach (var question in questionData.questions)
+                    {
+                        wordTrie.Insert(question.answer.ToUpper()); // Insert the answer in uppercase
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing JSON: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to load words from file: " + www.error);
+            }
+        }
+    }
+
+
+    private IEnumerator LoadQuestionData()
+    {
+        // Attempt to load from StreamingAssets first
+        string path = System.IO.Path.Combine(Application.streamingAssetsPath, "jumbled_letters_questions.json");
+
+        using (UnityWebRequest www = UnityWebRequest.Get(path))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
                 {
                     // Try to parse the JSON from file
                     string jsonText = www.downloadHandler.text;
                     questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
-                    
+
                     // Verify the data was loaded correctly
                     if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
                     {
@@ -107,15 +153,15 @@ public class JumbledLettersManager : MonoBehaviour
 
         currentAnswerIndex = 0;
         selectedWordIndex.Clear();
-        
+
         // Get current question from loaded data
         JLQuestion currentQuestion = questionData.questions[currentQuestionIndex];
-        
+
         questionText.text = currentQuestion.questionText;
         answerWord = currentQuestion.answer;
-        
+
         ResetQuestion();
-        
+
         for (int i = 0; i < answerWord.Length; i++)
         {
             charArray[i] = char.ToUpper(answerWord[i]);
@@ -125,42 +171,39 @@ public class JumbledLettersManager : MonoBehaviour
         {
             charArray[i] = (char)UnityEngine.Random.Range(65, 91);
         }
-        
+
         charArray = ShuffleList.ShuffleListItems<char>(charArray.ToList()).ToArray();
 
         for (int i = 0; i < optionWordArray.Length; i++)
         {
             optionWordArray[i].SetChar(charArray[i]);
-        }          
+        }
 
-        currentQuestionIndex++; 
-        gameStatus = GameStatus.Playing; 
+        currentQuestionIndex++;
+        gameStatus = GameStatus.Playing;
     }
 
     public void SelectedOption(WordData wordData)
     {
-        if(gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length) return;
+        if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length) return;
 
         selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
         wordData.gameObject.SetActive(false);
         answerWordArray[currentAnswerIndex].SetChar(wordData.charValue);
         currentAnswerIndex++;
 
+        // Check if the current answer is valid
         if (currentAnswerIndex == answerWord.Length)
         {
-            correctAnswer = true;
-
-            for(int i = 0; i < answerWord.Length; i++)
+            string formedWord = "";
+            for (int i = 0; i < currentAnswerIndex; i++)
             {
-                if(char.ToUpper(answerWord[i]) != char.ToUpper(answerWordArray[i].charValue))
-                {
-                    correctAnswer = false;
-                    break;
-                }
+                formedWord += answerWordArray[i].charValue;
             }
 
-            if(correctAnswer)
+            if (wordTrie.Search(formedWord.ToUpper())) // Check if the formed word is valid
             {
+                correctAnswer = true;
                 Debug.Log("Answer correct!");
                 gameStatus = GameStatus.Next;
                 if (currentQuestionIndex < questionData.questions.Count)
@@ -182,7 +225,7 @@ public class JumbledLettersManager : MonoBehaviour
                     int originalIndex = selectedWordIndex[i];
                     optionWordArray[originalIndex].gameObject.SetActive(true);
                 }
-                
+
                 // Clear selected indices and reset answer
                 selectedWordIndex.Clear();
                 currentAnswerIndex = 0;
@@ -193,17 +236,17 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void ResetQuestion()
     {
-        for(int i = 0; i < answerWordArray.Length; i++)
+        for (int i = 0; i < answerWordArray.Length; i++)
         {
             answerWordArray[i].gameObject.SetActive(true);
             answerWordArray[i].SetChar('_');
         }
 
-        for(int i = answerWord.Length; i < answerWordArray.Length; i++)
+        for (int i = answerWord.Length; i < answerWordArray.Length; i++)
         {
             answerWordArray[i].gameObject.SetActive(false);
         }
-        for(int i = 0; i < optionWordArray.Length; i++)
+        for (int i = 0; i < optionWordArray.Length; i++)
         {
             optionWordArray[i].gameObject.SetActive(true);
         }
@@ -211,12 +254,12 @@ public class JumbledLettersManager : MonoBehaviour
 
     public void ResetLastWord()
     {
-        if(selectedWordIndex.Count > 0)
+        if (selectedWordIndex.Count > 0)
         {
             int index = selectedWordIndex[selectedWordIndex.Count - 1];
             optionWordArray[index].gameObject.SetActive(true);
             selectedWordIndex.RemoveAt(selectedWordIndex.Count - 1);
-            currentAnswerIndex --;
+            currentAnswerIndex--;
             answerWordArray[currentAnswerIndex].SetChar('_');
         }
     }
