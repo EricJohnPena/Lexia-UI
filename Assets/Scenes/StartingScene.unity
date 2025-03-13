@@ -11495,6 +11495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 592f66fb382bdfc4ea3aaf453334f846, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  radarChart: {fileID: 1131867812}
   fullNameText: {fileID: 1631399498}
   sectionText: {fileID: 1862890007}
 --- !u!1 &1741413984

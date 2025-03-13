@@ -20,16 +20,13 @@ public class LogoutManager : MonoBehaviour
     }
 
     public void Logout()
-    {
-        Debug.Log("Logout button clicked");
-        // Clear PlayerPrefs
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
-        
-        // Clear radar items from PlayerPrefs
-        PlayerPrefs.DeleteKey("RadarItems");
-        // Clear user data from other systems
+{
+    Debug.Log("Logout button clicked");
+    // Clear PlayerPrefs
+    PlayerPrefs.DeleteAll();
+    PlayerPrefs.Save();
 
+    // Clear user data from other systems
     UserInfo userInfo = UserInfo.Instance;
     if (userInfo != null)
     {

@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
-using Newtonsoft.Json;
 using UnityEngine.UI;
 
 namespace RadarChart
@@ -17,13 +17,17 @@ namespace RadarChart
         public Text vocabularyRangeText;
         public Text consistencyText;
         public Text retentionText;
-        [SerializeField] private RadarStyle style;
-        [SerializeField] private List<RadarItem> radarItems = new List<RadarItem>();
+
+        [SerializeField]
+        private RadarStyle style;
+
+        [SerializeField]
+        private List<RadarItem> radarItems = new List<RadarItem>();
 
         private void Start()
         {
             Debug.Log("User ID: " + PlayerPrefs.GetString("User ID"));
-            
+
             StartCoroutine(FetchRadarItems(PlayerPrefs.GetString("User ID")));
         }
 
@@ -50,7 +54,8 @@ namespace RadarChart
             }
         }
 
-        [SerializeField, HideInInspector] private CanvasRenderer canvasRenderer;
+        [SerializeField, HideInInspector]
+        private CanvasRenderer canvasRenderer;
 
         private void OnValidate()
         {
@@ -66,14 +71,16 @@ namespace RadarChart
             }
         }
 
-        private IEnumerator FetchRadarItems(string student_id)
+        public IEnumerator FetchRadarItems(string student_id)
         {
             // Check if radar items are available in PlayerPrefs
             string radarItemsJson = PlayerPrefs.GetString("RadarItems", null);
             if (!string.IsNullOrEmpty(radarItemsJson))
             {
                 // Deserialize JSON data into radarItems
-                var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(radarItemsJson);
+                var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(
+                    radarItemsJson
+                );
                 if (radarValues != null)
                 {
                     radarItems.Clear();
@@ -82,7 +89,7 @@ namespace RadarChart
                         RadarItem radarItem = new RadarItem
                         {
                             Name = entry.Key,
-                            Value = Mathf.Max(0, entry.Value) // Ensure non-negative values
+                            Value = Mathf.Max(0, entry.Value), // Ensure non-negative values
                         };
                         radarItems.Add(radarItem);
                     }
@@ -96,55 +103,66 @@ namespace RadarChart
                 Debug.LogWarning("User ID is null or empty. Cannot fetch radar items.");
                 yield break; // Exit the coroutine if userId is not set
             }
-
-            WWWForm form = new WWWForm();
-            form.AddField("student_id", student_id);
-            using (UnityWebRequest webRequest = UnityWebRequest.Post("http://192.168.1.154/db_unity/getRadarItems.php?student_id=", form))
+            else
             {
-                yield return webRequest.SendWebRequest();
-
-                if (webRequest.result != UnityWebRequest.Result.Success)
+                WWWForm form = new WWWForm();
+                form.AddField("student_id", student_id);
+                using (
+                    UnityWebRequest webRequest = UnityWebRequest.Post(
+                        "http://192.168.1.154/db_unity/getRadarItems.php?student_id=",
+                        form
+                    )
+                )
                 {
-                    Debug.LogError("Error fetching radar items: " + webRequest.error);
-                }
-                else
-                {
-                    string jsonResponse = webRequest.downloadHandler.text;
-                    Debug.Log("Radar Items Response: " + jsonResponse);
+                    yield return webRequest.SendWebRequest();
 
-                    // Parse the JSON response
-                    if (jsonResponse == null)
+                    if (webRequest.result != UnityWebRequest.Result.Success)
                     {
-                        yield break;
+                        Debug.LogError("Error fetching radar items: " + webRequest.error);
                     }
-                    var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(jsonResponse.TrimStart('[').TrimEnd(']'));
-                    if (radarValues != null)
+                    else
                     {
-                        if (radarValues.Count > 0)
-                        {
-                            radarItems.Clear();
-                            Debug.Log("Fetched " + radarValues.Count + " radar items.");
-                            foreach (var entry in radarValues)
-                            {
-                                RadarItem radarItem = new RadarItem
-                                {
-                                    Name = entry.Key,
-                                    Value = Mathf.Max(0, entry.Value) // Ensure non-negative values
-                                };
-                                radarItems.Add(radarItem);
-                            }
+                        string jsonResponse = webRequest.downloadHandler.text;
+                        Debug.Log("Radar Items Response: " + jsonResponse);
 
-                            // Save radar items to PlayerPrefs as JSON
-                            string json = JsonConvert.SerializeObject(radarValues);
-                            PlayerPrefs.SetString("RadarItems", json);
-                            PlayerPrefs.Save();
-                            UpdateRadarValuesText();
-                            Debug.Log($"Fetched {radarItems.Count} radar items for student ID {UserInfo.Instance.userId}.");
-                        }
-                        else
+                        // Parse the JSON response
+                        if (jsonResponse == null)
                         {
-                            Debug.Log("No radar items found for user ID " + student_id);
                             yield break;
+                        }
+                        var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(
+                            jsonResponse.TrimStart('[').TrimEnd(']')
+                        );
+                        if (radarValues != null)
+                        {
+                            if (radarValues.Count > 0)
+                            {
+                                radarItems.Clear();
+                                Debug.Log("Fetched " + radarValues.Count + " radar items.");
+                                foreach (var entry in radarValues)
+                                {
+                                    RadarItem radarItem = new RadarItem
+                                    {
+                                        Name = entry.Key,
+                                        Value = Mathf.Max(0, entry.Value), // Ensure non-negative values
+                                    };
+                                    radarItems.Add(radarItem);
+                                }
+
+                                // Save radar items to PlayerPrefs as JSON
+                                string json = JsonConvert.SerializeObject(radarValues);
+                                PlayerPrefs.SetString("RadarItems", json);
+                                PlayerPrefs.Save();
+                                UpdateRadarValuesText();
+                                Debug.Log(
+                                    $"Fetched {radarItems.Count} radar items for student ID {UserInfo.Instance.userId}."
+                                );
+                            }
+                            else
+                            {
+                                Debug.Log("No radar items found for user ID " + student_id);
+                                yield break;
+                            }
                         }
                     }
                 }
