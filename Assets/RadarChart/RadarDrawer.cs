@@ -123,15 +123,6 @@ public class RadarDrawer
 
     private float GetRadarItemsMaxValue()
     {
-        float radarItemsMaxValue = Mathf.NegativeInfinity;
-
-        for (var i = 0; i < radarItems.Count; i++)
-        {
-            var radarItem = radarItems[i];
-            if (radarItem.Value > radarItemsMaxValue)
-                radarItemsMaxValue = radarItem.Value;
-        }
-
-        return radarItemsMaxValue;
+        return 10f; // Always use 10 as the maximum value
     }
 }

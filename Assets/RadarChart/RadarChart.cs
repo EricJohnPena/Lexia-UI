@@ -22,7 +22,7 @@ namespace RadarChart
         private RadarStyle style;
 
         [SerializeField]
-        private List<RadarItem> radarItems = new List<RadarItem>();
+        public List<RadarItem> radarItems = new List<RadarItem>();
 
         private void Start()
         {
@@ -89,7 +89,7 @@ namespace RadarChart
                         RadarItem radarItem = new RadarItem
                         {
                             Name = entry.Key,
-                            Value = Mathf.Max(0, entry.Value), // Ensure non-negative values
+                            Value = Mathf.Clamp(entry.Value, 0, 10), // Clamp values between 0 and 10
                         };
                         radarItems.Add(radarItem);
                     }
@@ -144,7 +144,7 @@ namespace RadarChart
                                     RadarItem radarItem = new RadarItem
                                     {
                                         Name = entry.Key,
-                                        Value = Mathf.Max(0, entry.Value), // Ensure non-negative values
+                                        Value = Mathf.Clamp(entry.Value, 0, 10), // Clamp values between 0 and 10
                                     };
                                     radarItems.Add(radarItem);
                                 }
@@ -175,7 +175,7 @@ namespace RadarChart
             {
                 var radarItem = radarItems[i];
                 if (radarItem.Name.Equals(id))
-                    radarItem.Value = val;
+                    radarItem.Value = Mathf.Clamp(val, 0, 10);
             }
         }
 
