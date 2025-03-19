@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
+
 public class LogoutManager : MonoBehaviour
 {
     // Reference to the MenuManager to navigate between pages
@@ -20,41 +21,32 @@ public class LogoutManager : MonoBehaviour
     }
 
     public void Logout()
-{
-    Debug.Log("Logout button clicked");
-    // Clear PlayerPrefs
-    PlayerPrefs.DeleteAll();
-    PlayerPrefs.Save();
+    {
+        // Clear all PlayerPrefs data
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
 
-    // Clear user data from other systems
-    UserInfo userInfo = UserInfo.Instance;
-    if (userInfo != null)
-    {
-        userInfo.ClearData();
-    }
-    else
-    {
-        Debug.LogError("UserInfo.Instance is null");
-    }
+        // Clear radar items from PlayerPrefs specifically
+        PlayerPrefs.DeleteKey("RadarItems");
+        PlayerPrefs.Save();
 
-    // Clear radar items
-    RadarChart.RadarChart radarChart = FindObjectOfType(typeof(RadarChart.RadarChart)) as RadarChart.RadarChart;
-    if (radarChart != null)
-    {
-        radarChart.ClearRadarItems();
+        // Clear radar items from the RadarChart component if it exists
+        RadarChart.RadarChart radarChart = FindObjectOfType<RadarChart.RadarChart>();
+        if (radarChart != null)
+        {
+            radarChart.ClearRadarItems();
+        }
+
+
+
+        // Redirect to the login page
+        if (menuManager != null)
+        {
+            menuManager.ToLoginPage();
+        }
+        else
+        {
+            Debug.LogError("menuManager is null");
+        }
     }
-    else
-    {
-        Debug.LogError("RadarChart instance not found");
-    }
-    // Redirect to the login page
-    if (menuManager != null)
-    {
-        menuManager.ToLoginPage();
-    }
-    else
-    {
-        Debug.LogError("menuManager is null");
-    }
-}
 }

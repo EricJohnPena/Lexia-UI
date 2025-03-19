@@ -18,8 +18,52 @@ public class RadarDrawer
         this.style = style;
     }
 
-    public void Draw()
+    public void Draw(Mesh mesh)
     {
+        // Do nothing if there are no radar items
+        if (radarItems == null || radarItems.Count == 0)
+        {
+            if (canvasRenderer != null)
+            {
+                canvasRenderer.SetMesh(null);
+            }
+            return;
+        }
+
+        // Ensure we have exactly 6 items
+        if (radarItems.Count != 6)
+        {
+            Debug.LogWarning($"Expected 6 radar items, got {radarItems.Count}. Skipping draw.");
+            if (canvasRenderer != null)
+            {
+                canvasRenderer.SetMesh(null);
+            }
+            return;
+        }
+
+        // Ensure items are in the correct order
+        string[] expectedOrder = new string[] {
+            "accuracy",
+            "speed",
+            "problem_solving_skills",
+            "vocabulary_range",
+            "consistency",
+            "retention"
+        };
+
+        for (int i = 0; i < radarItems.Count; i++)
+        {
+            if (radarItems[i].Name != expectedOrder[i])
+            {
+                Debug.LogWarning($"Radar item {i} is out of order. Expected {expectedOrder[i]}, got {radarItems[i].Name}");
+                if (canvasRenderer != null)
+                {
+                    canvasRenderer.SetMesh(null);
+                }
+                return;
+            }
+        }
+
         int count = radarItems.Count;
         float radarItemsMaxValue = GetRadarItemsMaxValue();
         float angle = 2f * Mathf.PI / count;
@@ -110,15 +154,27 @@ public class RadarDrawer
             }
         }
 
-        Mesh mesh = new Mesh
+        // Clear the existing mesh from the canvas renderer first
+        if (canvasRenderer != null)
         {
-            vertices = vertices,
-            uv = uvs,
-            triangles = triangles,
-        };
+            canvasRenderer.SetMesh(null);
+        }
 
-        canvasRenderer.SetMesh(mesh);
-        canvasRenderer.SetMaterial(style.Material, style.Texture);
+        // Update the mesh
+        mesh.Clear();
+        mesh.vertices = vertices;
+        mesh.uv = uvs;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mesh.RecalculateTangents();
+
+        // Set the new mesh
+        if (canvasRenderer != null)
+        {
+            canvasRenderer.SetMesh(mesh);
+            canvasRenderer.SetMaterial(style.Material, style.Texture);
+        }
     }
 
     private float GetRadarItemsMaxValue()

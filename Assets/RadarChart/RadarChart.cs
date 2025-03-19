@@ -24,11 +24,198 @@ namespace RadarChart
         [SerializeField]
         public List<RadarItem> radarItems = new List<RadarItem>();
 
+        private bool needsUpdate = true;
+        private string lastFetchedUserId = null; // Track the last user we fetched items for
+
         private void Start()
         {
-            Debug.Log("User ID: " + PlayerPrefs.GetString("User ID"));
+            // Initialize with empty values
+            UpdateRadarValuesText();
+        }
 
-            StartCoroutine(FetchRadarItems(PlayerPrefs.GetString("User ID")));
+        private void OnEnable()
+        {
+            // Check if there's a pending radar fetch
+            string pendingUserId = PlayerPrefs.GetString("PendingRadarFetch", "");
+            if (!string.IsNullOrEmpty(pendingUserId))
+            {
+                Debug.Log($"Processing pending radar fetch for user: {pendingUserId}");
+                // Clear the pending flag
+                PlayerPrefs.DeleteKey("PendingRadarFetch");
+                // Fetch the radar items
+                StartCoroutine(FetchRadarItems(pendingUserId));
+            }
+        }
+
+        // Public method to fetch radar items
+        public void FetchItemsForCurrentUser()
+        {
+            string currentUserId = PlayerPrefs.GetString("User ID");
+            Debug.Log("User ID: " + currentUserId);
+            
+            // Only fetch if we haven't fetched for this user yet
+            if (lastFetchedUserId != currentUserId)
+            {
+                Debug.Log($"Fetching radar items for new user: {currentUserId}");
+                
+                // Clear existing radar items and force a redraw to clear the mesh
+                ClearRadarItems();
+                ForceRedraw();
+                
+                lastFetchedUserId = currentUserId;
+                
+                // Check if the GameObject is active before starting the coroutine
+                if (gameObject.activeInHierarchy)
+                {
+                    StartCoroutine(FetchRadarItems(currentUserId));
+                }
+                else
+                {
+                    Debug.LogWarning($"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated.");
+                    // Store the user ID to fetch data when activated
+                    PlayerPrefs.SetString("PendingRadarFetch", currentUserId);
+                }
+            }
+            else
+            {
+                Debug.Log($"Already fetched radar items for user: {currentUserId}");
+            }
+        }
+
+        private void Update()
+        {
+            if (needsUpdate)
+            {
+                if (radarItems != null && radarItems.Count > 0)
+                {
+                    // Create a new mesh each time
+                    Mesh newMesh = new Mesh();
+                    newMesh.MarkDynamic();
+                    
+                    RadarDrawer radarDrawer = new RadarDrawer(canvasRenderer, radarItems, style);
+                    radarDrawer.Draw(newMesh);
+                }
+                else
+                {
+                    // Clear the mesh if there are no items
+                    if (canvasRenderer != null)
+                    {
+                        canvasRenderer.SetMesh(null);
+                    }
+                }
+                needsUpdate = false;
+            }
+        }
+
+        public IEnumerator FetchRadarItems(string student_id)
+        {
+            // Clear existing radar items first
+            radarItems.Clear();
+            needsUpdate = true;
+            
+            if (string.IsNullOrEmpty(student_id))
+            {
+                Debug.LogWarning("User ID is null or empty. Cannot fetch radar items.");
+                yield break;
+            }
+
+            // Force a fresh fetch from the server
+            WWWForm form = new WWWForm();
+            form.AddField("student_id", student_id);
+            using (
+                UnityWebRequest webRequest = UnityWebRequest.Post(
+                    "http://192.168.1.154/db_unity/getRadarItems.php",
+                    form
+                )
+            )
+            {
+                yield return webRequest.SendWebRequest();
+
+                if (webRequest.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError("Error fetching radar items: " + webRequest.error);
+                }
+                else
+                {
+                    string jsonResponse = webRequest.downloadHandler.text;
+                    Debug.Log("Raw Radar Items Response: " + jsonResponse);
+
+                    // Parse the JSON response
+                    if (jsonResponse == null)
+                    {
+                        yield break;
+                    }
+
+                    try
+                    {
+                        // Parse as array of dictionaries
+                        var radarArray = JsonConvert.DeserializeObject<List<Dictionary<string, int>>>(jsonResponse);
+                        if (radarArray != null && radarArray.Count > 0)
+                        {
+                            Debug.Log($"Fetched {radarArray.Count} radar items from server.");
+                            
+                            // Only use the first dictionary in the array
+                            var radarValues = radarArray[0];
+                            Debug.Log($"Using first set of radar values: {JsonConvert.SerializeObject(radarValues)}");
+                            
+                            // Define the expected radar items in order
+                            string[] expectedItems = new string[] {
+                                "accuracy",
+                                "speed",
+                                "problem_solving_skills",
+                                "vocabulary_range",
+                                "consistency",
+                                "retention"
+                            };
+
+                            // Create radar items in the correct order
+                            foreach (string itemName in expectedItems)
+                            {
+                                if (radarValues.ContainsKey(itemName))
+                                {
+                                    RadarItem radarItem = new RadarItem
+                                    {
+                                        Name = itemName,
+                                        Value = Mathf.Clamp(radarValues[itemName], 0, 10)
+                                    };
+                                    radarItems.Add(radarItem);
+                                    Debug.Log($"Added radar item: {itemName} = {radarValues[itemName]}");
+                                }
+                                else
+                                {
+                                    Debug.LogWarning($"Missing expected radar item: {itemName}");
+                                    RadarItem radarItem = new RadarItem
+                                    {
+                                        Name = itemName,
+                                        Value = 0
+                                    };
+                                    radarItems.Add(radarItem);
+                                    Debug.Log($"Added default radar item: {itemName} = 0");
+                                }
+                            }
+
+                            // Save radar items to PlayerPrefs as JSON
+                            string json = JsonConvert.SerializeObject(radarValues);
+                            PlayerPrefs.SetString("RadarItems", json);
+                            PlayerPrefs.Save();
+                            UpdateRadarValuesText();
+                            Debug.Log($"Final radar items count: {radarItems.Count}");
+                            Debug.Log($"Using {radarItems.Count} radar items for student ID {student_id}.");
+                        }
+                        else
+                        {
+                            Debug.Log("No radar items found for user ID " + student_id);
+                            yield break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Error parsing radar items: " + e.Message);
+                        Debug.LogError("Stack trace: " + e.StackTrace);
+                        yield break;
+                    }
+                }
+            }
         }
 
         private void UpdateRadarValuesText()
@@ -62,113 +249,6 @@ namespace RadarChart
             canvasRenderer = GetComponent<CanvasRenderer>();
         }
 
-        private void Update()
-        {
-            if (radarItems.Count > 0)
-            {
-                RadarDrawer radarDrawer = new RadarDrawer(canvasRenderer, radarItems, style);
-                radarDrawer.Draw();
-            }
-        }
-
-        public IEnumerator FetchRadarItems(string student_id)
-        {
-            // Check if radar items are available in PlayerPrefs
-            string radarItemsJson = PlayerPrefs.GetString("RadarItems", null);
-            if (!string.IsNullOrEmpty(radarItemsJson))
-            {
-                // Deserialize JSON data into radarItems
-                var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(
-                    radarItemsJson
-                );
-                if (radarValues != null)
-                {
-                    radarItems.Clear();
-                    foreach (var entry in radarValues)
-                    {
-                        RadarItem radarItem = new RadarItem
-                        {
-                            Name = entry.Key,
-                            Value = Mathf.Clamp(entry.Value, 0, 10), // Clamp values between 0 and 10
-                        };
-                        radarItems.Add(radarItem);
-                    }
-                    UpdateRadarValuesText(); // Update the UI text with fetched values
-                    yield break; // Exit if items are loaded from PlayerPrefs
-                }
-            }
-
-            if (string.IsNullOrEmpty(student_id))
-            {
-                Debug.LogWarning("User ID is null or empty. Cannot fetch radar items.");
-                yield break; // Exit the coroutine if userId is not set
-            }
-            else
-            {
-                WWWForm form = new WWWForm();
-                form.AddField("student_id", student_id);
-                using (
-                    UnityWebRequest webRequest = UnityWebRequest.Post(
-                        "http://192.168.1.154/db_unity/getRadarItems.php?student_id=",
-                        form
-                    )
-                )
-                {
-                    yield return webRequest.SendWebRequest();
-
-                    if (webRequest.result != UnityWebRequest.Result.Success)
-                    {
-                        Debug.LogError("Error fetching radar items: " + webRequest.error);
-                    }
-                    else
-                    {
-                        string jsonResponse = webRequest.downloadHandler.text;
-                        Debug.Log("Radar Items Response: " + jsonResponse);
-
-                        // Parse the JSON response
-                        if (jsonResponse == null)
-                        {
-                            yield break;
-                        }
-                        var radarValues = JsonConvert.DeserializeObject<Dictionary<string, int>>(
-                            jsonResponse.TrimStart('[').TrimEnd(']')
-                        );
-                        if (radarValues != null)
-                        {
-                            if (radarValues.Count > 0)
-                            {
-                                radarItems.Clear();
-                                Debug.Log("Fetched " + radarValues.Count + " radar items.");
-                                foreach (var entry in radarValues)
-                                {
-                                    RadarItem radarItem = new RadarItem
-                                    {
-                                        Name = entry.Key,
-                                        Value = Mathf.Clamp(entry.Value, 0, 10), // Clamp values between 0 and 10
-                                    };
-                                    radarItems.Add(radarItem);
-                                }
-
-                                // Save radar items to PlayerPrefs as JSON
-                                string json = JsonConvert.SerializeObject(radarValues);
-                                PlayerPrefs.SetString("RadarItems", json);
-                                PlayerPrefs.Save();
-                                UpdateRadarValuesText();
-                                Debug.Log(
-                                    $"Fetched {radarItems.Count} radar items for student ID {UserInfo.Instance.userId}."
-                                );
-                            }
-                            else
-                            {
-                                Debug.Log("No radar items found for user ID " + student_id);
-                                yield break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         public void SetStat(string id, int val)
         {
             for (var i = 0; i < radarItems.Count; i++)
@@ -181,7 +261,40 @@ namespace RadarChart
 
         public void ClearRadarItems()
         {
+            Debug.Log("Starting to clear radar items...");
+            Debug.Log($"Current radar items count before clear: {radarItems.Count}");
+            
+            // Clear the radar items list
             radarItems.Clear();
+            
+            // Clear the mesh from the canvas renderer
+            if (canvasRenderer != null)
+            {
+                canvasRenderer.SetMesh(null);
+                Debug.Log("Cleared mesh from canvas renderer");
+            }
+
+            // Reset all text fields to 0
+            if (accuracyText != null) accuracyText.text = "0";
+            if (speedText != null) speedText.text = "0";
+            if (problemSolvingSkillsText != null) problemSolvingSkillsText.text = "0";
+            if (vocabularyRangeText != null) vocabularyRangeText.text = "0";
+            if (consistencyText != null) consistencyText.text = "0";
+            if (retentionText != null) retentionText.text = "0";
+
+            // Force an update to ensure the chart is cleared
+            needsUpdate = true;
+            
+            // Reset the last fetched user ID
+            lastFetchedUserId = null;
+            
+            Debug.Log($"Final radar items count after clear: {radarItems.Count}");
+            Debug.Log("Radar items cleared successfully");
+        }
+
+        public void ForceRedraw()
+        {
+            needsUpdate = true;
         }
     }
 
@@ -192,3 +305,4 @@ namespace RadarChart
         public int Value { get; set; }
     }
 }
+

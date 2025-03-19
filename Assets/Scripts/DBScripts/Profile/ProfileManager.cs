@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class ProfileManager : MonoBehaviour
 {
@@ -25,14 +26,13 @@ public class ProfileManager : MonoBehaviour
         // Retrieve user info from PlayerPrefs
         string fullName = PlayerPrefs.GetString("Fullname", "Guest User");
         string section = PlayerPrefs.GetString("SectionName", "Not Assigned");
-        //Debug.Log(fullName);
-        //Debug.Log(section);
+        string userId = PlayerPrefs.GetString("User ID", "");
 
         // Update the UI elements with user information
         fullNameText.text = fullName;
-        sectionText.text = "Grade 6 - " + section; // Adjust this if you have a specific format for sections
+        sectionText.text = "Grade 6 - " + section;
 
-        // Fetch radar items for the current user after updating the profile UI
-        radarChart.FetchRadarItems(PlayerPrefs.GetString("User ID")); // Call to fetch radar items
+        // Use the FetchItemsForCurrentUser method which has built-in duplicate prevention
+        radarChart.FetchItemsForCurrentUser();
     }
 }
