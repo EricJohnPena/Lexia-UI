@@ -124,7 +124,7 @@ namespace RadarChart
             form.AddField("student_id", student_id);
             using (
                 UnityWebRequest webRequest = UnityWebRequest.Post(
-                    "http://192.168.1.154/db_unity/getRadarItems.php",
+                    Web.BaseApiUrl + "getRadarItems.php",
                     form
                 )
             )

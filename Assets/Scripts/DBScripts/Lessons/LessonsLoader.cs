@@ -66,7 +66,7 @@ public class LessonsLoader : MonoBehaviour
         form.AddField("module_number", moduleNumber);
         form.AddField("fk_subject_id", subjectId);
 
-        using (UnityWebRequest www = UnityWebRequest.Post("http://192.168.1.154/db_unity/getLessons.php", form))
+        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getLessons.php", form))
         {
             yield return www.SendWebRequest();
             if (www.result != UnityWebRequest.Result.Success)

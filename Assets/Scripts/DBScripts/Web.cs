@@ -8,11 +8,14 @@ using UnityEngine.UI;
 
 public class Web : MonoBehaviour
 {
+    // Base URL for all API endpoints
+    public static string BaseApiUrl = "http://192.168.1.154/db_unity/";
+    
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();
 
     void Start()
     {
-        StartCoroutine(GetDate("http://192.168.1.154/db_unity/get_date.php"));
+        StartCoroutine(GetDate(BaseApiUrl + "get_date.php"));
     }
 
     IEnumerator GetDate(string uri)
@@ -43,7 +46,7 @@ public class Web : MonoBehaviour
         form.AddField("student_id", student_id);
 
         using UnityWebRequest www = UnityWebRequest.Post(
-            "http://192.168.1.154/db_unity/getSectionId.php",
+            BaseApiUrl + "getSectionId.php",
             form
         );
         //SetDefaultHeaders(www);
@@ -69,7 +72,7 @@ public class Web : MonoBehaviour
 
         using (
             UnityWebRequest www = UnityWebRequest.Post(
-                "http://192.168.1.154/db_unity/login.php",
+                BaseApiUrl + "login.php",
                 form
             )
         )
@@ -146,7 +149,7 @@ public class Web : MonoBehaviour
     //     form.AddField("last_name", lastName);
     //     form.AddField("email", email);
 
-    //     using (UnityWebRequest www = UnityWebRequest.Post("http://192.168.1.154/db_unity/register.php", form))
+    //     using (UnityWebRequest www = UnityWebRequest.Post(BaseApiUrl + "register.php", form))
     //     {
     //         //SetDefaultHeaders(www);
     //         yield return www.SendWebRequest();
@@ -195,7 +198,7 @@ public class Web : MonoBehaviour
 
         using (
             UnityWebRequest www = UnityWebRequest.Post(
-                "http://192.168.1.154/db_unity/getSection.php",
+                BaseApiUrl + "getSection.php",
                 form
             )
         )
