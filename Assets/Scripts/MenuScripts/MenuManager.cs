@@ -144,9 +144,18 @@ public class MenuManager : MonoBehaviour
 
     }
 
+    public void ToStudentLeaderboard()
+    {
+        StudentDashboardPage.gameObject.SetActive(false);
+        StudentLeaderboardPage.gameObject.SetActive(true);
+        LeaderboardManager.Instance.LoadLeaderboard();
+    }
 
-
-
-
+    public void BackToStudentDashboardFromLeaderboard()
+    {
+        StudentLeaderboardPage.gameObject.SetActive(false);
+        StudentDashboardPage.gameObject.SetActive(true);
+        LeaderboardManager.Instance.ResetLeaderboard();
+    }
 
 }

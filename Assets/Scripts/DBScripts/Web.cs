@@ -10,7 +10,7 @@ public class Web : MonoBehaviour
 {
     // Base URL for all API endpoints
     public static string BaseApiUrl = "http://192.168.1.154/db_unity/";
-    
+
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();
 
     void Start()
@@ -45,10 +45,7 @@ public class Web : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("student_id", student_id);
 
-        using UnityWebRequest www = UnityWebRequest.Post(
-            BaseApiUrl + "getSectionId.php",
-            form
-        );
+        using UnityWebRequest www = UnityWebRequest.Post(BaseApiUrl + "getSectionId.php", form);
         //SetDefaultHeaders(www);
 
         yield return www.SendWebRequest();
@@ -70,12 +67,7 @@ public class Web : MonoBehaviour
         form.AddField("loginUser", username);
         form.AddField("loginPass", password);
 
-        using (
-            UnityWebRequest www = UnityWebRequest.Post(
-                BaseApiUrl + "login.php",
-                form
-            )
-        )
+        using (UnityWebRequest www = UnityWebRequest.Post(BaseApiUrl + "login.php", form))
         {
             yield return www.SendWebRequest();
 
@@ -196,12 +188,7 @@ public class Web : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("section_id", sectionId);
 
-        using (
-            UnityWebRequest www = UnityWebRequest.Post(
-                BaseApiUrl + "getSection.php",
-                form
-            )
-        )
+        using (UnityWebRequest www = UnityWebRequest.Post(BaseApiUrl + "getSection.php", form))
         {
             yield return www.SendWebRequest();
 
