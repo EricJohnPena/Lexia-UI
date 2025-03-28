@@ -7,7 +7,6 @@ public class LeaderboardEntryUI : MonoBehaviour
     public Text usernameText;
     public Text scoreText;
     public Image profileImage;
-    
 
     private void Awake()
     {
@@ -21,6 +20,7 @@ public class LeaderboardEntryUI : MonoBehaviour
 
     public void SetEntryData(string username, int score, int rank)
     {
+        Debug.Log($"Setting entry data: Username={username}, Score={score}, Rank={rank}");
         rankText.text = rank.ToString("00");
         usernameText.text = username;
         scoreText.text = score.ToString();
@@ -28,4 +28,4 @@ public class LeaderboardEntryUI : MonoBehaviour
         // You can load user's profile picture here if available
         // For now, we'll use the default profile picture set in Awake
     }
-} 
+}

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class LeaderboardManager : MonoBehaviour
 {
     public static LeaderboardManager Instance;
-    
+
     [Header("Subject Filter")]
     public Button englishButton;
     public Button scienceButton;
@@ -36,14 +36,68 @@ public class LeaderboardManager : MonoBehaviour
 
     private void SetupSubjectButtons()
     {
-        englishButton.onClick.AddListener(() => FilterBySubject(1));
-        scienceButton.onClick.AddListener(() => FilterBySubject(2));
+        englishButton.onClick.AddListener(() =>
+        {
+            FilterBySubject(1);
+            HighlightButton(englishButton, scienceButton);
+        });
+
+        scienceButton.onClick.AddListener(() =>
+        {
+            FilterBySubject(2);
+            HighlightButton(scienceButton, englishButton);
+        });
+
+        // Set default highlight
+        HighlightButton(englishButton, scienceButton);
+    }
+
+    private void HighlightButton(Button selectedButton, Button otherButton)
+    {
+        // Lower the opacity of the selected button's image
+        Image selectedImage = selectedButton.GetComponent<Image>();
+        if (selectedImage != null)
+        {
+            Color selectedColor = selectedImage.color;
+            selectedColor.a = 0.5f; // Set opacity to 50%
+            selectedImage.color = selectedColor;
+        }
+
+        // Reset the opacity of the other button's image
+        Image otherImage = otherButton.GetComponent<Image>();
+        if (otherImage != null)
+        {
+            Color otherColor = otherImage.color;
+            otherColor.a = 1f; // Set opacity to 100%
+            otherImage.color = otherColor;
+        }
+
+        // Change the text color of the selected button to black
+        Text selectedText = selectedButton.GetComponentInChildren<Text>();
+        if (selectedText != null)
+        {
+            selectedText.color = Color.black; // Selected text color
+        }
+
+        // Change the text color of the other button to white
+        Text otherText = otherButton.GetComponentInChildren<Text>();
+        if (otherText != null)
+        {
+            otherText.color = Color.white; // Default text color
+        }
     }
 
     public void FilterBySubject(int subjectId)
     {
-        currentSubjectId = subjectId;
-        LoadLeaderboard();
+        if (currentSubjectId != subjectId)
+        {
+            currentSubjectId = subjectId;
+
+            Debug.Log(
+                $"id: {currentSubjectId} Subject changed to {(subjectId == 1 ? "English" : "Science")}. Reloading leaderboard..."
+            );
+            LoadLeaderboard();
+        }
     }
 
     public void LoadLeaderboard()
@@ -65,9 +119,9 @@ public class LeaderboardManager : MonoBehaviour
         {
             Destroy(child.gameObject);
         }
-        
+
         leaderboardEntries.Clear();
-        Debug.Log("Leaderboard has been reset.");
+        Debug.Log("Leaderboard has been reset. UI cleared.");
     }
 
     private IEnumerator LoadLeaderboardData()
@@ -75,8 +129,11 @@ public class LeaderboardManager : MonoBehaviour
         WWWForm form = new WWWForm();
         form.AddField("user_id", PlayerPrefs.GetString("User ID"));
         form.AddField("subject_id", currentSubjectId);
+        Debug.Log($"Sending request with subject_id: {currentSubjectId}");
 
-        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getLeaderboard.php", form))
+        using (
+            UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getLeaderboard.php", form)
+        )
         {
             yield return www.SendWebRequest();
             if (www.result != UnityWebRequest.Result.Success)
@@ -86,13 +143,15 @@ public class LeaderboardManager : MonoBehaviour
             }
 
             string jsonResponse = www.downloadHandler.text;
-            Debug.Log("Leaderboard received: " + jsonResponse);
-            
+            Debug.Log($"Received response: {jsonResponse}");
+
             leaderboardEntries = JsonUtilityHelper.FromJsonList<LeaderboardData>(jsonResponse);
-            
+
             if (leaderboardEntries.Count == 0)
             {
-                Debug.LogWarning("No leaderboard entries received.");
+                Debug.LogWarning(
+                    "No leaderboard entries received for subject_id: " + currentSubjectId
+                );
                 yield break;
             }
 
@@ -101,11 +160,51 @@ public class LeaderboardManager : MonoBehaviour
             {
                 var entry = leaderboardEntries[i];
                 GameObject podiumInstance = Instantiate(podiumEntryPrefab, podiumContainer);
+                Debug.Log($"Instantiated podium prefab for: {entry.username}");
                 var podiumUI = podiumInstance.GetComponent<LeaderboardPodiumUI>();
-                
+
                 if (podiumUI != null)
                 {
                     podiumUI.SetPodiumData(entry.username, entry.score, i + 1);
+
+                    // Position the podiums
+                    RectTransform podiumTransform = podiumInstance.GetComponent<RectTransform>();
+                    if (podiumTransform != null)
+                    {
+                        podiumTransform.SetParent(podiumContainer, false); // Ensure it's a child of the container
+
+                        // Calculate dynamic size and position
+                        float containerWidth = ((RectTransform)podiumContainer).rect.width;
+                        float spacing = containerWidth / 4; // Divide into 4 parts for even spacing
+                        float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
+
+                        // Adjust width and height based on rank
+                        float prefabHeight = 100 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
+                        podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
+
+                        // Set positions: 1st (center), 2nd (left), 3rd (right)
+                        float xPosition = 0; // Default to center
+                        switch (i)
+                        {
+                            case 0: // 1st place
+                                xPosition = 0; // Center
+                                break;
+                            case 1: // 2nd place
+                                xPosition = -spacing; // Left
+                                break;
+                            case 2: // 3rd place
+                                xPosition = spacing; // Right
+                                break;
+                        }
+
+                        // Align base at the bottom
+                        float yPosition = prefabHeight / 2; // Half the height to align the base
+                        podiumTransform.anchoredPosition = new Vector2(xPosition, yPosition);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("Podium UI component is missing.");
                 }
             }
 
@@ -114,6 +213,7 @@ public class LeaderboardManager : MonoBehaviour
             {
                 var entry = leaderboardEntries[i];
                 GameObject entryInstance = Instantiate(leaderboardEntryPrefab, listContainer);
+                Debug.Log($"Instantiated leaderboard entry prefab for: {entry.username}");
                 var entryUI = entryInstance.GetComponent<LeaderboardEntryUI>();
 
                 if (entryUI != null)
@@ -122,9 +222,26 @@ public class LeaderboardManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogWarning("LeaderboardEntryUI component is missing on leaderboardEntryPrefab.");
+                    Debug.LogWarning(
+                        "LeaderboardEntryUI component is missing on leaderboardEntryPrefab."
+                    );
                 }
             }
+
+            // Adjust the size of the list container dynamically
+            RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
+            if (listContainerRect != null)
+            {
+                float itemHeight = leaderboardEntryPrefab.GetComponent<RectTransform>().sizeDelta.y;
+                float spacing = listContainer.GetComponent<VerticalLayoutGroup>().spacing;
+                float padding = listContainer.GetComponent<VerticalLayoutGroup>().padding.vertical;
+
+                // Calculate the new height based on the number of items
+                float newHeight = (itemHeight + spacing) * leaderboardEntries.Count + padding;
+                listContainerRect.sizeDelta = new Vector2(listContainerRect.sizeDelta.x, newHeight);
+            }
+
+            Debug.Log("Leaderboard UI updated successfully.");
         }
     }
 
@@ -132,7 +249,9 @@ public class LeaderboardManager : MonoBehaviour
     {
         if (leaderboardEntryPrefab.GetComponent<LeaderboardEntryUI>() == null)
         {
-            Debug.LogError("leaderboardEntryPrefab is missing the LeaderboardEntryUI component. Please fix this in the Unity Editor.");
+            Debug.LogError(
+                "leaderboardEntryPrefab is missing the LeaderboardEntryUI component. Please fix this in the Unity Editor."
+            );
         }
     }
 }
@@ -144,4 +263,3 @@ public class LeaderboardData
     public int score;
     public int rank;
 }
-

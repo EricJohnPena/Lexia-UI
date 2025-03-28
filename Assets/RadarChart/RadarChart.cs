@@ -52,18 +52,18 @@ namespace RadarChart
         {
             string currentUserId = PlayerPrefs.GetString("User ID");
             Debug.Log("User ID: " + currentUserId);
-            
+
             // Only fetch if we haven't fetched for this user yet
             if (lastFetchedUserId != currentUserId)
             {
                 Debug.Log($"Fetching radar items for new user: {currentUserId}");
-                
+
                 // Clear existing radar items and force a redraw to clear the mesh
                 ClearRadarItems();
                 ForceRedraw();
-                
+
                 lastFetchedUserId = currentUserId;
-                
+
                 // Check if the GameObject is active before starting the coroutine
                 if (gameObject.activeInHierarchy)
                 {
@@ -71,7 +71,9 @@ namespace RadarChart
                 }
                 else
                 {
-                    Debug.LogWarning($"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated.");
+                    Debug.LogWarning(
+                        $"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated."
+                    );
                     // Store the user ID to fetch data when activated
                     PlayerPrefs.SetString("PendingRadarFetch", currentUserId);
                 }
@@ -91,7 +93,7 @@ namespace RadarChart
                     // Create a new mesh each time
                     Mesh newMesh = new Mesh();
                     newMesh.MarkDynamic();
-                    
+
                     RadarDrawer radarDrawer = new RadarDrawer(canvasRenderer, radarItems, style);
                     radarDrawer.Draw(newMesh);
                 }
@@ -112,7 +114,7 @@ namespace RadarChart
             // Clear existing radar items first
             radarItems.Clear();
             needsUpdate = true;
-            
+
             if (string.IsNullOrEmpty(student_id))
             {
                 Debug.LogWarning("User ID is null or empty. Cannot fetch radar items.");
@@ -149,23 +151,28 @@ namespace RadarChart
                     try
                     {
                         // Parse as array of dictionaries
-                        var radarArray = JsonConvert.DeserializeObject<List<Dictionary<string, int>>>(jsonResponse);
+                        var radarArray = JsonConvert.DeserializeObject<
+                            List<Dictionary<string, int>>
+                        >(jsonResponse);
                         if (radarArray != null && radarArray.Count > 0)
                         {
                             Debug.Log($"Fetched {radarArray.Count} radar items from server.");
-                            
+
                             // Only use the first dictionary in the array
                             var radarValues = radarArray[0];
-                            Debug.Log($"Using first set of radar values: {JsonConvert.SerializeObject(radarValues)}");
-                            
+                            Debug.Log(
+                                $"Using first set of radar values: {JsonConvert.SerializeObject(radarValues)}"
+                            );
+
                             // Define the expected radar items in order
-                            string[] expectedItems = new string[] {
+                            string[] expectedItems = new string[]
+                            {
                                 "accuracy",
                                 "speed",
                                 "problem_solving_skills",
                                 "vocabulary_range",
                                 "consistency",
-                                "retention"
+                                "retention",
                             };
 
                             // Create radar items in the correct order
@@ -176,10 +183,12 @@ namespace RadarChart
                                     RadarItem radarItem = new RadarItem
                                     {
                                         Name = itemName,
-                                        Value = Mathf.Clamp(radarValues[itemName], 0, 10)
+                                        Value = Mathf.Clamp(radarValues[itemName], 0, 10),
                                     };
                                     radarItems.Add(radarItem);
-                                    Debug.Log($"Added radar item: {itemName} = {radarValues[itemName]}");
+                                    Debug.Log(
+                                        $"Added radar item: {itemName} = {radarValues[itemName]}"
+                                    );
                                 }
                                 else
                                 {
@@ -187,7 +196,7 @@ namespace RadarChart
                                     RadarItem radarItem = new RadarItem
                                     {
                                         Name = itemName,
-                                        Value = 0
+                                        Value = 0,
                                     };
                                     radarItems.Add(radarItem);
                                     Debug.Log($"Added default radar item: {itemName} = 0");
@@ -200,7 +209,9 @@ namespace RadarChart
                             PlayerPrefs.Save();
                             UpdateRadarValuesText();
                             Debug.Log($"Final radar items count: {radarItems.Count}");
-                            Debug.Log($"Using {radarItems.Count} radar items for student ID {student_id}.");
+                            Debug.Log(
+                                $"Using {radarItems.Count} radar items for student ID {student_id}."
+                            );
                         }
                         else
                         {
@@ -263,10 +274,10 @@ namespace RadarChart
         {
             Debug.Log("Starting to clear radar items...");
             Debug.Log($"Current radar items count before clear: {radarItems.Count}");
-            
+
             // Clear the radar items list
             radarItems.Clear();
-            
+
             // Clear the mesh from the canvas renderer
             if (canvasRenderer != null)
             {
@@ -275,19 +286,25 @@ namespace RadarChart
             }
 
             // Reset all text fields to 0
-            if (accuracyText != null) accuracyText.text = "0";
-            if (speedText != null) speedText.text = "0";
-            if (problemSolvingSkillsText != null) problemSolvingSkillsText.text = "0";
-            if (vocabularyRangeText != null) vocabularyRangeText.text = "0";
-            if (consistencyText != null) consistencyText.text = "0";
-            if (retentionText != null) retentionText.text = "0";
+            if (accuracyText != null)
+                accuracyText.text = "0";
+            if (speedText != null)
+                speedText.text = "0";
+            if (problemSolvingSkillsText != null)
+                problemSolvingSkillsText.text = "0";
+            if (vocabularyRangeText != null)
+                vocabularyRangeText.text = "0";
+            if (consistencyText != null)
+                consistencyText.text = "0";
+            if (retentionText != null)
+                retentionText.text = "0";
 
             // Force an update to ensure the chart is cleared
             needsUpdate = true;
-            
+
             // Reset the last fetched user ID
             lastFetchedUserId = null;
-            
+
             Debug.Log($"Final radar items count after clear: {radarItems.Count}");
             Debug.Log("Radar items cleared successfully");
         }
@@ -305,4 +322,3 @@ namespace RadarChart
         public int Value { get; set; }
     }
 }
-

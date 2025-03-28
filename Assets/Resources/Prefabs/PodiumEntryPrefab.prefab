@@ -35,9 +35,9 @@ RectTransform:
   - {fileID: 2857451074000213886}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -600, y: -1320}
   m_SizeDelta: {x: 190, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2776592348441581376
@@ -93,6 +93,7 @@ MonoBehaviour:
   profileImage: {fileID: 2647756852067756174}
   usernameText: {fileID: 90362136390296674}
   scoreText: {fileID: 6441167496469376239}
+  rankText: {fileID: 3607675390639981628}
   podiumBar: {fileID: 8500615422790170616}
 --- !u!1 &2004680018608101172
 GameObject:
