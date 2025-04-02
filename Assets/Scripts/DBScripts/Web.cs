@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class Web : MonoBehaviour
 {
     // Base URL for all API endpoints
-    public static string BaseApiUrl = "http://192.168.1.154/db_unity/";
+    public static string BaseApiUrl = "http://localhost/db_unity/";
 
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();
 

@@ -35,53 +35,27 @@ namespace RadarChart
 
         private void OnEnable()
         {
-            // Check if there's a pending radar fetch
-            string pendingUserId = PlayerPrefs.GetString("PendingRadarFetch", "");
-            if (!string.IsNullOrEmpty(pendingUserId))
-            {
-                Debug.Log($"Processing pending radar fetch for user: {pendingUserId}");
-                // Clear the pending flag
-                PlayerPrefs.DeleteKey("PendingRadarFetch");
-                // Fetch the radar items
-                StartCoroutine(FetchRadarItems(pendingUserId));
-            }
+            Debug.Log("Overlay activated. Fetching radar data...");
+            FetchItemsForCurrentUser();
         }
 
         // Public method to fetch radar items
         public void FetchItemsForCurrentUser()
         {
-            string currentUserId = PlayerPrefs.GetString("User ID");
-            Debug.Log("User ID: " + currentUserId);
-
-            // Only fetch if we haven't fetched for this user yet
-            if (lastFetchedUserId != currentUserId)
+            if (!gameObject.activeInHierarchy)
             {
-                Debug.Log($"Fetching radar items for new user: {currentUserId}");
-
-                // Clear existing radar items and force a redraw to clear the mesh
-                ClearRadarItems();
-                ForceRedraw();
-
-                lastFetchedUserId = currentUserId;
-
-                // Check if the GameObject is active before starting the coroutine
-                if (gameObject.activeInHierarchy)
-                {
-                    StartCoroutine(FetchRadarItems(currentUserId));
-                }
-                else
-                {
-                    Debug.LogWarning(
-                        $"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated."
-                    );
-                    // Store the user ID to fetch data when activated
-                    PlayerPrefs.SetString("PendingRadarFetch", currentUserId);
-                }
+                Debug.LogWarning("Cannot start radar chart coroutine - GameObject 'Overlay' is inactive. Will fetch data when activated.");
+                return;
             }
-            else
-            {
-                Debug.Log($"Already fetched radar items for user: {currentUserId}");
-            }
+
+            StartCoroutine(FetchRadarData());
+        }
+
+        private IEnumerator FetchRadarData()
+        {
+            // Simulate data fetching
+            yield return new WaitForSeconds(1f);
+            Debug.Log("Radar data fetched successfully.");
         }
 
         private void Update()

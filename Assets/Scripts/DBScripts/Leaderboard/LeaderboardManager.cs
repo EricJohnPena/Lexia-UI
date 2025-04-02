@@ -230,14 +230,16 @@ public class LeaderboardManager : MonoBehaviour
 
             // Adjust the size of the list container dynamically
             RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
-            if (listContainerRect != null)
+            GridLayoutGroup gridLayout = listContainer.GetComponent<GridLayoutGroup>();
+            if (listContainerRect != null && gridLayout != null)
             {
-                float itemHeight = leaderboardEntryPrefab.GetComponent<RectTransform>().sizeDelta.y;
-                float spacing = listContainer.GetComponent<VerticalLayoutGroup>().spacing;
-                float padding = listContainer.GetComponent<VerticalLayoutGroup>().padding.vertical;
+                float itemHeight = gridLayout.cellSize.y;
+                float spacing = gridLayout.spacing.y;
+                int columns = Mathf.Max(1, Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x));
+                int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
 
-                // Calculate the new height based on the number of items
-                float newHeight = (itemHeight + spacing) * leaderboardEntries.Count + padding;
+                // Calculate the new height based on the number of rows
+                float newHeight = (itemHeight + spacing) * rows - spacing; // Subtract spacing for the last row
                 listContainerRect.sizeDelta = new Vector2(listContainerRect.sizeDelta.x, newHeight);
             }
 
