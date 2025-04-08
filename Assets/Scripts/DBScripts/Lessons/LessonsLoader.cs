@@ -58,8 +58,6 @@ public class LessonsLoader : MonoBehaviour
 
     private IEnumerator LoadLessonsBySubject(int subjectId, string moduleNumber)
     {
-
-
         WWWForm form = new WWWForm();
         Debug.Log("subject id and module number = " + subjectId + " " + moduleNumber);
 
@@ -71,58 +69,48 @@ public class LessonsLoader : MonoBehaviour
             yield return www.SendWebRequest();
             if (www.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Error fetching modules: " + www.error);
+                Debug.LogError("Error fetching lessons: " + www.error);
             }
             else
             {
                 string jsonResponse = www.downloadHandler.text;
                 Debug.Log("Lessons received: " + jsonResponse);
-                // Clear the lessons list
+
                 lessons.Clear();
-                //Parse JSON response into a list of LessonDdata
                 lessons = JsonUtilityHelper.FromJsonList<LessonData>(jsonResponse);
+
                 if (lessons.Count == 0)
                 {
                     Debug.LogWarning("No lessons received for the selected module.");
                 }
 
-                //determine lesson name dynamically
                 string subjectName = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
-                //clear existing prefabs for each lessons
+
                 foreach (Transform child in parentTransform)
                 {
                     Destroy(child.gameObject);
                 }
 
-                //instantiate prefabs for each lesson
                 foreach (var lesson in lessons)
                 {
-                    Debug.Log("Lessson items " + lesson);
+                    Debug.Log("Lesson item: " + lesson);
                     string lessonName = lesson.lesson_name;
+                    string lessonNumber = lesson.lesson_number; // Use lesson_number from the fetched data
                     GameObject lessonInstance = Instantiate(lessonPrefab, parentTransform);
                     LessonUI lessonUI = lessonInstance.GetComponent<LessonUI>();
 
                     if (lessonUI != null)
                     {
-                        //set lesson's data
-                        lessonUI.SetLessonData(lessonName, lesson.lesson_number, subjectName);
+                        lessonUI.SetLessonData(lessonName, lessonNumber, subjectName, moduleNumber);
                     }
                     else
                     {
-                        Debug.Log("LessonUI component is missing on the lesson prefab/");
+                        Debug.LogWarning("LessonUI component is missing on the lesson prefab.");
                     }
-
                 }
-
-
-
             }
-
-
         }
     }
-
-
 }
 
 [System.Serializable]

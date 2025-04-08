@@ -9,24 +9,58 @@ public class LessonUI : MonoBehaviour
     public Button actionButton;
     public Button playMenuButton;
 
-    public void SetLessonData(string lessonName, string lessonNumber, string subjectName)
+    private bool isLessonDataSet = false;
+
+    private string currentSubject;
+    private string currentModule;
+    private string currentLessonNumber;
+
+    public void SetLessonData(string lessonName, string lessonNumber, string subjectName, string moduleName)
     {
+        if (isLessonDataSet)
+        {
+            Debug.LogWarning("SetLessonData was called again, but lesson data is already set.");
+            return;
+        }
+
+        isLessonDataSet = true;
         lessonNameText.text = lessonName;
+
+        currentSubject = subjectName;
+        currentModule = moduleName;
+        currentLessonNumber = lessonNumber;
 
         MenuManager.InstanceMenu.subjectName.text = subjectName;
 
+        Debug.Log($"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}");
+
         actionButton.onClick.RemoveAllListeners();
-        actionButton.onClick.AddListener(() => StartLesson(lessonNumber));
+        Debug.Log("Removed all listeners from actionButton.");
+        actionButton.onClick.AddListener(() => {
+            Debug.Log("Action button clicked. Starting lesson.");
+            StartLesson();
+        });
 
         playMenuButton.onClick.RemoveAllListeners();
-        playMenuButton.onClick.AddListener(SceneController.Instance.CreateNewGame);
+        Debug.Log("Removed all listeners from playMenuButton.");
+        playMenuButton.onClick.AddListener(() => {
+            Debug.Log($"Play button clicked. Recording lesson number: {currentLessonNumber}");
+            MenuManager.InstanceMenu.ToGameScene();
+            RecordLessonNumber();
+        });
     }
 
-    private void StartLesson(string lessonNumber)
+    private void StartLesson()
     {
-        LessonManager.instance.SetCurrentLesson(lessonNumber);
-        Debug.Log("Starting lesson: " + lessonNumber);
+        LessonManager.instance.SetCurrentLesson(currentLessonNumber);
+        Debug.Log($"Starting lesson: {currentLessonNumber}");
+        
 
     }
 
+    private void RecordLessonNumber()
+    {
+        // Logic to record the lesson number
+        Debug.Log($"Recorded lesson number: {currentLessonNumber} for Subject: {currentSubject}, Module: {currentModule}");
+    }
 }
