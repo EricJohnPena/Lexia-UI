@@ -18,8 +18,8 @@ public class PanelSwitcher : MonoBehaviour
 
     private void OnButtonClick()
     {
-        // Call the GoToStartingScene method from SceneController
-        SceneController.Instance.GoToStartingScene(canvasName);
+       MenuManager.InstanceMenu.ToLessonsPage();
+        // You can also add any other logic you want to execute when the button is clicked
     }
     public void SwitchToGameManagerPanel()
     {

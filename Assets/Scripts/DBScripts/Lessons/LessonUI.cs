@@ -45,7 +45,7 @@ public class LessonUI : MonoBehaviour
         Debug.Log("Removed all listeners from playMenuButton.");
         playMenuButton.onClick.AddListener(() => {
             Debug.Log($"Play button clicked. Recording lesson number: {currentLessonNumber}");
-            MenuManager.InstanceMenu.ToGameScene();
+            MenuManager.InstanceMenu.ToGameScene(); // Use MenuManager for page transition
             RecordLessonNumber();
         });
     }

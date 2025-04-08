@@ -167,8 +167,9 @@ public class MenuManager : MonoBehaviour
 
     public void ToGameScene()
     {
-        LessonsPage.gameObject.SetActive(false);
-        GameScene.gameObject.SetActive(true);
+        LessonsPage.gameObject.SetActive(false); // Deactivate the lessons page
+        GameScene.gameObject.SetActive(true);   // Activate the game scene
+        Debug.Log("Transitioned from LessonsPage to GameScene.");
     }
 
     public void ToStudentLeaderboard()
