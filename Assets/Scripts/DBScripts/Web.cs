@@ -230,6 +230,16 @@ public class Web : MonoBehaviour
         }
     }
 
+    public static (int subjectId, int moduleId, int lessonId) GetCurrentTrackingIds()
+    {
+        // Fetch the current tracking IDs from PlayerPrefs or set defaults
+        int subjectId = PlayerPrefs.GetInt("CurrentSubjectId", 1); // Default to 1 if not set
+        int moduleId = PlayerPrefs.GetInt("CurrentModuleId", 1);   // Default to 1 if not set
+        int lessonId = PlayerPrefs.GetInt("CurrentLessonId", 1);   // Default to 1 if not set
+
+        return (subjectId, moduleId, lessonId);
+    }
+
     private void SetDefaultHeaders(UnityWebRequest www)
     {
         //www.SetRequestHeader("Accept", "application/json");

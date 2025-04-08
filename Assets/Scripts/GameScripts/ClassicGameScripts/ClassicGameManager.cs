@@ -1,6 +1,6 @@
-using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
@@ -9,29 +9,41 @@ public class ClassicGameManager : MonoBehaviour
     private Trie wordTrie;
     public static ClassicGameManager instance;
 
-    [SerializeField] private Text questionText;
-    [SerializeField] private Image questionImage; // New image component
-    [SerializeField] private WordData[] answerWordArray;
-    [SerializeField] private GameObject gameOver;
-    [SerializeField] private Button[] keyboardButtons;
-    [SerializeField] private Button backspaceButton;
+    [SerializeField]
+    private Text questionText;
 
-    // Updated default questions to include image paths
+    [SerializeField]
+    private Image questionImage; // New image component
+
+    [SerializeField]
+    private WordData[] answerWordArray;
+
+    [SerializeField]
+    private GameObject gameOver;
+
+    [SerializeField]
+    private Button[] keyboardButtons;
+
+    [SerializeField]
+    private Button backspaceButton;
+
     private KeyboardQuestionList defaultQuestionData = new KeyboardQuestionList
     {
         questions = new List<KeyboardQuestion>
         {
-            new KeyboardQuestion {
-                questionText = "Default Question 1",
+            new KeyboardQuestion
+            {
+                questionText = "No Questions Loaded",
                 answer = "ANSWER1",
-                imagePath = "DefaultImages/default_image1" // Path to default image
+                imagePath = "DefaultImages/default_image1",
             },
-            new KeyboardQuestion {
-                questionText = "Default Question 2",
+            new KeyboardQuestion
+            {
+                questionText = "No Questions Loaded",
                 answer = "ANSWER2",
-                imagePath = "DefaultImages/default_image2" // Path to another default image
-            }
-        }
+                imagePath = "DefaultImages/default_image2",
+            },
+        },
     };
     private KeyboardQuestionList questionData;
     private int currentQuestionIndex = 0;
@@ -42,27 +54,28 @@ public class ClassicGameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
+        if (instance == null)
+            instance = this;
+        else
+            Destroy(gameObject);
 
         selectedKeyIndex = new List<int>();
-        // Initialize the Trie
         wordTrie = new Trie();
 
-        // Load valid words into the Trie
         LoadValidWords();
 
-        StartCoroutine(LoadQuestionData());
+        var (subjectId, moduleId, lessonId) = Web.GetCurrentTrackingIds();
+        StartCoroutine(LoadQuestionData(subjectId, moduleId, lessonId));
 
         SetupKeyboardListeners();
     }
 
     private void LoadValidWords()
     {
-        // Load valid words from the JSON file
-        string path = System.IO.Path.Combine(Application.streamingAssetsPath, "classic_questions.json");
-
-        // Use UnityWebRequest to read the JSON file
+        string path = System.IO.Path.Combine(
+            Application.streamingAssetsPath,
+            "classic_questions.json"
+        );
         StartCoroutine(LoadWordsFromJson(path));
     }
 
@@ -76,14 +89,14 @@ public class ClassicGameManager : MonoBehaviour
             {
                 try
                 {
-                    // Parse the JSON data
                     string jsonText = www.downloadHandler.text;
-                    KeyboardQuestionList questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
+                    KeyboardQuestionList questionData = JsonUtility.FromJson<KeyboardQuestionList>(
+                        jsonText
+                    );
 
-                    // Insert each answer into the Trie
                     foreach (var question in questionData.questions)
                     {
-                        wordTrie.Insert(question.answer.ToUpper()); // Insert the answer in uppercase
+                        wordTrie.Insert(question.answer.ToUpper());
                     }
                 }
                 catch (System.Exception e)
@@ -98,11 +111,12 @@ public class ClassicGameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadQuestionData()
+    private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
     {
-        string path = System.IO.Path.Combine(Application.streamingAssetsPath, "classic_questions.json");
+        string url =
+            $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
 
-        using (UnityWebRequest www = UnityWebRequest.Get(path))
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
 
@@ -111,11 +125,19 @@ public class ClassicGameManager : MonoBehaviour
                 try
                 {
                     string jsonText = www.downloadHandler.text;
+                    Debug.Log("Raw JSON Response: " + jsonText);
+
                     questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
 
-                    if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+                    if (
+                        questionData == null
+                        || questionData.questions == null
+                        || questionData.questions.Count == 0
+                    )
                     {
-                        Debug.LogWarning("Loaded JSON is empty or invalid. Using default questions.");
+                        Debug.LogWarning(
+                            "Loaded JSON is empty or invalid. Using default questions."
+                        );
                         questionData = defaultQuestionData;
                     }
                 }
@@ -127,7 +149,9 @@ public class ClassicGameManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("Failed to load questions from file. Using default questions.");
+                Debug.LogWarning(
+                    "Failed to fetch questions from the server. Using default questions."
+                );
                 questionData = defaultQuestionData;
             }
         }
@@ -137,23 +161,19 @@ public class ClassicGameManager : MonoBehaviour
 
     private void SetQuestion()
     {
-        // Check if we have questions left
         if (currentQuestionIndex >= questionData.questions.Count)
         {
             gameOver.SetActive(true);
             return;
         }
 
-        // Reset for new question
         currentAnswerIndex = 0;
         selectedKeyIndex.Clear();
 
-        // Get current question
         KeyboardQuestion currentQuestion = questionData.questions[currentQuestionIndex];
         questionText.text = currentQuestion.questionText;
         currentAnswer = currentQuestion.answer.ToUpper();
 
-        // Load and display the question image
         StartCoroutine(LoadQuestionImage(currentQuestion.imagePath));
 
         ResetQuestion();
@@ -164,10 +184,8 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator LoadQuestionImage(string imagePath)
     {
-        // Disable image initially
         questionImage.gameObject.SetActive(false);
 
-        // Attempt to load image from StreamingAssets
         string fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, imagePath);
 
         using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(fullPath))
@@ -178,64 +196,50 @@ public class ClassicGameManager : MonoBehaviour
             {
                 Texture2D texture = DownloadHandlerTexture.GetContent(www);
 
-                // Create sprite from texture
                 Sprite sprite = Sprite.Create(
                     texture,
                     new Rect(0, 0, texture.width, texture.height),
                     new Vector2(0.5f, 0.5f)
                 );
 
-                // Set sprite to image component
                 questionImage.sprite = sprite;
                 questionImage.gameObject.SetActive(true);
             }
             else
             {
                 Debug.LogWarning($"Failed to load image: {imagePath}");
-                // Optionally hide the image if loading fails
                 questionImage.gameObject.SetActive(false);
             }
         }
     }
 
-
-
     private void SetupKeyboardListeners()
     {
-        // Attach click listeners to all keyboard buttons
         for (int i = 0; i < keyboardButtons.Length; i++)
         {
-            int index = i; // Capture the current index for the lambda
+            int index = i;
             keyboardButtons[i].onClick.AddListener(() => OnKeyPressed(keyboardButtons[index]));
         }
 
-        // Add listener for backspace button
         if (backspaceButton != null)
         {
             backspaceButton.onClick.AddListener(ResetLastWord);
         }
     }
 
-
-
-
-
     private void ResetQuestion()
     {
-        // Reset answer word array display
         for (int i = 0; i < answerWordArray.Length; i++)
         {
             answerWordArray[i].gameObject.SetActive(true);
             answerWordArray[i].SetChar('_');
         }
 
-        // Hide extra answer slots if answer is shorter than array
         for (int i = currentAnswer.Length; i < answerWordArray.Length; i++)
         {
             answerWordArray[i].gameObject.SetActive(false);
         }
 
-        // Ensure all keyboard buttons are visible
         foreach (Button button in keyboardButtons)
         {
             button.gameObject.SetActive(true);
@@ -244,19 +248,16 @@ public class ClassicGameManager : MonoBehaviour
 
     private void OnKeyPressed(Button keyButton)
     {
-        if (gameStatus == GameStatus.Next || currentAnswerIndex >= currentAnswer.Length) return;
+        if (gameStatus == GameStatus.Next || currentAnswerIndex >= currentAnswer.Length)
+            return;
 
-        // Get the text of the pressed key
         string keyPressed = keyButton.GetComponentInChildren<Text>().text;
 
-        // Track the index of the pressed key
         selectedKeyIndex.Add(System.Array.IndexOf(keyboardButtons, keyButton));
 
-        // Set the character in the answer array
         answerWordArray[currentAnswerIndex].SetChar(keyPressed[0]);
         currentAnswerIndex++;
 
-        // Check for answer completion
         if (currentAnswerIndex == currentAnswer.Length)
         {
             CheckAnswer();
@@ -265,16 +266,11 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetLastWord()
     {
-        // Similar to JumbledLettersManager's ResetLastWord method
         if (selectedKeyIndex.Count > 0)
         {
-            // Get the last selected key index
             int index = selectedKeyIndex[selectedKeyIndex.Count - 1];
-
-            // Remove the last selected index
             selectedKeyIndex.RemoveAt(selectedKeyIndex.Count - 1);
 
-            // Decrement answer index and clear the character
             currentAnswerIndex--;
             answerWordArray[currentAnswerIndex].SetChar('_');
         }
@@ -282,10 +278,8 @@ public class ClassicGameManager : MonoBehaviour
 
     private void CheckAnswer()
     {
-        // Check if the answer is correct by comparing each character
         bool isCharacterMatch = true;
 
-        // Verify each character
         for (int i = 0; i < currentAnswer.Length; i++)
         {
             if (char.ToUpper(currentAnswer[i]) != char.ToUpper(answerWordArray[i].charValue))
@@ -295,10 +289,8 @@ public class ClassicGameManager : MonoBehaviour
             }
         }
 
-        // Check if the answer is valid in the Trie
         bool isValidWord = wordTrie.Search(currentAnswer.ToUpper());
 
-        // Only consider the answer correct if both conditions are met
         if (isCharacterMatch && isValidWord)
         {
             Debug.Log("Correct Answer!");
@@ -316,7 +308,6 @@ public class ClassicGameManager : MonoBehaviour
         else
         {
             Debug.Log("Incorrect Answer!");
-            // Reset the current input
             for (int i = 0; i < currentAnswerIndex; i++)
             {
                 answerWordArray[i].SetChar('_');
@@ -328,13 +319,12 @@ public class ClassicGameManager : MonoBehaviour
     }
 }
 
-// Existing data structures
 [System.Serializable]
 public class KeyboardQuestion
 {
     public string questionText;
     public string answer;
-    public string imagePath; // New field for image path
+    public string imagePath;
 }
 
 [System.Serializable]
