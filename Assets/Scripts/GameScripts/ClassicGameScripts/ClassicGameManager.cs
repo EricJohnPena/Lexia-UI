@@ -115,7 +115,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         string url =
             $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
-
+        Debug.Log("Fetching questions from URL: " + url);
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
