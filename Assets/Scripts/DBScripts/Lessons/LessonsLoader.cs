@@ -13,7 +13,11 @@ public class LessonsLoader : MonoBehaviour
     public GameObject lessonPrefab;
     public Transform parentTransform;
     public List<LessonData> lessons = new List<LessonData>();
-    string moduleNumber;
+    public static string moduleNumber;
+    public static int subjectId;
+
+     
+    
 
     //    public Transform parentTransform;
 
@@ -32,11 +36,11 @@ public class LessonsLoader : MonoBehaviour
         // Reset the lessons and UI
         ResetLessons();
         //get the selected module_number and fk_subject_id from ButtonTracker
-        int subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
+        subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
         moduleNumber = ModuleManager.Instance.GetCurrentModule();
 
         // Save the current tracking IDs
-        Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), 0); // Lesson ID is 0 initially
+       // Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), 0); // Lesson ID is 0 initially
 
         Debug.Log($"Loading lessons for Subject ID: {subjectId}, Module Number: {moduleNumber}");
         //start the coroutine to fetch and load modules
@@ -108,8 +112,10 @@ public class LessonsLoader : MonoBehaviour
                         // Add a listener to track the clicked lesson
                         lessonUI.actionButton.onClick.AddListener(() =>
                         {
-                            Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), int.Parse(lesson.lesson_number));
-                            Debug.Log($"Tracking updated: Subject ID: {subjectId}, Module Number: {moduleNumber}, Lesson Number: {lesson.lesson_number}");
+                            string clickedLessonId = lessonUI.GetLessonId(); // Retrieve the lesson ID from LessonUI
+                           // Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), int.Parse(clickedLessonId));
+                            Debug.Log($"Tracking updated: Subject ID: {subjectId}, Module Number: {moduleNumber}, Lesson ID: {clickedLessonId}");
+                            
                         });
                     }
                     else
@@ -120,6 +126,8 @@ public class LessonsLoader : MonoBehaviour
             }
         }
     }
+
+    
 }
 
 [System.Serializable]

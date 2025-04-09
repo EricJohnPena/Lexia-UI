@@ -14,6 +14,8 @@ public class LessonUI : MonoBehaviour
     private string currentSubject;
     private string currentModule;
     private string currentLessonNumber;
+    private string lessonId;    // Field to store the lesson ID
+    public static int lesson_id;
 
     public void SetLessonData(string lessonName, string lessonNumber, string subjectName, string moduleName)
     {
@@ -29,6 +31,7 @@ public class LessonUI : MonoBehaviour
         currentSubject = subjectName;
         currentModule = moduleName;
         currentLessonNumber = lessonNumber;
+        this.lessonId = lessonNumber; // Assign the lesson ID
 
         MenuManager.InstanceMenu.subjectName.text = subjectName;
 
@@ -46,8 +49,17 @@ public class LessonUI : MonoBehaviour
         playMenuButton.onClick.AddListener(() => {
             Debug.Log($"Play button clicked. Recording lesson number: {currentLessonNumber}");
             MenuManager.InstanceMenu.ToGameScene(); // Use MenuManager for page transition
+            lesson_id = int.Parse(currentLessonNumber);
             RecordLessonNumber();
+           
         });
+    }
+
+    
+
+    public string GetLessonId()
+    {
+        return lessonId; // Expose the lesson ID
     }
 
     private void StartLesson()

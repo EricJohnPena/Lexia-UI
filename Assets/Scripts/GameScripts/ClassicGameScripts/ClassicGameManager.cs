@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -51,6 +52,7 @@ public class ClassicGameManager : MonoBehaviour
     private int currentAnswerIndex = 0;
     private GameStatus gameStatus = GameStatus.Playing;
     private List<int> selectedKeyIndex;
+    
 
     private void Awake()
     {
@@ -65,7 +67,15 @@ public class ClassicGameManager : MonoBehaviour
         LoadValidWords();
 
         var (subjectId, moduleId, lessonId) = Web.GetCurrentTrackingIds();
-        StartCoroutine(LoadQuestionData(subjectId, moduleId, lessonId));
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
+        
+        //StartCoroutine(LoadQuestionData(1,1,1));
 
         SetupKeyboardListeners();
     }
@@ -113,6 +123,9 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
     {
+        Debug.Log($"{subjectId}, {moduleId}, {lessonId} from loadlessondata");
+        Debug.Log(int.Parse(LessonsLoader.moduleNumber));
+        
         string url =
             $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching questions from URL: " + url);
