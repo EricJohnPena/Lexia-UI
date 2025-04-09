@@ -34,7 +34,9 @@ public class LessonsLoader : MonoBehaviour
         //get the selected module_number and fk_subject_id from ButtonTracker
         int subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
         moduleNumber = ModuleManager.Instance.GetCurrentModule();
-        //access module data from module loader
+
+        // Save the current tracking IDs
+        Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), 0); // Lesson ID is 0 initially
 
         Debug.Log($"Loading lessons for Subject ID: {subjectId}, Module Number: {moduleNumber}");
         //start the coroutine to fetch and load modules
@@ -102,6 +104,13 @@ public class LessonsLoader : MonoBehaviour
                     if (lessonUI != null)
                     {
                         lessonUI.SetLessonData(lessonName, lessonNumber, subjectName, moduleNumber);
+
+                        // Add a listener to track the clicked lesson
+                        lessonUI.actionButton.onClick.AddListener(() =>
+                        {
+                            Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), int.Parse(lesson.lesson_number));
+                            Debug.Log($"Tracking updated: Subject ID: {subjectId}, Module Number: {moduleNumber}, Lesson Number: {lesson.lesson_number}");
+                        });
                     }
                     else
                     {
