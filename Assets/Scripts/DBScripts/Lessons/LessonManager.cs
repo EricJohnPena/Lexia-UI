@@ -6,6 +6,8 @@ public class LessonManager : MonoBehaviour
 {
     public static LessonManager instance { get; private set; }
     private string currentLessonNumber;
+    private string currentModuleNumber;
+    private string currentSubjectId;
 
     private void Awake()
     {
@@ -31,5 +33,18 @@ public class LessonManager : MonoBehaviour
         return currentLessonNumber;
     }
 
+    public void RecordLessonData(string lessonNumber, string moduleNumber, string subjectId)
+    {
+        currentLessonNumber = lessonNumber;
+        currentModuleNumber = moduleNumber;
+        currentSubjectId = subjectId;
+
+        Debug.Log($"[LessonManager] Recorded lesson data - Lesson: {lessonNumber}, Module: {moduleNumber}, Subject: {subjectId}");
+    }
+
+    public (string lessonNumber, string moduleNumber, string subjectId) GetCurrentLessonData()
+    {
+        return (currentLessonNumber, currentModuleNumber, currentSubjectId);
+    }
 }
 

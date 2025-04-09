@@ -18,10 +18,14 @@ public class ModuleUI : MonoBehaviour
 
     private void StartModule(string moduleNumber)
     {
+        if (ModuleManager.Instance == null)
+        {
+            Debug.LogError("ModuleManager instance is null. Ensure ModuleManager is present in the scene.");
+            return;
+        }
+
         Debug.Log("Starting module: " + moduleNumber);
         ModuleManager.Instance.SetCurrentModule(moduleNumber);
-        // Add your logic for starting the module here
-        //LessonsLoader.Instance.LoadLessonsForSelectedModuleAndSubject();
         MenuManager.InstanceMenu.ToLessonsPage();
     }
 }

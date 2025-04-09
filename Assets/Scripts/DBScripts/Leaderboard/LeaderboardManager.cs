@@ -179,7 +179,7 @@ public class LeaderboardManager : MonoBehaviour
                         float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
 
                         // Adjust width and height based on rank
-                        float prefabHeight = 100 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
+                        float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
                         podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
 
                         // Set positions: 1st (center), 2nd (left), 3rd (right)

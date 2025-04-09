@@ -78,17 +78,7 @@ public class ModuleLoader : MonoBehaviour
     }
 
 
-    private void SetDefaultHeaders(UnityWebRequest www)
-    {
-        //www.SetRequestHeader("Accept", "application/json");
-        www.SetRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-        www.SetRequestHeader("Accept-Encoding", "gzip, deflate");
-        www.SetRequestHeader("Accept-Language", "en-US,en;q=0.5");
-        www.SetRequestHeader("Cache-Control", "max-age=0");
-        www.SetRequestHeader("Cookie", "__test=a179c2531f72ee6d3d402e20c138e870");
-        www.SetRequestHeader("Upgrade-Insecure-Requests", "1");
-        www.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0");
-    }
+ 
 }
 
 

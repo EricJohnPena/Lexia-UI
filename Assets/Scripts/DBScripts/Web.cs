@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class Web : MonoBehaviour
 {
     // Base URL for all API endpoints
-    public static string BaseApiUrl = "http://localhost/db_unity/";
+    public static string BaseApiUrl = "https://steelblue-cobra-436400.hostingersite.com/db_unity/";
 
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();
 
@@ -237,7 +237,21 @@ public class Web : MonoBehaviour
         int moduleId = PlayerPrefs.GetInt("CurrentModuleId", 1);   // Default to 1 if not set
         int lessonId = PlayerPrefs.GetInt("CurrentLessonId", 1);   // Default to 1 if not set
 
+        Debug.Log($"GetCurrentTrackingIds called. Returning Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"); // Debug log
         return (subjectId, moduleId, lessonId);
+    }
+
+    public static void SetCurrentTrackingIds(int subjectId, int moduleId, int lessonId)
+    {
+        string subjectName = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
+        Debug.Log($"Setting Tracking IDs - Subject: {subjectName} ({subjectId}), Module: {moduleId}, Lesson: {lessonId}");
+
+        PlayerPrefs.SetInt("CurrentSubjectId", subjectId);
+        PlayerPrefs.SetInt("CurrentModuleId", moduleId);
+        PlayerPrefs.SetInt("CurrentLessonId", lessonId);
+        PlayerPrefs.Save();
+
+        Debug.Log($"SetCurrentTrackingIds called. Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}");
     }
 
     private void SetDefaultHeaders(UnityWebRequest www)
