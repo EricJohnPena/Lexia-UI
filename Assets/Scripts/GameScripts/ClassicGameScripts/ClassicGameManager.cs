@@ -172,6 +172,12 @@ public class ClassicGameManager : MonoBehaviour
             }
         }
 
+        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+        {
+            Debug.LogWarning("No questions available. Using default questions.");
+            questionData = defaultQuestionData;
+        }
+
         SetQuestion();
     }
 
@@ -180,6 +186,7 @@ public class ClassicGameManager : MonoBehaviour
         if (currentQuestionIndex >= questionData.questions.Count)
         {
             gameOver.SetActive(true);
+            Debug.Log("No more questions available.");
             return;
         }
 
@@ -191,6 +198,9 @@ public class ClassicGameManager : MonoBehaviour
         currentAnswer = currentQuestion.answer.ToUpper();
 
         StartCoroutine(LoadQuestionImage(currentQuestion.imagePath));
+
+        Debug.Log($"Current Question Index: {currentQuestionIndex}");
+        Debug.Log($"Total Questions: {questionData.questions.Count}");
 
         ResetQuestion();
 
@@ -336,6 +346,12 @@ public class ClassicGameManager : MonoBehaviour
 
     public void LoadQuestionsOnButtonClick()
     {
+        // Reset the question index and other related variables
+        currentQuestionIndex = 0;
+        currentAnswerIndex = 0;
+        selectedKeyIndex.Clear();
+        gameStatus = GameStatus.Playing;
+
         StartCoroutine(
             LoadQuestionData(
                 LessonsLoader.subjectId,

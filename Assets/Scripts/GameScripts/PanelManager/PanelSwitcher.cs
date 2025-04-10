@@ -28,6 +28,9 @@ public class PanelSwitcher : MonoBehaviour
     public void SwitchToClassicGamePanel()
     {
         PanelManager.Instance.ActivatePanel(GamePanel.ClassicGamePanel);
+
+        // Reload Classic Game UI and questions
+        ClassicGameManager.instance.LoadQuestionsOnButtonClick();
     }
 
     public void SwitchToJumbledLettersGamePanel()
