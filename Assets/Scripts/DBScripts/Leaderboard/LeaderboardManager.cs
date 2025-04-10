@@ -121,7 +121,7 @@ public class LeaderboardManager : MonoBehaviour
         }
 
         leaderboardEntries.Clear();
-        Debug.Log("Leaderboard has been reset. UI cleared.");
+        //Debug.Log("Leaderboard has been reset. UI cleared.");
     }
 
     private IEnumerator LoadLeaderboardData()
@@ -146,7 +146,6 @@ public class LeaderboardManager : MonoBehaviour
             Debug.Log($"Received response: {jsonResponse}");
 
             leaderboardEntries = JsonUtilityHelper.FromJsonList<LeaderboardData>(jsonResponse);
-
             if (leaderboardEntries.Count == 0)
             {
                 Debug.LogWarning(
@@ -160,12 +159,13 @@ public class LeaderboardManager : MonoBehaviour
             {
                 var entry = leaderboardEntries[i];
                 GameObject podiumInstance = Instantiate(podiumEntryPrefab, podiumContainer);
-                Debug.Log($"Instantiated podium prefab for: {entry.username}");
+                Debug.Log($"Instantiated podium prefab for: {entry.first_name} {entry.last_name}");
                 var podiumUI = podiumInstance.GetComponent<LeaderboardPodiumUI>();
-
                 if (podiumUI != null)
                 {
-                    podiumUI.SetPodiumData(entry.username, entry.score, i + 1);
+                    string fullName = $"{entry.first_name} {entry.last_name}";
+
+                    podiumUI.SetPodiumData(fullName, entry.score, i + 1);
 
                     // Position the podiums
                     RectTransform podiumTransform = podiumInstance.GetComponent<RectTransform>();
@@ -218,7 +218,8 @@ public class LeaderboardManager : MonoBehaviour
 
                 if (entryUI != null)
                 {
-                    entryUI.SetEntryData(entry.username, entry.score, i + 1);
+                    string fullName = $"{entry.first_name} {entry.last_name}";
+                    entryUI.SetEntryData(fullName, entry.score, i + 1);
                 }
                 else
                 {
@@ -235,7 +236,10 @@ public class LeaderboardManager : MonoBehaviour
             {
                 float itemHeight = gridLayout.cellSize.y;
                 float spacing = gridLayout.spacing.y;
-                int columns = Mathf.Max(1, Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x));
+                int columns = Mathf.Max(
+                    1,
+                    Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x)
+                );
                 int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
 
                 // Calculate the new height based on the number of rows
@@ -264,4 +268,6 @@ public class LeaderboardData
     public string username;
     public int score;
     public int rank;
+    public string first_name;
+    public string last_name;
 }

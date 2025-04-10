@@ -19,7 +19,7 @@ public class PanelSwitcher : MonoBehaviour
     private void OnButtonClick()
     {
        MenuManager.InstanceMenu.ToLessonsPage();
-        // You can also add any other logic you want to execute when the button is clicked
+
     }
     public void SwitchToGameManagerPanel()
     {

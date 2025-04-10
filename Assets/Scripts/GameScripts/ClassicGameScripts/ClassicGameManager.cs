@@ -61,12 +61,17 @@ public class ClassicGameManager : MonoBehaviour
         else
             Destroy(gameObject);
 
+        gameObject.SetActive(true); // Ensure the GameObject is active
+
         selectedKeyIndex = new List<int>();
         wordTrie = new Trie();
 
         LoadValidWords();
 
-        var (subjectId, moduleId, lessonId) = Web.GetCurrentTrackingIds();
+        currentQuestionIndex = 0; // Reset question index
+        questionData = defaultQuestionData; // Reset question data to default
+
+       
         StartCoroutine(
             LoadQuestionData(
                 LessonsLoader.subjectId,
@@ -74,8 +79,6 @@ public class ClassicGameManager : MonoBehaviour
                 LessonUI.lesson_id
             )
         );
-        
-        //StartCoroutine(LoadQuestionData(1,1,1));
 
         SetupKeyboardListeners();
     }
@@ -329,6 +332,17 @@ public class ClassicGameManager : MonoBehaviour
             currentAnswerIndex = 0;
             selectedKeyIndex.Clear();
         }
+    }
+
+    public void LoadQuestionsOnButtonClick()
+    {
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 }
 

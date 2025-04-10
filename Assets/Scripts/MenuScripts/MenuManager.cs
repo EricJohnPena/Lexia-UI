@@ -146,6 +146,7 @@ public class MenuManager : MonoBehaviour
 
     public void ToLessonsPage()
     {
+        GameScene.gameObject.SetActive(false);
         StudentDashboardPage.gameObject.SetActive(false);
         LessonsPage.gameObject.SetActive(true);
 
