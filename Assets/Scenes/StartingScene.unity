@@ -5802,6 +5802,7 @@ MonoBehaviour:
   currentClueText: {fileID: 751133837}
   gridSize: 10
   levelFileName: level1.json
+  apiUrl: https://steelblue-cobra-436400.hostingersite.com/db_unity/getCrosswordData.php
 --- !u!114 &584705973
 MonoBehaviour:
   m_ObjectHideFlags: 0

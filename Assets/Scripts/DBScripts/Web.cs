@@ -9,8 +9,8 @@ using UnityEngine.UI;
 public class Web : MonoBehaviour
 {
     // Base URL for all API endpoints
-    //public static string BaseApiUrl = "https://steelblue-cobra-436400.hostingersite.com/db_unity/";
-    public static string BaseApiUrl = "http://localhost/db_unity/";
+    public static string BaseApiUrl = "https://steelblue-cobra-436400.hostingersite.com/db_unity/";
+    //public static string BaseApiUrl = "http://localhost/db_unity/";
 
 
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();

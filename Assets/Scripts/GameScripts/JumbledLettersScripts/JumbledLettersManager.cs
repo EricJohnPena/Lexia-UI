@@ -19,7 +19,7 @@ public class JumbledLettersManager : MonoBehaviour
     [SerializeField]
     private WordData[] optionWordArray;
 
-    [SerializeField]
+ 
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
