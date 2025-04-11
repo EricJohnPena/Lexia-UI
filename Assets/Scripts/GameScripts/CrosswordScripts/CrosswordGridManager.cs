@@ -1,7 +1,9 @@
 // CrosswordGridManager.cs
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
 public class CrosswordGridManager : MonoBehaviour
 {
@@ -15,6 +17,7 @@ public class CrosswordGridManager : MonoBehaviour
     private GridCell[,] gridCells;
     private LevelManager levelManager;
     public string levelFileName = "level1.json";
+    public string apiUrl = $"{Web.BaseApiUrl}getCrosswordData.php";
 
     private GridCell selectedCell;
     private List<GridCell> highlightedCells = new List<GridCell>();
@@ -69,6 +72,61 @@ public class CrosswordGridManager : MonoBehaviour
         if (crosswordKeyboard == null)
         {
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
+        }
+
+        StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+    }
+
+    private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
+    {
+        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        Debug.Log("Fetching crossword data from URL: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string jsonText = www.downloadHandler.text;
+                    Debug.Log("Raw JSON Response: " + jsonText);
+
+                    currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
+
+                    if (currentLevel == null || currentLevel.fixedLayout == null || currentLevel.fixedLayout.Count == 0)
+                    {
+                        Debug.LogWarning("Loaded JSON is empty or invalid!");
+                        yield break;
+                    }
+
+                    Debug.Log("Successfully loaded crossword data.");
+                    wordTrie = new Trie();
+                    foreach (var placement in currentLevel.fixedLayout)
+                    {
+                        wordTrie.Insert(placement.word.ToUpper());
+                    }
+
+                    GenerateGrid();
+                    AssignWordNumbers();
+                    PlaceWords(currentLevel.fixedLayout);
+                    DisplayClues(currentLevel.wordClues);
+
+                    if (currentClueText != null)
+                    {
+                        currentClueText.text = "Tap a cell to begin";
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing JSON: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to fetch crossword data: " + www.error);
+            }
         }
     }
 
@@ -352,6 +410,12 @@ public class CrosswordGridManager : MonoBehaviour
     void HandleCellClick(GridCell cell)
     {
         Debug.Log($"Cell clicked: Row {cell.Row}, Col {cell.Col}");
+
+        if (cell == null)
+        {
+            Debug.LogWarning("Clicked cell is null.");
+            return;
+        }
 
         ClearHighlights();
 

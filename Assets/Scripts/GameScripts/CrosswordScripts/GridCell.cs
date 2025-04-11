@@ -148,6 +148,7 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
     {
         if (!IsLocked)
         {
+            Debug.Log($"GridCell clicked: Row {Row}, Col {Col}");
             OnCellClicked?.Invoke(this);
         }
     }
