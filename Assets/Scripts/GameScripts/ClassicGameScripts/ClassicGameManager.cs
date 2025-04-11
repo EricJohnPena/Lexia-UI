@@ -83,6 +83,62 @@ public class ClassicGameManager : MonoBehaviour
         SetupKeyboardListeners();
     }
 
+    void OnEnable()
+    {
+        Debug.Log("Classic game enabled. Refreshing data...");
+        RefreshClassicGameData(); // Refresh data and UI every time the game is enabled
+    }
+
+    public void RefreshClassicGameData()
+    {
+        Debug.Log("Refreshing classic game data...");
+
+        // Reset game state
+        ResetGameState();
+
+        // Reload classic game data
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
+    }
+
+    private void ResetGameState()
+    {
+        Debug.Log("Resetting classic game state...");
+
+        // Reset variables
+        currentQuestionIndex = 0;
+        currentAnswerIndex = 0;
+        selectedKeyIndex.Clear();
+        gameStatus = GameStatus.Playing;
+
+        // Reset UI
+        if (questionText != null)
+        {
+            questionText.text = "";
+        }
+
+        foreach (var word in answerWordArray)
+        {
+            word.SetChar('_');
+            word.gameObject.SetActive(true);
+        }
+
+        foreach (var button in keyboardButtons)
+        {
+            button.gameObject.SetActive(true);
+        }
+
+        if (gameOver != null)
+        {
+            gameOver.SetActive(false);
+        }
+    }
+
     private void LoadValidWords()
     {
         string path = System.IO.Path.Combine(

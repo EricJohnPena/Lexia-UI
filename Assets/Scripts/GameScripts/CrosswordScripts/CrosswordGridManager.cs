@@ -78,12 +78,45 @@ public class CrosswordGridManager : MonoBehaviour
         RefreshCrosswordData();
     }
 
+    void OnEnable()
+    {
+        Debug.Log("Crossword game enabled. Refreshing data...");
+        RefreshCrosswordData(); // Refresh data and UI every time the game is enabled
+    }
+
     public void RefreshCrosswordData()
     {
         Debug.Log("Refreshing crossword data...");
+
+        // Reset game state
         ClearGrid();
+        ResetGameState();
         DisplayEmptyMessage();
+
+        // Reload crossword data
         StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+    }
+
+    private void ResetGameState()
+    {
+        Debug.Log("Resetting crossword game state...");
+
+        // Reset variables
+        selectedCell = null;
+        highlightedCells.Clear();
+        currentWord = null;
+        wordNumbers.Clear();
+
+        // Reset UI
+        if (cluesPanelText != null)
+        {
+            cluesPanelText.text = "";
+        }
+
+        if (currentClueText != null)
+        {
+            currentClueText.text = "";
+        }
     }
 
     private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
@@ -153,10 +186,14 @@ public class CrosswordGridManager : MonoBehaviour
             {
                 if (cell != null)
                 {
-                    cell.SetActive(false);
+                    // Unsubscribe from events to avoid memory leaks
+                    cell.OnCellClicked -= HandleCellClick;
+                    Destroy(cell.gameObject); // Destroy the cell GameObject
                 }
             }
         }
+
+        gridCells = null; // Clear the gridCells array to ensure a fresh start
     }
 
     private void DisplayEmptyMessage()
@@ -422,8 +459,10 @@ public class CrosswordGridManager : MonoBehaviour
         DisplayCurrentClue(currentWord);
     }
 
-    void GenerateGrid()
+    private void GenerateGrid()
     {
+        ClearGrid(); // Ensure the grid is cleared before generating a new one
+
         gridCells = new GridCell[gridSize, gridSize];
         float cellSize = 70f;
 
