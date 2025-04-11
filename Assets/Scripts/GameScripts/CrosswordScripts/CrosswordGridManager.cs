@@ -75,6 +75,15 @@ public class CrosswordGridManager : MonoBehaviour
         }
 
         StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+        RefreshCrosswordData();
+    }
+
+    public void RefreshCrosswordData()
+    {
+        Debug.Log("Refreshing crossword data...");
+        ClearGrid();
+        DisplayEmptyMessage();
+        StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
     }
 
     private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
@@ -97,7 +106,9 @@ public class CrosswordGridManager : MonoBehaviour
 
                     if (currentLevel == null || currentLevel.fixedLayout == null || currentLevel.fixedLayout.Count == 0)
                     {
-                        Debug.LogWarning("Loaded JSON is empty or invalid!");
+                        Debug.LogWarning("No crossword data received from the server. Displaying an empty crossword.");
+                        ClearGrid();
+                        DisplayEmptyMessage();
                         yield break;
                     }
 
@@ -121,12 +132,43 @@ public class CrosswordGridManager : MonoBehaviour
                 catch (System.Exception e)
                 {
                     Debug.LogError("Error parsing JSON: " + e.Message);
+                    ClearGrid();
+                    DisplayEmptyMessage();
                 }
             }
             else
             {
                 Debug.LogError("Failed to fetch crossword data: " + www.error);
+                ClearGrid();
+                DisplayEmptyMessage();
             }
+        }
+    }
+
+    private void ClearGrid()
+    {
+        if (gridCells != null)
+        {
+            foreach (var cell in gridCells)
+            {
+                if (cell != null)
+                {
+                    cell.SetActive(false);
+                }
+            }
+        }
+    }
+
+    private void DisplayEmptyMessage()
+    {
+        if (cluesPanelText != null)
+        {
+            cluesPanelText.text = "Loading crossword data...";
+        }
+
+        if (currentClueText != null)
+        {
+            currentClueText.text = "";
         }
     }
 
