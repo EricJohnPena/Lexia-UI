@@ -29,6 +29,8 @@ public class JumbledLettersManager : MonoBehaviour
     private int currentQuestionIndex = 0;
     private GameStatus gameStatus = GameStatus.Playing;
     private string answerWord;
+    private bool isLessonCompleted = false;
+    private bool isRefreshing = false;
 
     private void Awake()
     {
@@ -41,8 +43,72 @@ public class JumbledLettersManager : MonoBehaviour
 
     void OnEnable()
     {
-        Debug.Log("Jumbled Letters game enabled. Refreshing data...");
-        RefreshJumbledLettersData();
+        Debug.Log("Jumbled Letters game enabled.");
+
+        if (!isRefreshing)
+        {
+            int userId = int.Parse(UserInfo.Instance.userId);
+            int lessonId = LessonUI.lesson_id;
+
+            Debug.Log($"Starting CheckLessonCompletion with studentId={userId}, lessonId={lessonId}");
+
+            StartCoroutine(CheckLessonCompletion(userId, lessonId));
+        }
+    }
+
+    private IEnumerator CheckLessonCompletion(int userId, int lessonId)
+    {
+        if (userId <= 0 || lessonId <= 0)
+        {
+            Debug.LogError($"Invalid parameters for CheckLessonCompletion: userId={userId}, lessonId={lessonId}");
+            yield break; // Exit early if parameters are invalid
+        }
+
+        string url = $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={userId}&lesson_id={lessonId}";
+        Debug.Log("Checking lesson completion from URL: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string response = www.downloadHandler.text;
+                    Debug.Log("Lesson Completion Response: " + response);
+
+                    isLessonCompleted = response.Trim() == "true";
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                    isLessonCompleted = false;
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to check lesson completion: " + www.error);
+                isLessonCompleted = false;
+            }
+        }
+
+        HandleLessonState();
+    }
+
+    private void HandleLessonState()
+    {
+        if (isLessonCompleted)
+        {
+            Debug.Log("Lesson is already completed.");
+            questionText.text = "Lesson Completed!";
+            gameOver.SetActive(true);
+        }
+        else
+        {
+            Debug.Log("Lesson not completed. Loading lesson data...");
+            RefreshJumbledLettersData();
+        }
     }
 
     public void RefreshJumbledLettersData()
@@ -225,4 +291,3 @@ public class JumbledLettersManager : MonoBehaviour
         }
     }
 }
-

@@ -3,7 +3,6 @@ using UnityEngine.UI;
 
 public class PanelSwitcher : MonoBehaviour
 {
-
     public string canvasName; // Set this in the Inspector
     public Button yourButton; // Assign the button in the Inspector
 
@@ -18,19 +17,29 @@ public class PanelSwitcher : MonoBehaviour
 
     private void OnButtonClick()
     {
-       MenuManager.InstanceMenu.ToLessonsPage();
-
+        MenuManager.InstanceMenu.ToLessonsPage();
     }
+
     public void SwitchToGameManagerPanel()
     {
         PanelManager.Instance.ActivatePanel(GamePanel.GameManagerPanel);
     }
+
     public void SwitchToClassicGamePanel()
     {
+        Debug.Log("SwitchToClassicGamePanel called.");
         PanelManager.Instance.ActivatePanel(GamePanel.ClassicGamePanel);
 
-        // Reload Classic Game UI and questions
-        ClassicGameManager.instance.LoadQuestionsOnButtonClick();
+        // Only load questions if the game is not initialized
+        if (ClassicGameManager.instance != null && !ClassicGameManager.instance.isGameInitialized)
+        {
+            Debug.Log("Loading questions for Classic Game Panel.");
+            ClassicGameManager.instance.LoadQuestionsOnButtonClick();
+        }
+        else
+        {
+            Debug.Log("Classic Game Panel already initialized. Skipping question load.");
+        }
     }
 
     public void SwitchToJumbledLettersGamePanel()

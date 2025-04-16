@@ -15,7 +15,7 @@ public class LessonUI : MonoBehaviour
     private string currentModule;
     private string currentLessonNumber;
     private string lessonId;    // Field to store the lesson ID
-    public static int lesson_id;
+    public static int lesson_id = 1; // Default to 1 to avoid null issues
 
     public void SetLessonData(string lessonName, string lessonNumber, string subjectName, string moduleName)
     {

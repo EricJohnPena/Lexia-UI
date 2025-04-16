@@ -186,4 +186,28 @@ public class MenuManager : MonoBehaviour
         StudentDashboardPage.gameObject.SetActive(true);
         LeaderboardManager.Instance.ResetLeaderboard();
     }
+
+    public void ToClassicGamePanel()
+    {
+        Debug.Log("ToClassicGamePanel called.");
+        PanelSwitcher panelSwitcher = FindObjectOfType<PanelSwitcher>();
+        if (panelSwitcher != null)
+        {
+            panelSwitcher.SwitchToClassicGamePanel();
+        }
+        else
+        {
+            Debug.LogWarning("PanelSwitcher not found.");
+        }
+    }
+
+    public void DisplayGameModes(List<string> gameModes)
+    {
+        Debug.Log("Displaying available game modes...");
+        foreach (string mode in gameModes)
+        {
+            Debug.Log($"Game Mode: {mode}");
+            // Add logic to display game modes in the UI
+        }
+    }
 }

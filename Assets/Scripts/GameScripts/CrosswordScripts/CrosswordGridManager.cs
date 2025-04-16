@@ -1,9 +1,9 @@
 // CrosswordGridManager.cs
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class CrosswordGridManager : MonoBehaviour
 {
@@ -26,6 +26,9 @@ public class CrosswordGridManager : MonoBehaviour
     private CrosswordLevel currentLevel;
     private Dictionary<WordPlacement, int> wordNumbers = new Dictionary<WordPlacement, int>();
     private CrosswordKeyboard crosswordKeyboard;
+    private bool isLessonCompleted = false;
+    private bool isRefreshing = false;
+    public GameObject gameOver;
 
     void Start()
     {
@@ -74,14 +77,106 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
         }
 
-        StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+        StartCoroutine(
+            LoadCrosswordData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
         RefreshCrosswordData();
     }
 
     void OnEnable()
     {
-        Debug.Log("Crossword game enabled. Refreshing data...");
-        RefreshCrosswordData(); // Refresh data and UI every time the game is enabled
+        Debug.Log("Crossword game enabled.");
+
+        if (!isRefreshing)
+        {
+            int subjectId = LessonsLoader.subjectId;
+            int moduleId;
+
+            if (string.IsNullOrEmpty(LessonsLoader.moduleNumber))
+            {
+                Debug.LogError(
+                    "LessonsLoader.moduleNumber is null or empty. Cannot parse module number."
+                );
+                return;
+            }
+
+            try
+            {
+                moduleId = int.Parse(LessonsLoader.moduleNumber);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(
+                    $"Failed to parse LessonsLoader.moduleNumber: {LessonsLoader.moduleNumber}. Error: {e.Message}"
+                );
+                return;
+            }
+
+            int lessonId = LessonUI.lesson_id;
+
+            StartCoroutine(CheckLessonCompletion(int.Parse(UserInfo.Instance.userId), lessonId));
+            
+        }
+    }
+
+    private IEnumerator CheckLessonCompletion(int studentId, int lessonId)
+    {
+        string url =
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}";
+        Debug.Log("Checking lesson completion from URL: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string response = www.downloadHandler.text;
+                    Debug.Log("Lesson Completion Response: " + response);
+
+                    isLessonCompleted = response.Trim() == "true";
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                    isLessonCompleted = false;
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to check lesson completion: " + www.error);
+                isLessonCompleted = false;
+            }
+        }
+
+        HandleLessonState();
+    }
+
+    private void HandleLessonState()
+    {
+        if (isLessonCompleted)
+        {
+            Debug.Log("Lesson is already completed.");
+            currentClueText.text = "Lesson Completed!";
+            gameOver.SetActive(true);
+        }
+        else
+        {
+            Debug.Log("Lesson not completed. Loading crossword data...");
+            StartCoroutine(
+                LoadCrosswordData(
+                    LessonsLoader.subjectId,
+                    int.Parse(LessonsLoader.moduleNumber),
+                    LessonUI.lesson_id
+                )
+            );
+        }
     }
 
     public void RefreshCrosswordData()
@@ -94,7 +189,13 @@ public class CrosswordGridManager : MonoBehaviour
         DisplayEmptyMessage();
 
         // Reload crossword data
-        StartCoroutine(LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+        StartCoroutine(
+            LoadCrosswordData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 
     private void ResetGameState()
@@ -137,9 +238,15 @@ public class CrosswordGridManager : MonoBehaviour
 
                     currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
 
-                    if (currentLevel == null || currentLevel.fixedLayout == null || currentLevel.fixedLayout.Count == 0)
+                    if (
+                        currentLevel == null
+                        || currentLevel.fixedLayout == null
+                        || currentLevel.fixedLayout.Count == 0
+                    )
                     {
-                        Debug.LogWarning("No crossword data received from the server. Displaying an empty crossword.");
+                        Debug.LogWarning(
+                            "No crossword data received from the server. Displaying an empty crossword."
+                        );
                         ClearGrid();
                         DisplayEmptyMessage();
                         yield break;
@@ -221,7 +328,8 @@ public class CrosswordGridManager : MonoBehaviour
 
     void HandleKeyboardInput()
     {
-        if (selectedCell == null) return;
+        if (selectedCell == null)
+            return;
 
         foreach (char c in Input.inputString)
         {
@@ -236,10 +344,12 @@ public class CrosswordGridManager : MonoBehaviour
             RemoveLastLetter();
         }
     }
+
     // Method to handle key input from on-screen keyboard
     public void HandleKeyInput(char letter)
     {
-        if (selectedCell == null || currentWord == null) return;
+        if (selectedCell == null || currentWord == null)
+            return;
 
         InputLetter(char.ToUpper(letter));
     }
@@ -258,11 +368,10 @@ public class CrosswordGridManager : MonoBehaviour
         Debug.Log("Space input handled");
     }
 
-
-
     void InputLetter(char letter)
     {
-        if (selectedCell == null || currentWord == null) return;
+        if (selectedCell == null || currentWord == null)
+            return;
 
         selectedCell.SetInputLetter(letter);
 
@@ -289,7 +398,8 @@ public class CrosswordGridManager : MonoBehaviour
     List<GridCell> GetCurrentWordCells()
     {
         List<GridCell> cells = new List<GridCell>();
-        if (currentWord == null) return cells;
+        if (currentWord == null)
+            return cells;
 
         for (int i = 0; i < currentWord.word.Length; i++)
         {
@@ -302,7 +412,8 @@ public class CrosswordGridManager : MonoBehaviour
 
     void MoveCursorToNextCell()
     {
-        if (currentWord == null) return;
+        if (currentWord == null)
+            return;
 
         int currentIndex = GetCellIndexInWord(selectedCell);
         if (currentIndex < currentWord.word.Length - 1)
@@ -315,7 +426,8 @@ public class CrosswordGridManager : MonoBehaviour
 
     void MoveCursorToPreviousCell()
     {
-        if (currentWord == null) return;
+        if (currentWord == null)
+            return;
 
         int currentIndex = GetCellIndexInWord(selectedCell);
         if (currentIndex > 0)
@@ -328,11 +440,12 @@ public class CrosswordGridManager : MonoBehaviour
 
     int GetCellIndexInWord(GridCell cell)
     {
-        if (currentWord == null) return -1;
+        if (currentWord == null)
+            return -1;
 
-        return currentWord.horizontal ?
-            cell.Col - currentWord.startCol :
-            cell.Row - currentWord.startRow;
+        return currentWord.horizontal
+            ? cell.Col - currentWord.startCol
+            : cell.Row - currentWord.startRow;
     }
 
     void RemoveLastLetter()
@@ -481,7 +594,8 @@ public class CrosswordGridManager : MonoBehaviour
                 cellScript.OnCellClicked += HandleCellClick;
 
                 RectTransform rectTransform = newCell.GetComponent<RectTransform>();
-                rectTransform.anchoredPosition = gridStartPos + new Vector2(col * cellSize, -row * cellSize);
+                rectTransform.anchoredPosition =
+                    gridStartPos + new Vector2(col * cellSize, -row * cellSize);
 
                 gridCells[row, col] = cellScript;
             }
@@ -547,7 +661,8 @@ public class CrosswordGridManager : MonoBehaviour
         foreach (var placement in currentLevel.fixedLayout)
         {
             // Only check words with matching orientation
-            if (placement.horizontal != horizontal) continue;
+            if (placement.horizontal != horizontal)
+                continue;
 
             for (int i = 0; i < placement.word.Length; i++)
             {
@@ -568,7 +683,9 @@ public class CrosswordGridManager : MonoBehaviour
         if (currentClueText != null && word != null)
         {
             // Find the corresponding clue
-            WordClue clue = currentLevel.wordClues.Find(c => c.word.ToUpper() == word.word.ToUpper());
+            WordClue clue = currentLevel.wordClues.Find(c =>
+                c.word.ToUpper() == word.word.ToUpper()
+            );
             if (clue != null)
             {
                 string direction = word.horizontal ? "Across" : "Down";
@@ -657,9 +774,11 @@ public class CrosswordGridManager : MonoBehaviour
             cluesPanelText.text = acrossClues + downClues;
         }
     }
+
     public void NavigateToNextWord()
     {
-        if (currentWord == null || currentLevel.fixedLayout == null) return;
+        if (currentWord == null || currentLevel.fixedLayout == null)
+            return;
 
         // Find the index of the current word
         int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
@@ -681,7 +800,8 @@ public class CrosswordGridManager : MonoBehaviour
 
     public void NavigateToPreviousWord()
     {
-        if (currentWord == null || currentLevel.fixedLayout == null) return;
+        if (currentWord == null || currentLevel.fixedLayout == null)
+            return;
 
         // Find the index of the current word
         int currentIndex = currentLevel.fixedLayout.IndexOf(currentWord);
@@ -692,7 +812,8 @@ public class CrosswordGridManager : MonoBehaviour
         }
 
         // Move to the previous word, or wrap around to the last word
-        int previousIndex = (currentIndex - 1 + currentLevel.fixedLayout.Count) % currentLevel.fixedLayout.Count;
+        int previousIndex =
+            (currentIndex - 1 + currentLevel.fixedLayout.Count) % currentLevel.fixedLayout.Count;
         currentWord = currentLevel.fixedLayout[previousIndex];
 
         // Select the first cell of the previous word
@@ -700,6 +821,4 @@ public class CrosswordGridManager : MonoBehaviour
         int firstCol = currentWord.startCol;
         SelectCell(gridCells[firstRow, firstCol]);
     }
-
-
 }

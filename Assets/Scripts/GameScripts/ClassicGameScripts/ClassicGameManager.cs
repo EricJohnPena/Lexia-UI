@@ -52,7 +52,11 @@ public class ClassicGameManager : MonoBehaviour
     private int currentAnswerIndex = 0;
     private GameStatus gameStatus = GameStatus.Playing;
     private List<int> selectedKeyIndex;
-    
+    public bool isGameInitialized = false; // Flag to track initialization
+    private bool isRefreshing = false; // Prevent multiple refreshes
+    private bool isLessonCompleted = false; // Track if the lesson is completed
+    private List<string> availableGameModes = new List<string>();
+    private bool isLessonCheckCompleted = false; // New flag to track lesson completion check
 
     private void Awake()
     {
@@ -71,27 +75,187 @@ public class ClassicGameManager : MonoBehaviour
         currentQuestionIndex = 0; // Reset question index
         questionData = defaultQuestionData; // Reset question data to default
 
-       
-        StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
-        );
-
         SetupKeyboardListeners();
+
+        // Remove LoadQuestionData from Awake
+        // Questions will only be fetched after lesson completion check
     }
 
     void OnEnable()
     {
-        Debug.Log("Classic game enabled. Refreshing data...");
-        RefreshClassicGameData(); // Refresh data and UI every time the game is enabled
+        Debug.Log("Classic game enabled.");
+
+        if (!isRefreshing)
+        {
+            int subjectId = LessonsLoader.subjectId;
+            int moduleId;
+
+            if (string.IsNullOrEmpty(LessonsLoader.moduleNumber))
+            {
+                Debug.LogError("LessonsLoader.moduleNumber is null or empty. Cannot parse module number.");
+                return;
+            }
+
+            try
+            {
+                moduleId = int.Parse(LessonsLoader.moduleNumber);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to parse LessonsLoader.moduleNumber: {LessonsLoader.moduleNumber}. Error: {e.Message}");
+                return;
+            }
+
+            int lessonId = LessonUI.lesson_id;
+
+            StartCoroutine(CheckLessonCompletion(int.Parse(PlayerPrefs.GetString("User ID")), lessonId));
+            Debug.Log(PlayerPrefs.GetString("User ID"));
+        }
+    }
+
+    private IEnumerator FetchGameModes(int subjectId, int moduleId, int lessonId)
+    {
+        string url = $"{Web.BaseApiUrl}getGameModeMappings.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        Debug.Log("Fetching game modes from URL: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string jsonResponse = www.downloadHandler.text;
+                    Debug.Log("Game Modes Response: " + jsonResponse);
+                    availableGameModes = JsonUtility.FromJson<List<string>>(jsonResponse);
+                    Debug.Log("Available Game Modes: " + string.Join(", ", availableGameModes));
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing game modes response: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to fetch game modes: " + www.error);
+            }
+        }
+    }
+
+    private IEnumerator CheckLessonCompletion(int studentId, int lessonId)
+    {
+        if (isRefreshing)
+        {
+            Debug.LogWarning("CheckLessonCompletion is already running. Skipping...");
+            yield break;
+        }
+
+        isRefreshing = true; // Mark as running
+        Debug.Log($"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}");
+
+        if (studentId <= 0 || lessonId <= 0)
+        {
+            Debug.LogError($"Invalid parameters: studentId={studentId}, lessonId={lessonId}");
+            isRefreshing = false; // Reset flag
+            yield break;
+        }
+
+        string url = $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}";
+        Debug.Log("Checking lesson completion from URL: " + url);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    string response = www.downloadHandler.text;
+                    Debug.Log("Lesson Completion Response: " + response);
+
+                    isLessonCompleted = response.Trim() == "true";
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                    isLessonCompleted = false;
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to check lesson completion: " + www.error);
+                isLessonCompleted = false;
+            }
+        }
+
+        isLessonCheckCompleted = true; // Mark lesson check as completed
+        isRefreshing = false; // Reset flag
+
+        // Explicitly control the flow based on the lesson completion status
+        if (isLessonCompleted)
+        {
+            HandleLessonCompleted();
+        }
+        else
+        {
+            StartCoroutine(LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            ));
+        }
+    }
+
+    private void HandleLessonCompleted()
+    {
+        Debug.Log("Lesson is already completed.");
+        questionText.text = "Lesson Completed!";
+        gameOver.SetActive(true);
+    }
+
+    private void HandleLessonState()
+    {
+        if (!isLessonCheckCompleted)
+        {
+            Debug.LogWarning("Lesson completion check not finalized. Skipping HandleLessonState.");
+            return; // Exit early if lesson completion check is not finalized
+        }
+
+        if (isLessonCompleted)
+        {
+            Debug.Log("Lesson is already completed.");
+            questionText.text = "Lesson Completed!";
+            gameOver.SetActive(true);
+            return; // Exit early to prevent further execution
+        }
+
+        Debug.Log("Lesson not completed. Loading lesson data...");
+
+        // Ensure LoadQuestionData is only called if the lesson is not completed
+        if (!isRefreshing)
+        {
+            StartCoroutine(
+                LoadQuestionData(
+                    LessonsLoader.subjectId,
+                    int.Parse(LessonsLoader.moduleNumber),
+                    LessonUI.lesson_id
+                )
+            );
+        }
     }
 
     public void RefreshClassicGameData()
     {
+        if (isRefreshing)
+        {
+            Debug.Log("Refresh already in progress. Skipping...");
+            return;
+        }
+
         Debug.Log("Refreshing classic game data...");
+        isRefreshing = true; // Mark as refreshing
 
         // Reset game state
         ResetGameState();
@@ -106,8 +270,16 @@ public class ClassicGameManager : MonoBehaviour
         );
     }
 
+    public void ResetGameInitialization()
+    {
+        // Method to reset the initialization flag if needed
+        isGameInitialized = false;
+    }
+
     private void ResetGameState()
     {
+        isRefreshing = false; // Reset the refreshing flag
+        isLessonCompleted = false; // Reset the lesson completion flag
         Debug.Log("Resetting classic game state...");
 
         // Reset variables
@@ -182,12 +354,13 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
     {
+        Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId}, {lessonId} from loadlessondata");
         Debug.Log(int.Parse(LessonsLoader.moduleNumber));
         
-        string url =
-            $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url = $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching questions from URL: " + url);
+
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
@@ -198,7 +371,6 @@ public class ClassicGameManager : MonoBehaviour
                 {
                     string jsonText = www.downloadHandler.text;
                     Debug.Log("Raw JSON Response: " + jsonText);
-
                     questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
 
                     if (
@@ -235,6 +407,7 @@ public class ClassicGameManager : MonoBehaviour
         }
 
         SetQuestion();
+        isRefreshing = false; // Mark refresh as complete
     }
 
     private void SetQuestion()
@@ -252,22 +425,18 @@ public class ClassicGameManager : MonoBehaviour
         KeyboardQuestion currentQuestion = questionData.questions[currentQuestionIndex];
         questionText.text = currentQuestion.questionText;
         currentAnswer = currentQuestion.answer.ToUpper();
-
         StartCoroutine(LoadQuestionImage(currentQuestion.imagePath));
 
         Debug.Log($"Current Question Index: {currentQuestionIndex}");
         Debug.Log($"Total Questions: {questionData.questions.Count}");
 
         ResetQuestion();
-
-        currentQuestionIndex++;
         gameStatus = GameStatus.Playing;
     }
 
     private IEnumerator LoadQuestionImage(string imagePath)
     {
         questionImage.gameObject.SetActive(false);
-
         string fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, imagePath);
 
         using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(fullPath))
@@ -277,7 +446,6 @@ public class ClassicGameManager : MonoBehaviour
             if (www.result == UnityWebRequest.Result.Success)
             {
                 Texture2D texture = DownloadHandlerTexture.GetContent(www);
-
                 Sprite sprite = Sprite.Create(
                     texture,
                     new Rect(0, 0, texture.width, texture.height),
@@ -334,7 +502,6 @@ public class ClassicGameManager : MonoBehaviour
             return;
 
         string keyPressed = keyButton.GetComponentInChildren<Text>().text;
-
         selectedKeyIndex.Add(System.Array.IndexOf(keyboardButtons, keyButton));
 
         answerWordArray[currentAnswerIndex].SetChar(keyPressed[0]);
@@ -378,6 +545,9 @@ public class ClassicGameManager : MonoBehaviour
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
 
+            // Increment question index only after a correct answer
+            currentQuestionIndex++;
+
             if (currentQuestionIndex < questionData.questions.Count)
             {
                 Invoke("SetQuestion", 0.5f);
@@ -416,18 +586,18 @@ public class ClassicGameManager : MonoBehaviour
             )
         );
     }
-}
 
-[System.Serializable]
-public class KeyboardQuestion
-{
-    public string questionText;
-    public string answer;
-    public string imagePath;
-}
+    [System.Serializable]
+    public class KeyboardQuestion
+    {
+        public string questionText;
+        public string answer;
+        public string imagePath;
+    }
 
-[System.Serializable]
-public class KeyboardQuestionList
-{
-    public List<KeyboardQuestion> questions;
+    [System.Serializable]
+    public class KeyboardQuestionList
+    {
+        public List<KeyboardQuestion> questions;
+    }
 }

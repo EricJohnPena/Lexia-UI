@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class UserInfo : MonoBehaviour
@@ -10,7 +9,7 @@ public class UserInfo : MonoBehaviour
     }
 
 
-    public string userId { get; private set; } //set preivately, but can get publicly
+    public string userId { get; private set; } = "0"; // Default to "0" to avoid null issues
     public string username;
     public string password;
     public string firstname;
@@ -93,7 +92,4 @@ public class UserInfo : MonoBehaviour
         PlayerPrefs.Save();
         Debug.Log("Player information deleted.");
     }
- 
-
-
 }

@@ -41,31 +41,25 @@ public class PanelManager : MonoBehaviour
     // Method to activate a specific panel
     public void ActivatePanel(GamePanel panelToActivate)
     {
-        if (panels == null || panels.Length == 0)
+        if (_currentActivePanel == panelToActivate)
         {
-            Debug.LogError("Panel array is not assigned or empty!");
-            return;
+            Debug.Log($"Panel {panelToActivate} is already active. Skipping activation.");
+            return; // Prevent reactivating the same panel
         }
 
-        // Deactivate all panels
         DeactivateAllPanels();
 
-        // Activate the selected panel
         int panelIndex = (int)panelToActivate;
-
-        if (panelIndex < 0 || panelIndex >= panels.Length)
+        if (panelIndex >= 0 && panelIndex < panels.Length && panels[panelIndex] != null)
         {
-            Debug.LogError($"Invalid panel index: {panelIndex}");
-            return;
+            panels[panelIndex].SetActive(true);
+            Debug.Log($"Activated panel: {panelToActivate}");
+        }
+        else
+        {
+            Debug.LogWarning($"Panel index {panelIndex} is out of range or null.");
         }
 
-        panels[panelIndex].SetActive(true);
-        Debug.Log($"{panelToActivate} activated");
-
-        // Perform specific initialization for each panel
-        InitializePanel(panelToActivate);
-
-        // Update the current active panel
         _currentActivePanel = panelToActivate;
     }
 

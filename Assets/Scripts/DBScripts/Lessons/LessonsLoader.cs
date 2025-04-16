@@ -13,7 +13,7 @@ public class LessonsLoader : MonoBehaviour
     public GameObject lessonPrefab;
     public Transform parentTransform;
     public List<LessonData> lessons = new List<LessonData>();
-    public static string moduleNumber;
+    public static string moduleNumber = "1"; // Default to "1" to avoid null issues
     public static int subjectId;
 
      
