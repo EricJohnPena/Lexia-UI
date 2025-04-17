@@ -321,10 +321,13 @@ public class JumbledLettersManager : MonoBehaviour
 
         for (int i = answerWord.Length; i < optionWordArray.Length; i++)
         {
-            charArray[i] = (char)UnityEngine.Random.Range(65, 91);
+            charArray[i] = (char)UnityEngine.Random.Range(65, 91); // Random uppercase letters
         }
 
-        charArray = ShuffleList.ShuffleListItems<char>(charArray.ToList()).ToArray();
+        // Ensure the shuffle method is correctly invoked
+        charArray = ShuffleList
+            .ShuffleListItems(charArray.Take(optionWordArray.Length).ToList())
+            .ToArray();
 
         for (int i = 0; i < optionWordArray.Length; i++)
         {
@@ -380,6 +383,25 @@ public class JumbledLettersManager : MonoBehaviour
                 ResetCurrentInput();
             }
         }
+    }
+
+    public void ShuffleOptions()
+    {
+        Debug.Log("Shuffling options...");
+
+        // Shuffle the characters in the charArray
+        charArray = ShuffleList
+            .ShuffleListItems(charArray.Take(optionWordArray.Length).ToList())
+            .ToArray();
+
+        // Apply the shuffled characters to the optionWordArray
+        for (int i = 0; i < optionWordArray.Length; i++)
+        {
+            optionWordArray[i].SetChar(charArray[i]);
+            optionWordArray[i].gameObject.SetActive(true); // Ensure all options are visible
+        }
+
+        Debug.Log("Options shuffled successfully.");
     }
 
     private void ResetCurrentInput()
