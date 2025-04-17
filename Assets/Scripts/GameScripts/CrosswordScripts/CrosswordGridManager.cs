@@ -117,16 +117,48 @@ public class CrosswordGridManager : MonoBehaviour
             }
 
             int lessonId = LessonUI.lesson_id;
+            int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
 
-            StartCoroutine(CheckLessonCompletion(int.Parse(UserInfo.Instance.userId), lessonId));
-            
+            StartCoroutine(
+                CheckLessonCompletion(
+                    int.Parse(PlayerPrefs.GetString("User ID")),
+                    lessonId,
+                    gameModeId,
+                    subjectId
+                )
+            );
         }
     }
 
-    private IEnumerator CheckLessonCompletion(int studentId, int lessonId)
+    private IEnumerator CheckLessonCompletion(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId
+    )
     {
+        if (isRefreshing)
+        {
+            Debug.LogWarning("CheckLessonCompletion is already running. Skipping...");
+            yield break;
+        }
+
+        isRefreshing = true; // Mark as running
+        Debug.Log(
+            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+        );
+
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            );
+            isRefreshing = false; // Reset flag
+            yield break;
+        }
+
         string url =
-            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}";
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -155,7 +187,16 @@ public class CrosswordGridManager : MonoBehaviour
             }
         }
 
-        HandleLessonState();
+        isRefreshing = false; // Reset flag
+
+        if (isLessonCompleted)
+        {
+            HandleLessonState();
+        }
+        else
+        {
+            RefreshCrosswordData();
+        }
     }
 
     private void HandleLessonState()

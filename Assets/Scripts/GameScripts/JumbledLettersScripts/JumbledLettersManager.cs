@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class JumbledLettersManager : MonoBehaviour
 {
@@ -12,14 +12,16 @@ public class JumbledLettersManager : MonoBehaviour
 
     [SerializeField]
     private Text questionText;
+
     [SerializeField]
     private GameObject gameOver;
+
     [SerializeField]
     private WordData[] answerWordArray;
+
     [SerializeField]
     private WordData[] optionWordArray;
 
- 
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
@@ -34,8 +36,10 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void Awake()
     {
-        if (instance == null) instance = this;
-        else Destroy(gameObject);
+        if (instance == null)
+            instance = this;
+        else
+            Destroy(gameObject);
 
         selectedWordIndex = new List<int>();
         wordTrie = new Trie();
@@ -47,24 +51,72 @@ public class JumbledLettersManager : MonoBehaviour
 
         if (!isRefreshing)
         {
-            int userId = int.Parse(UserInfo.Instance.userId);
+            int subjectId = LessonsLoader.subjectId;
+            int moduleId;
+
+            if (string.IsNullOrEmpty(LessonsLoader.moduleNumber))
+            {
+                Debug.LogError(
+                    "LessonsLoader.moduleNumber is null or empty. Cannot parse module number."
+                );
+                return;
+            }
+
+            try
+            {
+                moduleId = int.Parse(LessonsLoader.moduleNumber);
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError(
+                    $"Failed to parse LessonsLoader.moduleNumber: {LessonsLoader.moduleNumber}. Error: {e.Message}"
+                );
+                return;
+            }
+
             int lessonId = LessonUI.lesson_id;
+            int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
 
-            Debug.Log($"Starting CheckLessonCompletion with studentId={userId}, lessonId={lessonId}");
-
-            StartCoroutine(CheckLessonCompletion(userId, lessonId));
+            StartCoroutine(
+                CheckLessonCompletion(
+                    int.Parse(PlayerPrefs.GetString("User ID")),
+                    lessonId,
+                    gameModeId,
+                    subjectId
+                )
+            );
         }
     }
 
-    private IEnumerator CheckLessonCompletion(int userId, int lessonId)
+    private IEnumerator CheckLessonCompletion(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId
+    )
     {
-        if (userId <= 0 || lessonId <= 0)
+        if (isRefreshing)
         {
-            Debug.LogError($"Invalid parameters for CheckLessonCompletion: userId={userId}, lessonId={lessonId}");
-            yield break; // Exit early if parameters are invalid
+            Debug.LogWarning("CheckLessonCompletion is already running. Skipping...");
+            yield break;
         }
 
-        string url = $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={userId}&lesson_id={lessonId}";
+        isRefreshing = true; // Mark as running
+        Debug.Log(
+            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+        );
+
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            );
+            isRefreshing = false; // Reset flag
+            yield break;
+        }
+
+        string url =
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -93,7 +145,16 @@ public class JumbledLettersManager : MonoBehaviour
             }
         }
 
-        HandleLessonState();
+        isRefreshing = false; // Reset flag
+
+        if (isLessonCompleted)
+        {
+            HandleLessonState();
+        }
+        else
+        {
+            RefreshJumbledLettersData();
+        }
     }
 
     private void HandleLessonState()
@@ -115,7 +176,13 @@ public class JumbledLettersManager : MonoBehaviour
     {
         Debug.Log("Refreshing Jumbled Letters data...");
         ResetGameState();
-        StartCoroutine(LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber), LessonUI.lesson_id));
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 
     private void ResetGameState()
@@ -126,7 +193,8 @@ public class JumbledLettersManager : MonoBehaviour
         selectedWordIndex.Clear();
         gameStatus = GameStatus.Playing;
 
-        if (questionText != null) questionText.text = "";
+        if (questionText != null)
+            questionText.text = "";
 
         foreach (var word in answerWordArray)
         {
@@ -139,7 +207,8 @@ public class JumbledLettersManager : MonoBehaviour
             word.gameObject.SetActive(true);
         }
 
-        if (gameOver != null) gameOver.SetActive(false);
+        if (gameOver != null)
+            gameOver.SetActive(false);
     }
 
     private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
@@ -160,7 +229,11 @@ public class JumbledLettersManager : MonoBehaviour
 
                     questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
 
-                    if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+                    if (
+                        questionData == null
+                        || questionData.questions == null
+                        || questionData.questions.Count == 0
+                    )
                     {
                         Debug.LogWarning("No Jumbled Letters data received from the server.");
                         gameOver.SetActive(true);
@@ -228,7 +301,8 @@ public class JumbledLettersManager : MonoBehaviour
 
     public void SelectedOption(WordData wordData)
     {
-        if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length) return;
+        if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length)
+            return;
 
         selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
         wordData.gameObject.SetActive(false);
