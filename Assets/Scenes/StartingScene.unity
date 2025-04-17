@@ -3557,7 +3557,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 281816143}
         m_TargetAssemblyTypeName: JumbledLettersManager, Assembly-CSharp
-        m_MethodName: ResetLastWord
+        m_MethodName: ClearAnswer
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -5803,6 +5803,7 @@ MonoBehaviour:
   gridSize: 10
   levelFileName: level1.json
   apiUrl: https://steelblue-cobra-436400.hostingersite.com/db_unity/getCrosswordData.php
+  gameOver: {fileID: 0}
 --- !u!114 &584705973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7719,6 +7720,46 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 836830698}
     m_Modifications:
+    - target: {fileID: 841662768040356195, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 841662768040356195, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 281816143}
+    - target: {fileID: 841662768040356195, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ClearAnswerLetter
+      objectReference: {fileID: 0}
+    - target: {fileID: 841662768040356195, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: JumbledLettersManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 841662768040356195, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 281816143}
+    - target: {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ClearAnswerLetter
+      objectReference: {fileID: 0}
+    - target: {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: JumbledLettersManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3662436903015444562, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7803,7 +7844,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: AnswerWordPrefab
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 4235130632633304320, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 281816141}
+    m_RemovedComponents:
+    - {fileID: 2976720368395520347, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+    - {fileID: 4235130632633304320, guid: fdf89869a8c4cfc4081240952b1f3f6a, type: 3}
+    - {fileID: 0}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -18288,7 +18336,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: AnswerWordPrefab (1)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 0}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -19438,6 +19487,7 @@ MonoBehaviour:
   - {fileID: 1732601311}
   - {fileID: 1651033851}
   backspaceButton: {fileID: 472012567}
+  isGameInitialized: 0
 --- !u!114 &1932636605 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 826788265074976009, guid: b4d968988b9c5684d85e9ea614dfb383, type: 3}

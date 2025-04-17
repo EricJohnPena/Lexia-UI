@@ -387,21 +387,88 @@ public class JumbledLettersManager : MonoBehaviour
 
     public void ShuffleOptions()
     {
-        Debug.Log("Shuffling options...");
+        Debug.Log("Shuffling current options...");
 
-        // Shuffle the characters in the charArray
-        charArray = ShuffleList
-            .ShuffleListItems(charArray.Take(optionWordArray.Length).ToList())
-            .ToArray();
-
-        // Apply the shuffled characters to the optionWordArray
+        // Collect only the currently active option letters
+        List<char> activeChars = new List<char>();
         for (int i = 0; i < optionWordArray.Length; i++)
         {
-            optionWordArray[i].SetChar(charArray[i]);
-            optionWordArray[i].gameObject.SetActive(true); // Ensure all options are visible
+            if (optionWordArray[i].gameObject.activeSelf)
+            {
+                activeChars.Add(optionWordArray[i].charValue);
+            }
+        }
+
+        // Shuffle the active characters
+        activeChars = ShuffleList.ShuffleListItems(activeChars);
+
+        // Reassign the shuffled characters back to the active options
+        int activeIndex = 0;
+        for (int i = 0; i < optionWordArray.Length; i++)
+        {
+            if (optionWordArray[i].gameObject.activeSelf)
+            {
+                optionWordArray[i].SetChar(activeChars[activeIndex]);
+                activeIndex++;
+            }
         }
 
         Debug.Log("Options shuffled successfully.");
+    }
+
+    public void ClearAnswer()
+    {
+        Debug.Log("Clearing current answer...");
+
+        // Reset the current input
+        for (int i = 0; i < currentAnswerIndex; i++)
+        {
+            int originalIndex = selectedWordIndex[i];
+            optionWordArray[originalIndex].gameObject.SetActive(true); // Make options visible again
+        }
+
+        selectedWordIndex.Clear();
+        currentAnswerIndex = 0;
+
+        // Reset the answerWordArray display
+        for (int i = 0; i < answerWordArray.Length; i++)
+        {
+            answerWordArray[i].SetChar('_');
+        }
+
+        Debug.Log("Answer cleared successfully.");
+    }
+
+    public void ClearAnswerLetter(int answerIndex)
+    {
+        Debug.Log($"Clearing letter at answer index {answerIndex}...");
+
+        if (answerIndex < 0 || answerIndex >= currentAnswerIndex)
+        {
+            Debug.LogWarning("Invalid answer index. Ignoring clear request.");
+            return;
+        }
+
+        // Get the original index of the cleared letter in the options
+        int originalIndex = selectedWordIndex[answerIndex];
+
+        // Make the corresponding option visible again
+        optionWordArray[originalIndex].gameObject.SetActive(true);
+
+        // Shift the remaining letters in the answer to the left
+        for (int i = answerIndex; i < currentAnswerIndex - 1; i++)
+        {
+            answerWordArray[i].SetChar(answerWordArray[i + 1].charValue);
+            selectedWordIndex[i] = selectedWordIndex[i + 1];
+        }
+
+        // Clear the last letter in the answer
+        answerWordArray[currentAnswerIndex - 1].SetChar('_');
+
+        // Update the current answer index
+        currentAnswerIndex--;
+
+        Debug.Log("Letter cleared successfully.");
     }
 
     private void ResetCurrentInput()
