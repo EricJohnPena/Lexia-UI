@@ -58,6 +58,7 @@ public class ClassicGameManager : MonoBehaviour
     private bool isLessonCompleted = false; // Track if the lesson is completed
     private List<string> availableGameModes = new List<string>();
     private bool isLessonCheckCompleted = false; // New flag to track lesson completion check
+    private string apiUrl = $"{Web.BaseApiUrl}getClassicQuestions.php"; // Define API URL for fetching questions
 
     private void Awake()
     {
@@ -171,7 +172,7 @@ public class ClassicGameManager : MonoBehaviour
 
         isRefreshing = true; // Mark as running
         Debug.Log(
-            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectid = {subjectId}"
+            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
         );
 
         if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
@@ -395,7 +396,7 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log(int.Parse(LessonsLoader.moduleNumber));
 
         string url =
-            $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+            $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
