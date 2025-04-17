@@ -235,6 +235,35 @@ public class ClassicGameManager : MonoBehaviour
         }
     }
 
+    private IEnumerator UpdateGameCompletionStatus(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId
+    )
+    {
+        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
+        WWWForm form = new WWWForm();
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Game completion status updated successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to update game completion status: " + www.error);
+            }
+        }
+    }
+
     private void HandleLessonCompleted()
     {
         Debug.Log("Lesson is already completed.");
@@ -395,8 +424,7 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log($"{subjectId}, {moduleId}, {lessonId} from loadlessondata");
         Debug.Log(int.Parse(LessonsLoader.moduleNumber));
 
-        string url =
-            $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -573,7 +601,12 @@ public class ClassicGameManager : MonoBehaviour
     private void CheckAnswer()
     {
         // Form the user input from the answerWordArray
-        string userInput = string.Join("", answerWordArray.Take(currentAnswer.Length).Select(a => a.charValue)).Trim().ToUpper();
+        string userInput = string.Join(
+                "",
+                answerWordArray.Take(currentAnswer.Length).Select(a => a.charValue)
+            )
+            .Trim()
+            .ToUpper();
         string expectedAnswer = currentAnswer.Trim().ToUpper();
 
         Debug.Log($"Expected Answer: {expectedAnswer}");
@@ -595,6 +628,14 @@ public class ClassicGameManager : MonoBehaviour
             else
             {
                 gameOver.SetActive(true);
+                int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+                int lessonId = LessonUI.lesson_id;
+                int gameModeId = 1; // Assuming 1 is the ID for Classic mode
+                int subjectId = LessonsLoader.subjectId;
+
+                StartCoroutine(
+                    UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId)
+                );
             }
         }
         else

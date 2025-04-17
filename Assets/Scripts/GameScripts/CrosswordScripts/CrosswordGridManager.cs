@@ -586,6 +586,38 @@ public class CrosswordGridManager : MonoBehaviour
         if (isComplete)
         {
             currentClueText.text = "Congratulations! Puzzle Complete!";
+            gameOver.SetActive(true);
+
+            int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+            int lessonId = LessonUI.lesson_id;
+            int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
+            int subjectId = LessonsLoader.subjectId;
+
+            StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId));
+        }
+    }
+
+    private IEnumerator UpdateGameCompletionStatus(int studentId, int lessonId, int gameModeId, int subjectId)
+    {
+        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
+        WWWForm form = new WWWForm();
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Game completion status updated successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to update game completion status: " + www.error);
+            }
         }
     }
 

@@ -34,7 +34,7 @@ public class PanelSwitcher : MonoBehaviour
         if (ClassicGameManager.instance != null && !ClassicGameManager.instance.isGameInitialized)
         {
             Debug.Log("Loading questions for Classic Game Panel.");
-            ClassicGameManager.instance.LoadQuestionsOnButtonClick();
+            //ClassicGameManager.instance.LoadQuestionsOnButtonClick();
         }
         else
         {

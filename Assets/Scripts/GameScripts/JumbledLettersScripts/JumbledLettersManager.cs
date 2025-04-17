@@ -157,6 +157,35 @@ public class JumbledLettersManager : MonoBehaviour
         }
     }
 
+    private IEnumerator UpdateGameCompletionStatus(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId
+    )
+    {
+        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
+        WWWForm form = new WWWForm();
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Game completion status updated successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to update game completion status: " + www.error);
+            }
+        }
+    }
+
     private void HandleLessonState()
     {
         if (isLessonCompleted)
@@ -164,6 +193,13 @@ public class JumbledLettersManager : MonoBehaviour
             Debug.Log("Lesson is already completed.");
             questionText.text = "Lesson Completed!";
             gameOver.SetActive(true);
+
+            // int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+            // int lessonId = LessonUI.lesson_id;
+            // int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+            // int subjectId = LessonsLoader.subjectId;
+
+            // StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId));
         }
         else
         {
@@ -327,6 +363,14 @@ public class JumbledLettersManager : MonoBehaviour
                 }
                 else
                 {
+                    int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+                    int lessonId = LessonUI.lesson_id;
+                    int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+                    int subjectId = LessonsLoader.subjectId;
+
+                    StartCoroutine(
+                        UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId)
+                    );
                     gameOver.SetActive(true);
                 }
             }
