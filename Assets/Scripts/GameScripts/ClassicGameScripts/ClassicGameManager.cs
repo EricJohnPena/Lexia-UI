@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -92,7 +93,9 @@ public class ClassicGameManager : MonoBehaviour
 
             if (string.IsNullOrEmpty(LessonsLoader.moduleNumber))
             {
-                Debug.LogError("LessonsLoader.moduleNumber is null or empty. Cannot parse module number.");
+                Debug.LogError(
+                    "LessonsLoader.moduleNumber is null or empty. Cannot parse module number."
+                );
                 return;
             }
 
@@ -102,20 +105,30 @@ public class ClassicGameManager : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Failed to parse LessonsLoader.moduleNumber: {LessonsLoader.moduleNumber}. Error: {e.Message}");
+                Debug.LogError(
+                    $"Failed to parse LessonsLoader.moduleNumber: {LessonsLoader.moduleNumber}. Error: {e.Message}"
+                );
                 return;
             }
 
             int lessonId = LessonUI.lesson_id;
+            int gameModeId = 1; // Assuming 1 is the ID for Classic mode
 
-            StartCoroutine(CheckLessonCompletion(int.Parse(PlayerPrefs.GetString("User ID")), lessonId));
-            Debug.Log(PlayerPrefs.GetString("User ID"));
+            StartCoroutine(
+                CheckLessonCompletion(
+                    int.Parse(PlayerPrefs.GetString("User ID")),
+                    lessonId,
+                    gameModeId,
+                    subjectId
+                )
+            );
         }
     }
 
     private IEnumerator FetchGameModes(int subjectId, int moduleId, int lessonId)
     {
-        string url = $"{Web.BaseApiUrl}getGameModeMappings.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url =
+            $"{Web.BaseApiUrl}getGameModeMappings.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching game modes from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -143,7 +156,12 @@ public class ClassicGameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator CheckLessonCompletion(int studentId, int lessonId)
+    private IEnumerator CheckLessonCompletion(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId
+    )
     {
         if (isRefreshing)
         {
@@ -152,21 +170,27 @@ public class ClassicGameManager : MonoBehaviour
         }
 
         isRefreshing = true; // Mark as running
-        Debug.Log($"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}");
+        Debug.Log(
+            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectid = {subjectId}"
+        );
 
-        if (studentId <= 0 || lessonId <= 0)
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
-            Debug.LogError($"Invalid parameters: studentId={studentId}, lessonId={lessonId}");
+            Debug.LogError(
+                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            );
             isRefreshing = false; // Reset flag
             yield break;
         }
 
-        string url = $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}";
+        string url =
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
+            Debug.Log("Checking lesson completion from URL: " + url);
 
             if (www.result == UnityWebRequest.Result.Success)
             {
@@ -200,11 +224,13 @@ public class ClassicGameManager : MonoBehaviour
         }
         else
         {
-            StartCoroutine(LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            ));
+            StartCoroutine(
+                LoadQuestionData(
+                    LessonsLoader.subjectId,
+                    int.Parse(LessonsLoader.moduleNumber),
+                    LessonUI.lesson_id
+                )
+            );
         }
     }
 
@@ -313,11 +339,21 @@ public class ClassicGameManager : MonoBehaviour
 
     private void LoadValidWords()
     {
-        string path = System.IO.Path.Combine(
-            Application.streamingAssetsPath,
-            "classic_questions.json"
-        );
-        StartCoroutine(LoadWordsFromJson(path));
+        // Insert valid words into the Trie
+        foreach (var question in defaultQuestionData.questions)
+        {
+            wordTrie.Insert(question.answer.ToUpper());
+        }
+
+        if (questionData != null && questionData.questions != null)
+        {
+            foreach (var question in questionData.questions)
+            {
+                wordTrie.Insert(question.answer.ToUpper());
+            }
+        }
+
+        Debug.Log("Valid words loaded into Trie.");
     }
 
     private IEnumerator LoadWordsFromJson(string path)
@@ -357,8 +393,9 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId}, {lessonId} from loadlessondata");
         Debug.Log(int.Parse(LessonsLoader.moduleNumber));
-        
-        string url = $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+
+        string url =
+            $"{Web.BaseApiUrl}getClassicQuestions.php?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -400,7 +437,11 @@ public class ClassicGameManager : MonoBehaviour
             }
         }
 
-        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+        if (
+            questionData == null
+            || questionData.questions == null
+            || questionData.questions.Count == 0
+        )
         {
             Debug.LogWarning("No questions available. Using default questions.");
             questionData = defaultQuestionData;
@@ -424,11 +465,12 @@ public class ClassicGameManager : MonoBehaviour
 
         KeyboardQuestion currentQuestion = questionData.questions[currentQuestionIndex];
         questionText.text = currentQuestion.questionText;
-        currentAnswer = currentQuestion.answer.ToUpper();
+        currentAnswer = currentQuestion.answer.ToUpper().Trim(); // Ensure answer is uppercase and trimmed
         StartCoroutine(LoadQuestionImage(currentQuestion.imagePath));
 
         Debug.Log($"Current Question Index: {currentQuestionIndex}");
         Debug.Log($"Total Questions: {questionData.questions.Count}");
+        Debug.Log($"Current Answer: {currentAnswer}");
 
         ResetQuestion();
         gameStatus = GameStatus.Playing;
@@ -479,15 +521,17 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetQuestion()
     {
+        // Reset all answerWordArray elements to inactive
         for (int i = 0; i < answerWordArray.Length; i++)
         {
-            answerWordArray[i].gameObject.SetActive(true);
-            answerWordArray[i].SetChar('_');
+            answerWordArray[i].gameObject.SetActive(false);
+            answerWordArray[i].SetChar('_'); // Reset charValue to '_'
         }
 
-        for (int i = currentAnswer.Length; i < answerWordArray.Length; i++)
+        // Activate only the required number of elements based on currentAnswer length
+        for (int i = 0; i < currentAnswer.Length; i++)
         {
-            answerWordArray[i].gameObject.SetActive(false);
+            answerWordArray[i].gameObject.SetActive(true);
         }
 
         foreach (Button button in keyboardButtons)
@@ -501,7 +545,7 @@ public class ClassicGameManager : MonoBehaviour
         if (gameStatus == GameStatus.Next || currentAnswerIndex >= currentAnswer.Length)
             return;
 
-        string keyPressed = keyButton.GetComponentInChildren<Text>().text;
+        string keyPressed = keyButton.GetComponentInChildren<Text>().text.ToUpper(); // Convert input to uppercase
         selectedKeyIndex.Add(System.Array.IndexOf(keyboardButtons, keyButton));
 
         answerWordArray[currentAnswerIndex].SetChar(keyPressed[0]);
@@ -527,20 +571,15 @@ public class ClassicGameManager : MonoBehaviour
 
     private void CheckAnswer()
     {
-        bool isCharacterMatch = true;
+        // Form the user input from the answerWordArray
+        string userInput = string.Join("", answerWordArray.Take(currentAnswer.Length).Select(a => a.charValue)).Trim().ToUpper();
+        string expectedAnswer = currentAnswer.Trim().ToUpper();
 
-        for (int i = 0; i < currentAnswer.Length; i++)
-        {
-            if (char.ToUpper(currentAnswer[i]) != char.ToUpper(answerWordArray[i].charValue))
-            {
-                isCharacterMatch = false;
-                break;
-            }
-        }
+        Debug.Log($"Expected Answer: {expectedAnswer}");
+        Debug.Log($"User Input: {userInput}");
 
-        bool isValidWord = wordTrie.Search(currentAnswer.ToUpper());
-
-        if (isCharacterMatch && isValidWord)
+        // Compare user input with the expected answer
+        if (userInput == expectedAnswer)
         {
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
@@ -550,7 +589,7 @@ public class ClassicGameManager : MonoBehaviour
 
             if (currentQuestionIndex < questionData.questions.Count)
             {
-                Invoke("SetQuestion", 0.5f);
+                Invoke(nameof(SetQuestion), 0.5f);
             }
             else
             {
@@ -560,14 +599,20 @@ public class ClassicGameManager : MonoBehaviour
         else
         {
             Debug.Log("Incorrect Answer!");
-            for (int i = 0; i < currentAnswerIndex; i++)
-            {
-                answerWordArray[i].SetChar('_');
-            }
-
-            currentAnswerIndex = 0;
-            selectedKeyIndex.Clear();
+            ResetCurrentInput();
         }
+    }
+
+    private void ResetCurrentInput()
+    {
+        // Reset the current input in the answerWordArray
+        for (int i = 0; i < currentAnswerIndex; i++)
+        {
+            answerWordArray[i].SetChar('_');
+        }
+
+        currentAnswerIndex = 0;
+        selectedKeyIndex.Clear();
     }
 
     public void LoadQuestionsOnButtonClick()
