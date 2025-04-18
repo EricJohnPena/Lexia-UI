@@ -241,7 +241,8 @@ public class ClassicGameManager : MonoBehaviour
         int studentId,
         int lessonId,
         int gameModeId,
-        int subjectId
+        int subjectId,
+        float solveTime
     )
     {
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
@@ -250,6 +251,7 @@ public class ClassicGameManager : MonoBehaviour
         form.AddField("lesson_id", lessonId);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
+        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, form))
         {
@@ -270,6 +272,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         Debug.Log("Lesson is already completed.");
         questionText.text = "Lesson Completed!";
+        timerManager?.StopTimer(); // Stop the timer when the lesson is completed
         gameOver.SetActive(true);
     }
 
@@ -285,6 +288,7 @@ public class ClassicGameManager : MonoBehaviour
         {
             Debug.Log("Lesson is already completed.");
             questionText.text = "Lesson Completed!";
+            timerManager?.StopTimer();
             gameOver.SetActive(true);
             return; // Exit early to prevent further execution
         }
@@ -365,6 +369,7 @@ public class ClassicGameManager : MonoBehaviour
 
         if (gameOver != null)
         {
+
             gameOver.SetActive(false);
         }
     }
@@ -490,6 +495,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         if (currentQuestionIndex >= questionData.questions.Count)
         {
+            timerManager?.StopTimer(); // Stop the timer when the game ends
             gameOver.SetActive(true);
             Debug.Log("No more questions available.");
             return;
@@ -633,14 +639,16 @@ public class ClassicGameManager : MonoBehaviour
             }
             else
             {
+                timerManager?.StopTimer();
                 gameOver.SetActive(true);
                 int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
                 int lessonId = LessonUI.lesson_id;
                 int gameModeId = 1; // Assuming 1 is the ID for Classic mode
                 int subjectId = LessonsLoader.subjectId;
+                float solveTime = timerManager?.elapsedTime ?? 0;
 
                 StartCoroutine(
-                    UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId)
+                    UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
                 );
             }
         }

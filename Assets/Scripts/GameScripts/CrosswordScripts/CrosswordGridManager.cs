@@ -53,6 +53,7 @@ public class CrosswordGridManager : MonoBehaviour
         {
             Debug.LogError("Word clues in level data are null or empty!");
         }
+
         // Initialize the Trie and insert words
         wordTrie = new Trie();
         foreach (var placement in currentLevel.fixedLayout)
@@ -78,14 +79,7 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
         }
 
-        StartCoroutine(
-            LoadCrosswordData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
-        );
-        RefreshCrosswordData();
+        // Do not load crossword data here; it will be loaded after checking lesson completion
     }
 
     void OnEnable()
@@ -196,7 +190,13 @@ public class CrosswordGridManager : MonoBehaviour
         }
         else
         {
-            RefreshCrosswordData();
+            StartCoroutine(
+                LoadCrosswordData(
+                    LessonsLoader.subjectId,
+                    int.Parse(LessonsLoader.moduleNumber),
+                    LessonUI.lesson_id
+                )
+            );
         }
     }
 
@@ -207,17 +207,6 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.Log("Lesson is already completed.");
             currentClueText.text = "Lesson Completed!";
             gameOver.SetActive(true);
-        }
-        else
-        {
-            Debug.Log("Lesson not completed. Loading crossword data...");
-            StartCoroutine(
-                LoadCrosswordData(
-                    LessonsLoader.subjectId,
-                    int.Parse(LessonsLoader.moduleNumber),
-                    LessonUI.lesson_id
-                )
-            );
         }
     }
 
@@ -264,6 +253,12 @@ public class CrosswordGridManager : MonoBehaviour
 
     private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
     {
+        if (isLessonCompleted)
+        {
+            Debug.Log("Game is already completed. Skipping question loading.");
+            yield break; // Exit the coroutine if the game is completed
+        }
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching crossword data from URL: " + url);
 
@@ -301,11 +296,12 @@ public class CrosswordGridManager : MonoBehaviour
                         wordTrie.Insert(placement.word.ToUpper());
                     }
 
-                    if (currentLevel != null && currentLevel.fixedLayout.Count > 0)
+                    if (currentLevel.fixedLayout.Count > 0)
                     {
-                        timerManager?.StartTimer(); // Start the timer when crossword data is loaded
-                        GenerateGrid();
+                        timerManager?.StartTimer(); // Start the timer only if the lesson is not completed
                     }
+
+                    GenerateGrid();
                     AssignWordNumbers();
                     PlaceWords(currentLevel.fixedLayout);
                     DisplayClues(currentLevel.wordClues);
@@ -597,12 +593,19 @@ public class CrosswordGridManager : MonoBehaviour
             int lessonId = LessonUI.lesson_id;
             int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
             int subjectId = LessonsLoader.subjectId;
+            float solveTime = timerManager?.elapsedTime ?? 0;
 
-            StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId));
+            StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime));
         }
     }
 
-    private IEnumerator UpdateGameCompletionStatus(int studentId, int lessonId, int gameModeId, int subjectId)
+    private IEnumerator UpdateGameCompletionStatus(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
     {
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
         WWWForm form = new WWWForm();
@@ -610,6 +613,7 @@ public class CrosswordGridManager : MonoBehaviour
         form.AddField("lesson_id", lessonId);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
+        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, form))
         {
@@ -618,6 +622,7 @@ public class CrosswordGridManager : MonoBehaviour
             if (www.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log("Game completion status updated successfully.");
+                timerManager?.StopTimer(); // Stop the timer when the game is completed
             }
             else
             {

@@ -163,7 +163,8 @@ public class JumbledLettersManager : MonoBehaviour
         int studentId,
         int lessonId,
         int gameModeId,
-        int subjectId
+        int subjectId,
+        float solveTime
     )
     {
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
@@ -172,6 +173,7 @@ public class JumbledLettersManager : MonoBehaviour
         form.AddField("lesson_id", lessonId);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
+        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, form))
         {
@@ -194,20 +196,15 @@ public class JumbledLettersManager : MonoBehaviour
         {
             Debug.Log("Lesson is already completed.");
             questionText.text = "Lesson Completed!";
+            timerManager?.StopTimer();
             gameOver.SetActive(true);
-
-            // int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-            // int lessonId = LessonUI.lesson_id;
-            // int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
-            // int subjectId = LessonsLoader.subjectId;
-
-            // StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId));
         }
         else
         {
             Debug.Log("Lesson not completed. Loading lesson data...");
             RefreshJumbledLettersData();
         }
+        timerManager?.StopTimer(); // Stop the timer when lesson state is handled
     }
 
     public void RefreshJumbledLettersData()
@@ -274,6 +271,7 @@ public class JumbledLettersManager : MonoBehaviour
                     )
                     {
                         Debug.LogWarning("No Jumbled Letters data received from the server.");
+                        timerManager?.StopTimer();
                         gameOver.SetActive(true);
                         yield break;
                     }
@@ -292,12 +290,14 @@ public class JumbledLettersManager : MonoBehaviour
                 catch (System.Exception e)
                 {
                     Debug.LogError("Error parsing JSON: " + e.Message);
+                    timerManager?.StopTimer();
                     gameOver.SetActive(true);
                 }
             }
             else
             {
                 Debug.LogError("Failed to fetch Jumbled Letters data: " + www.error);
+                timerManager?.StopTimer();
                 gameOver.SetActive(true);
             }
         }
@@ -307,6 +307,7 @@ public class JumbledLettersManager : MonoBehaviour
     {
         if (currentQuestionIndex >= questionData.questions.Count)
         {
+            timerManager?.StopTimer();
             gameOver.SetActive(true);
             return;
         }
@@ -376,10 +377,12 @@ public class JumbledLettersManager : MonoBehaviour
                     int lessonId = LessonUI.lesson_id;
                     int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
                     int subjectId = LessonsLoader.subjectId;
+                    float solveTime = timerManager?.elapsedTime ?? 0;
 
                     StartCoroutine(
-                        UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId)
+                        UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
                     );
+                    timerManager?.StopTimer();
                     gameOver.SetActive(true);
                 }
             }

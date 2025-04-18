@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class TimerManager : MonoBehaviour
 {
     public Text timerText; // Assign the Text UI element in the Inspector
-    private float elapsedTime;
+    public float elapsedTime;
     private bool isRunning;
 
     void Update()
