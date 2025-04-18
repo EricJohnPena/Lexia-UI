@@ -29,6 +29,8 @@ public class ClassicGameManager : MonoBehaviour
     [SerializeField]
     private Button backspaceButton;
 
+    public TimerManager timerManager; // Assign in the Inspector
+
     private KeyboardQuestionList defaultQuestionData = new KeyboardQuestionList
     {
         questions = new List<KeyboardQuestion>
@@ -476,7 +478,11 @@ public class ClassicGameManager : MonoBehaviour
             questionData = defaultQuestionData;
         }
 
-        SetQuestion();
+        if (questionData != null && questionData.questions.Count > 0)
+        {
+            timerManager?.StartTimer(); // Start the timer when questions are loaded
+            SetQuestion();
+        }
         isRefreshing = false; // Mark refresh as complete
     }
 

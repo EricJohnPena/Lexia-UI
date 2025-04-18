@@ -22,6 +22,8 @@ public class JumbledLettersManager : MonoBehaviour
     [SerializeField]
     private WordData[] optionWordArray;
 
+    public TimerManager timerManager; // Assign in the Inspector
+
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
@@ -281,7 +283,11 @@ public class JumbledLettersManager : MonoBehaviour
                         wordTrie.Insert(question.answer.ToUpper());
                     }
 
-                    SetQuestion();
+                    if (questionData != null && questionData.questions.Count > 0)
+                    {
+                        timerManager?.StartTimer(); // Start the timer when questions are loaded
+                        SetQuestion();
+                    }
                 }
                 catch (System.Exception e)
                 {

@@ -29,6 +29,7 @@ public class CrosswordGridManager : MonoBehaviour
     private bool isLessonCompleted = false;
     private bool isRefreshing = false;
     public GameObject gameOver;
+    public TimerManager timerManager; // Assign in the Inspector
 
     void Start()
     {
@@ -300,7 +301,11 @@ public class CrosswordGridManager : MonoBehaviour
                         wordTrie.Insert(placement.word.ToUpper());
                     }
 
-                    GenerateGrid();
+                    if (currentLevel != null && currentLevel.fixedLayout.Count > 0)
+                    {
+                        timerManager?.StartTimer(); // Start the timer when crossword data is loaded
+                        GenerateGrid();
+                    }
                     AssignWordNumbers();
                     PlaceWords(currentLevel.fixedLayout);
                     DisplayClues(currentLevel.wordClues);
