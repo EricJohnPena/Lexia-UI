@@ -29,6 +29,11 @@ public class ClassicGameManager : MonoBehaviour
     [SerializeField]
     private Button backspaceButton;
 
+    [SerializeField]
+    private Button passButton; // Assign the Pass button in the Inspector
+
+    private List<int> skippedQuestions = new List<int>(); // Track skipped questions
+
     public TimerManager timerManager; // Assign in the Inspector
 
     private KeyboardQuestionList defaultQuestionData = new KeyboardQuestionList
@@ -62,6 +67,8 @@ public class ClassicGameManager : MonoBehaviour
     private bool isLessonCheckCompleted = false; // New flag to track lesson completion check
     private string apiUrl = $"{Web.BaseApiUrl}getClassicQuestions.php"; // Define API URL for fetching questions
 
+    private HashSet<int> correctlyAnsweredQuestions = new HashSet<int>(); // Track correctly answered questions
+
     private void Awake()
     {
         if (instance == null)
@@ -81,8 +88,10 @@ public class ClassicGameManager : MonoBehaviour
 
         SetupKeyboardListeners();
 
-        // Remove LoadQuestionData from Awake
-        // Questions will only be fetched after lesson completion check
+        if (passButton != null)
+        {
+            passButton.onClick.AddListener(PassQuestion);
+        }
     }
 
     void OnEnable()
@@ -630,26 +639,29 @@ public class ClassicGameManager : MonoBehaviour
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
 
-            // Increment question index only after a correct answer
-            currentQuestionIndex++;
+            // Mark the current question as correctly answered
+            correctlyAnsweredQuestions.Add(currentQuestionIndex);
 
-            if (currentQuestionIndex < questionData.questions.Count)
+            // Remove the question from the skipped list if it was skipped earlier
+            skippedQuestions.Remove(currentQuestionIndex);
+
+            // Check if the game is complete
+            if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
             {
-                Invoke(nameof(SetQuestion), 0.5f);
+                CheckGameCompletion(); // Complete the game immediately
+            }
+            else if (skippedQuestions.Count > 0)
+            {
+                HandleSkippedQuestions(); // Revisit skipped questions
             }
             else
             {
-                timerManager?.StopTimer();
-                gameOver.SetActive(true);
-                int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-                int lessonId = LessonUI.lesson_id;
-                int gameModeId = 1; // Assuming 1 is the ID for Classic mode
-                int subjectId = LessonsLoader.subjectId;
-                float solveTime = timerManager?.elapsedTime ?? 0;
-
-                StartCoroutine(
-                    UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
-                );
+                // Move to the next question if no skipped questions remain
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questionData.questions.Count)
+                {
+                    Invoke(nameof(SetQuestion), 0.5f);
+                }
             }
         }
         else
@@ -669,6 +681,71 @@ public class ClassicGameManager : MonoBehaviour
 
         currentAnswerIndex = 0;
         selectedKeyIndex.Clear();
+    }
+
+    private void PassQuestion()
+    {
+        if (currentQuestionIndex < questionData.questions.Count)
+        {
+            Debug.Log($"Question {currentQuestionIndex} skipped.");
+
+            // Ensure the current question is added to the skipped list only once
+            if (!skippedQuestions.Contains(currentQuestionIndex) && 
+                !correctlyAnsweredQuestions.Contains(currentQuestionIndex))
+            {
+                skippedQuestions.Add(currentQuestionIndex);
+            }
+
+            // Move to the next question
+            currentQuestionIndex++;
+
+            // Check if there are more questions to display
+            if (currentQuestionIndex < questionData.questions.Count)
+            {
+                SetQuestion();
+            }
+            else
+            {
+                HandleSkippedQuestions(); // Handle skipped questions if all questions are traversed
+            }
+        }
+    }
+
+    private void HandleSkippedQuestions()
+    {
+        if (skippedQuestions.Count > 0)
+        {
+            Debug.Log("Revisiting skipped questions...");
+
+            // Retrieve the first skipped question and remove it from the list
+            currentQuestionIndex = skippedQuestions[0];
+            skippedQuestions.RemoveAt(0);
+
+            // Set the question for the skipped index
+            SetQuestion();
+        }
+        else if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
+        {
+            CheckGameCompletion(); // Complete the game if all questions are answered correctly
+        }
+    }
+
+    private void CheckGameCompletion()
+    {
+        Debug.Log("All questions answered correctly. Game over.");
+        timerManager?.StopTimer();
+        gameOver.SetActive(true);
+
+        // Update game completion status
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int lessonId = LessonUI.lesson_id;
+        int gameModeId = 1; // Assuming 1 is the ID for Classic mode
+        int subjectId = LessonsLoader.subjectId;
+        float solveTime = timerManager?.elapsedTime ?? 0;
+
+        StartCoroutine(
+            UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
+        );
     }
 
     public void LoadQuestionsOnButtonClick()

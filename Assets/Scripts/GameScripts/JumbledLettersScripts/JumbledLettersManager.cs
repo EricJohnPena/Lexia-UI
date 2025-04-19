@@ -24,6 +24,10 @@ public class JumbledLettersManager : MonoBehaviour
 
     public TimerManager timerManager; // Assign in the Inspector
 
+    [SerializeField]
+    private Button passButton; // Assign the Pass button in the Inspector
+    private List<int> skippedQuestions = new List<int>(); // Track skipped questions
+
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
@@ -36,6 +40,8 @@ public class JumbledLettersManager : MonoBehaviour
     private bool isLessonCompleted = false;
     private bool isRefreshing = false;
 
+    private HashSet<int> correctlyAnsweredQuestions = new HashSet<int>(); // Track correctly answered questions
+
     private void Awake()
     {
         if (instance == null)
@@ -45,6 +51,11 @@ public class JumbledLettersManager : MonoBehaviour
 
         selectedWordIndex = new List<int>();
         wordTrie = new Trie();
+
+        if (passButton != null)
+        {
+            passButton.onClick.AddListener(PassQuestion);
+        }
     }
 
     void OnEnable()
@@ -226,6 +237,8 @@ public class JumbledLettersManager : MonoBehaviour
         currentQuestionIndex = 0;
         currentAnswerIndex = 0;
         selectedWordIndex.Clear();
+        skippedQuestions.Clear(); // Clear skipped questions
+        correctlyAnsweredQuestions.Clear(); // Clear correctly answered questions
         gameStatus = GameStatus.Playing;
 
         if (questionText != null)
@@ -307,8 +320,7 @@ public class JumbledLettersManager : MonoBehaviour
     {
         if (currentQuestionIndex >= questionData.questions.Count)
         {
-            timerManager?.StopTimer();
-            gameOver.SetActive(true);
+            HandleSkippedQuestions(); // Handle skipped questions if all questions are traversed
             return;
         }
 
@@ -331,7 +343,7 @@ public class JumbledLettersManager : MonoBehaviour
             charArray[i] = (char)UnityEngine.Random.Range(65, 91); // Random uppercase letters
         }
 
-        // Ensure the shuffle method is correctly invoked
+        // Shuffle the characters
         charArray = ShuffleList
             .ShuffleListItems(charArray.Take(optionWordArray.Length).ToList())
             .ToArray();
@@ -357,40 +369,40 @@ public class JumbledLettersManager : MonoBehaviour
 
         if (currentAnswerIndex == answerWord.Length)
         {
-            string formedWord = "";
-            for (int i = 0; i < currentAnswerIndex; i++)
-            {
-                formedWord += answerWordArray[i].charValue;
-            }
+            CheckAnswer();
+        }
+    }
 
-            if (wordTrie.Search(formedWord.ToUpper()))
-            {
-                Debug.Log("Answer correct!");
-                gameStatus = GameStatus.Next;
-                if (currentQuestionIndex < questionData.questions.Count)
-                {
-                    Invoke("SetQuestion", 0.5f);
-                }
-                else
-                {
-                    int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-                    int lessonId = LessonUI.lesson_id;
-                    int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
-                    int subjectId = LessonsLoader.subjectId;
-                    float solveTime = timerManager?.elapsedTime ?? 0;
+    private void CheckAnswer()
+    {
+        string formedWord = string.Join("", answerWordArray.Take(currentAnswerIndex).Select(a => a.charValue)).ToUpper();
 
-                    StartCoroutine(
-                        UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
-                    );
-                    timerManager?.StopTimer();
-                    gameOver.SetActive(true);
-                }
+        if (wordTrie.Search(formedWord))
+        {
+            Debug.Log("Answer correct!");
+            gameStatus = GameStatus.Next;
+
+            // Mark the current question as correctly answered
+            correctlyAnsweredQuestions.Add(currentQuestionIndex - 1);
+
+            // Remove the question from the skipped list if it was skipped earlier
+            skippedQuestions.Remove(currentQuestionIndex - 1);
+
+            // Check if the game is complete
+            if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
+            {
+                CheckGameCompletion(); // Complete the game immediately
             }
             else
             {
-                Debug.Log("Answer incorrect!");
-                ResetCurrentInput();
+                Debug.Log("Moving to the next unanswered or skipped question...");
+                HandleSkippedQuestions(); // Continue to the next unanswered or skipped question
             }
+        }
+        else
+        {
+            Debug.Log("Answer incorrect!");
+            ResetCurrentInput();
         }
     }
 
@@ -478,6 +490,95 @@ public class JumbledLettersManager : MonoBehaviour
         currentAnswerIndex--;
 
         Debug.Log("Letter cleared successfully.");
+    }
+
+    private void PassQuestion()
+    {
+        // Ensure the current question index is within bounds
+        if (currentQuestionIndex < questionData.questions.Count)
+        {
+            Debug.Log($"Question {currentQuestionIndex} skipped.");
+
+            // Add the current question to the skipped list if not already answered or skipped
+            if (!skippedQuestions.Contains(currentQuestionIndex) && 
+                !correctlyAnsweredQuestions.Contains(currentQuestionIndex))
+            {
+                skippedQuestions.Add(currentQuestionIndex);
+            }
+
+            // Move to the next question
+            currentQuestionIndex++;
+
+            // Check if there are more questions to display
+            if (currentQuestionIndex < questionData.questions.Count)
+            {
+                SetQuestion();
+            }
+            else
+            {
+                Debug.Log("No more questions to display. Looping back to skipped questions...");
+                HandleSkippedQuestions(); // Handle skipped questions if all questions are traversed
+            }
+        }
+        else
+        {
+            Debug.Log("Looping back to skipped questions...");
+            HandleSkippedQuestions(); // Handle skipped questions if already at the end
+        }
+    }
+
+    private void HandleSkippedQuestions()
+    {
+        if (skippedQuestions.Count > 0)
+        {
+            Debug.Log($"Revisiting skipped questions. Remaining: {skippedQuestions.Count}");
+
+            // Retrieve the first skipped question and remove it from the list
+            currentQuestionIndex = skippedQuestions[0];
+            skippedQuestions.RemoveAt(0);
+
+            // Set the question for the skipped index
+            SetQuestion();
+        }
+        else if (correctlyAnsweredQuestions.Count < questionData.questions.Count)
+        {
+            Debug.Log("No more skipped questions. Looping to unanswered questions...");
+            // Find the next unanswered question
+            for (int i = 0; i < questionData.questions.Count; i++)
+            {
+                if (!correctlyAnsweredQuestions.Contains(i))
+                {
+                    currentQuestionIndex = i;
+                    SetQuestion();
+                    return;
+                }
+            }
+
+            Debug.Log("No more questions to revisit. Game over.");
+        }
+        else
+        {
+            Debug.Log("All questions answered correctly. Completing the game...");
+            CheckGameCompletion();
+        }
+    }
+
+    private void CheckGameCompletion()
+    {
+        Debug.Log("All questions answered correctly. Game over.");
+        timerManager?.StopTimer();
+        gameOver.SetActive(true);
+
+        // Update game completion status
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int lessonId = LessonUI.lesson_id;
+        int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+        int subjectId = LessonsLoader.subjectId;
+        float solveTime = timerManager?.elapsedTime ?? 0;
+
+        StartCoroutine(
+            UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
+        );
     }
 
     private void ResetCurrentInput()
