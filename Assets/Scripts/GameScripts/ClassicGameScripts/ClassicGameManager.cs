@@ -628,10 +628,8 @@ public class ClassicGameManager : MonoBehaviour
         answerWordArray[currentAnswerIndex].SetChar(keyPressed[0]);
         currentAnswerIndex++;
 
-        if (currentAnswerIndex == currentAnswer.Length)
-        {
-            CheckAnswer();
-        }
+        // Check if the answer is complete
+        CheckIfAnswerComplete();
     }
 
     private void ResetLastWord()
@@ -661,7 +659,7 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log($"User Input: {userInput}");
 
         // Compare user input with the expected answer
-        if (userInput == expectedAnswer)
+        if (userInput.Equals(expectedAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
@@ -822,6 +820,9 @@ public class ClassicGameManager : MonoBehaviour
             hintCounter--;
             UpdateHintCounterUI();
             Debug.Log($"Hint revealed at index {randomIndex}: {currentAnswer[randomIndex]}");
+
+            // Check if the answer is complete
+            CheckIfAnswerComplete();
         }
         else
         {
@@ -834,6 +835,18 @@ public class ClassicGameManager : MonoBehaviour
         if (hintCounterText != null)
         {
             hintCounterText.text = $"Hints Remaining: {hintCounter}";
+        }
+    }
+
+    private void CheckIfAnswerComplete()
+    {
+        // Count the number of non-empty characters in the answerWordArray
+        int filledCount = answerWordArray.Count(a => a.charValue != '_');
+
+        // If the number of filled characters matches the answer length, check the answer
+        if (filledCount == currentAnswer.Length)
+        {
+            CheckAnswer();
         }
     }
 

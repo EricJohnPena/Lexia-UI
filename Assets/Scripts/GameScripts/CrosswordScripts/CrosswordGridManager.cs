@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using System.Linq;
 
 public class CrosswordGridManager : MonoBehaviour
 {
@@ -526,18 +527,16 @@ public class CrosswordGridManager : MonoBehaviour
 
     void CheckWord()
     {
-        string enteredWord = "";
-        var cells = GetCurrentWordCells();
+        string enteredWord = string.Join("", GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())).ToUpper();
+        string expectedWord = currentWord.word.ToUpper();
 
-        foreach (var cell in cells)
-        {
-            enteredWord += cell.GetCurrentLetter();
-        }
+        Debug.Log($"Expected Word: {expectedWord}");
+        Debug.Log($"Entered Word: {enteredWord}");
 
-        if (wordTrie.Search(enteredWord.ToUpper()))
+        if (enteredWord.Equals(expectedWord, System.StringComparison.OrdinalIgnoreCase))
         {
             // Word is correct - lock it in
-            foreach (var cell in cells)
+            foreach (var cell in GetCurrentWordCells())
             {
                 cell.LockCell();
             }
@@ -548,14 +547,14 @@ public class CrosswordGridManager : MonoBehaviour
         else
         {
             // Word is incorrect - flash cells red
-            foreach (var cell in cells)
+            foreach (var cell in GetCurrentWordCells())
             {
                 cell.FlashRed(0.5f);
                 cell.SetInputLetter(' ');
             }
 
             // Return to first cell of word
-            SelectCell(cells[0]);
+            SelectCell(GetCurrentWordCells().First());
         }
     }
 

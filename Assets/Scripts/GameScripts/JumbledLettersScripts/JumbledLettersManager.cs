@@ -371,6 +371,18 @@ public class JumbledLettersManager : MonoBehaviour
         gameStatus = GameStatus.Playing;
     }
 
+    private void CheckIfAnswerComplete()
+    {
+        // Count the number of non-empty characters in the answerWordArray
+        int filledCount = answerWordArray.Count(a => a.charValue != '_');
+
+        // If the number of filled characters matches the answer length, check the answer
+        if (filledCount == answerWord.Length)
+        {
+            CheckAnswer();
+        }
+    }
+
     public void SelectedOption(WordData wordData)
     {
         if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length)
@@ -393,17 +405,19 @@ public class JumbledLettersManager : MonoBehaviour
         answerWordArray[currentAnswerIndex].SetChar(wordData.charValue);
         currentAnswerIndex++;
 
-        if (currentAnswerIndex == answerWord.Length)
-        {
-            CheckAnswer();
-        }
+        // Check if the answer is complete
+        CheckIfAnswerComplete();
     }
 
     private void CheckAnswer()
     {
-        string formedWord = string.Join("", answerWordArray.Take(currentAnswerIndex).Select(a => a.charValue)).ToUpper();
+        string formedWord = string.Join("", answerWordArray.Take(answerWord.Length).Select(a => a.charValue)).ToUpper();
+        string expectedAnswer = answerWord.ToUpper();
 
-        if (wordTrie.Search(formedWord))
+        Debug.Log($"Expected Answer: {expectedAnswer}");
+        Debug.Log($"Formed Word: {formedWord}");
+
+        if (formedWord.Equals(expectedAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
             Debug.Log("Answer correct!");
             gameStatus = GameStatus.Next;
@@ -664,6 +678,9 @@ public class JumbledLettersManager : MonoBehaviour
             hintCounter--;
             UpdateHintCounterUI();
             Debug.Log($"Hint revealed at index {randomIndex}: {answerWord[randomIndex]}");
+
+            // Check if the answer is complete
+            CheckIfAnswerComplete();
         }
         else
         {
