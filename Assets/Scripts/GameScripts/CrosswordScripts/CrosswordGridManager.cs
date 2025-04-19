@@ -521,7 +521,12 @@ public class CrosswordGridManager : MonoBehaviour
         if (selectedCell != null)
         {
             selectedCell.SetInputLetter(' ');
-            MoveCursorToPreviousCell();
+
+            // Only move to the previous cell if the current cell is empty
+            if (selectedCell.GetCurrentLetter() == ' ')
+            {
+                MoveCursorToPreviousCell();
+            }
         }
     }
 
