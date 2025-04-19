@@ -32,6 +32,14 @@ public class ClassicGameManager : MonoBehaviour
     [SerializeField]
     private Button passButton; // Assign the Pass button in the Inspector
 
+    [SerializeField]
+    private Button hintButton; // Assign the hint button in the Inspector
+
+    [SerializeField]
+    private Text hintCounterText; // Assign the Text UI in the Inspector
+
+    private int hintCounter = 3; // Maximum number of hints allowed
+
     private List<int> skippedQuestions = new List<int>(); // Track skipped questions
 
     public TimerManager timerManager; // Assign in the Inspector
@@ -92,6 +100,13 @@ public class ClassicGameManager : MonoBehaviour
         {
             passButton.onClick.AddListener(PassQuestion);
         }
+
+        if (hintButton != null)
+        {
+            hintButton.onClick.AddListener(RevealHint);
+        }
+
+        UpdateHintCounterUI();
     }
 
     void OnEnable()
@@ -595,6 +610,18 @@ public class ClassicGameManager : MonoBehaviour
         if (gameStatus == GameStatus.Next || currentAnswerIndex >= currentAnswer.Length)
             return;
 
+        // Find the next available index that is not already answered
+        while (currentAnswerIndex < currentAnswer.Length && answerWordArray[currentAnswerIndex].charValue != '_')
+        {
+            currentAnswerIndex++;
+        }
+
+        if (currentAnswerIndex >= currentAnswer.Length)
+        {
+            Debug.Log("No available indices to place the letter.");
+            return;
+        }
+
         string keyPressed = keyButton.GetComponentInChildren<Text>().text.ToUpper(); // Convert input to uppercase
         selectedKeyIndex.Add(System.Array.IndexOf(keyboardButtons, keyButton));
 
@@ -763,6 +790,51 @@ public class ClassicGameManager : MonoBehaviour
                 LessonUI.lesson_id
             )
         );
+    }
+
+    private void RevealHint()
+    {
+        if (hintCounter <= 0)
+        {
+            Debug.Log("No hints remaining.");
+            return;
+        }
+
+        if (currentAnswerIndex >= currentAnswer.Length)
+        {
+            Debug.Log("Answer is already complete. No hint needed.");
+            return;
+        }
+
+        List<int> unrevealedIndices = new List<int>();
+        for (int i = 0; i < currentAnswer.Length; i++)
+        {
+            if (answerWordArray[i].charValue == '_')
+            {
+                unrevealedIndices.Add(i);
+            }
+        }
+
+        if (unrevealedIndices.Count > 0)
+        {
+            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
+            hintCounter--;
+            UpdateHintCounterUI();
+            Debug.Log($"Hint revealed at index {randomIndex}: {currentAnswer[randomIndex]}");
+        }
+        else
+        {
+            Debug.Log("No unrevealed letters remain.");
+        }
+    }
+
+    private void UpdateHintCounterUI()
+    {
+        if (hintCounterText != null)
+        {
+            hintCounterText.text = $"Hints Remaining: {hintCounter}";
+        }
     }
 
     [System.Serializable]

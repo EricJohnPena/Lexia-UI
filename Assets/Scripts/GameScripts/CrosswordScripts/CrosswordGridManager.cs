@@ -30,6 +30,12 @@ public class CrosswordGridManager : MonoBehaviour
     private bool isRefreshing = false;
     public GameObject gameOver;
     public TimerManager timerManager; // Assign in the Inspector
+    [SerializeField]
+    private Button hintButton; // Assign the hint button in the Inspector
+    [SerializeField]
+    private Text hintCounterText; // Assign the Text UI in the Inspector
+
+    private int hintCounter = 3; // Maximum number of hints allowed
 
     void Start()
     {
@@ -78,6 +84,13 @@ public class CrosswordGridManager : MonoBehaviour
         {
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
         }
+
+        if (hintButton != null)
+        {
+            hintButton.onClick.AddListener(RevealHint);
+        }
+
+        UpdateHintCounterUI();
 
         // Do not load crossword data here; it will be loaded after checking lesson completion
     }
@@ -415,12 +428,24 @@ public class CrosswordGridManager : MonoBehaviour
         if (selectedCell == null || currentWord == null)
             return;
 
+        // Skip cells that are already locked or have a letter
+        while (selectedCell != null && selectedCell.GetCurrentLetter() != ' ')
+        {
+            MoveCursorToNextCell();
+        }
+
+        if (selectedCell == null || selectedCell.GetCurrentLetter() != ' ')
+        {
+            Debug.Log("No available cells to place the letter.");
+            return;
+        }
+
         selectedCell.SetInputLetter(letter);
 
-        // Move to next cell in word
+        // Move to the next cell in the word
         MoveCursorToNextCell();
 
-        // Check if word is complete
+        // Check if the word is complete
         if (IsWordComplete())
         {
             CheckWord();
@@ -903,5 +928,51 @@ public class CrosswordGridManager : MonoBehaviour
         int firstRow = currentWord.startRow;
         int firstCol = currentWord.startCol;
         SelectCell(gridCells[firstRow, firstCol]);
+    }
+
+    private void RevealHint()
+    {
+        if (hintCounter <= 0)
+        {
+            Debug.Log("No hints remaining.");
+            return;
+        }
+
+        if (currentWord == null)
+        {
+            Debug.Log("No word selected. Cannot reveal a hint.");
+            return;
+        }
+
+        List<GridCell> unrevealedCells = new List<GridCell>();
+        foreach (var cell in GetCurrentWordCells())
+        {
+            if (cell.GetCurrentLetter() == ' ')
+            {
+                unrevealedCells.Add(cell);
+            }
+        }
+
+        if (unrevealedCells.Count > 0)
+        {
+            GridCell randomCell = unrevealedCells[UnityEngine.Random.Range(0, unrevealedCells.Count)];
+            int indexInWord = GetCellIndexInWord(randomCell);
+            randomCell.SetInputLetter(currentWord.word[indexInWord]);
+            hintCounter--;
+            UpdateHintCounterUI();
+            Debug.Log($"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}");
+        }
+        else
+        {
+            Debug.Log("No unrevealed letters remain in the current word.");
+        }
+    }
+
+    private void UpdateHintCounterUI()
+    {
+        if (hintCounterText != null)
+        {
+            hintCounterText.text = $"Hints Remaining: {hintCounter}";
+        }
     }
 }

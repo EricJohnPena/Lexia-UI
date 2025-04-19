@@ -28,6 +28,13 @@ public class JumbledLettersManager : MonoBehaviour
     private Button passButton; // Assign the Pass button in the Inspector
     private List<int> skippedQuestions = new List<int>(); // Track skipped questions
 
+    public Button hintButton; // Assign the hint button in the Inspector
+
+    [SerializeField]
+    private Text hintCounterText; // Assign the Text UI in the Inspector
+
+    private int hintCounter = 3; // Maximum number of hints allowed
+
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
@@ -56,6 +63,13 @@ public class JumbledLettersManager : MonoBehaviour
         {
             passButton.onClick.AddListener(PassQuestion);
         }
+
+        if (hintButton != null)
+        {
+            hintButton.onClick.AddListener(RevealHint);
+        }
+
+        UpdateHintCounterUI();
     }
 
     void OnEnable()
@@ -362,6 +376,18 @@ public class JumbledLettersManager : MonoBehaviour
         if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length)
             return;
 
+        // Find the next available index that is not already answered
+        while (currentAnswerIndex < answerWord.Length && answerWordArray[currentAnswerIndex].charValue != '_')
+        {
+            currentAnswerIndex++;
+        }
+
+        if (currentAnswerIndex >= answerWord.Length)
+        {
+            Debug.Log("No available indices to place the letter.");
+            return;
+        }
+
         selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
         wordData.gameObject.SetActive(false);
         answerWordArray[currentAnswerIndex].SetChar(wordData.charValue);
@@ -605,6 +631,51 @@ public class JumbledLettersManager : MonoBehaviour
         foreach (var word in optionWordArray)
         {
             word.gameObject.SetActive(true);
+        }
+    }
+
+    private void RevealHint()
+    {
+        if (hintCounter <= 0)
+        {
+            Debug.Log("No hints remaining.");
+            return;
+        }
+
+        if (currentAnswerIndex >= answerWord.Length)
+        {
+            Debug.Log("Answer is already complete. No hint needed.");
+            return;
+        }
+
+        List<int> unrevealedIndices = new List<int>();
+        for (int i = 0; i < answerWord.Length; i++)
+        {
+            if (answerWordArray[i].charValue == '_')
+            {
+                unrevealedIndices.Add(i);
+            }
+        }
+
+        if (unrevealedIndices.Count > 0)
+        {
+            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
+            hintCounter--;
+            UpdateHintCounterUI();
+            Debug.Log($"Hint revealed at index {randomIndex}: {answerWord[randomIndex]}");
+        }
+        else
+        {
+            Debug.Log("No unrevealed letters remain.");
+        }
+    }
+
+    private void UpdateHintCounterUI()
+    {
+        if (hintCounterText != null)
+        {
+            hintCounterText.text = $"Hints Remaining: {hintCounter}";
         }
     }
 }

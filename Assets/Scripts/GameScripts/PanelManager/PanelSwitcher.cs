@@ -5,6 +5,7 @@ public class PanelSwitcher : MonoBehaviour
 {
     public string canvasName; // Set this in the Inspector
     public Button yourButton; // Assign the button in the Inspector
+    public Button hintButton; // Assign the hint button in the Inspector
 
     void Start()
     {
@@ -13,11 +14,21 @@ public class PanelSwitcher : MonoBehaviour
         {
             yourButton.onClick.AddListener(OnButtonClick);
         }
+
+        if (hintButton != null)
+        {
+            hintButton.onClick.AddListener(RevealHint);
+        }
     }
 
     private void OnButtonClick()
     {
         MenuManager.InstanceMenu.ToLessonsPage();
+    }
+
+    private void RevealHint()
+    {
+        Debug.Log("Hint button pressed. Implement hint logic in the respective game manager.");
     }
 
     public void SwitchToGameManagerPanel()
