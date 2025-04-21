@@ -823,7 +823,10 @@ public class CrosswordGridManager : MonoBehaviour
     {
         foreach (var cell in highlightedCells)
         {
-            cell.ClearHighlight();
+            if (cell != null) // Ensure the cell is not null
+            {
+                cell.ClearHighlight();
+            }
         }
         highlightedCells.Clear();
     }

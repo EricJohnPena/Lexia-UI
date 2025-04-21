@@ -115,7 +115,7 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
 
     public void ClearHighlight()
     {
-        if (!IsLocked)
+        if (!IsLocked && cellBackground != null) // Ensure the Image component is not null
         {
             cellBackground.color = defaultColor;
         }
