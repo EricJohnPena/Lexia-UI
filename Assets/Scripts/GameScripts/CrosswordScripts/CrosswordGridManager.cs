@@ -651,12 +651,22 @@ public class CrosswordGridManager : MonoBehaviour
             if (www.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log("Game completion status updated successfully.");
-                timerManager?.StopTimer(); // Stop the timer when the game is completed
             }
             else
             {
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
+        }
+
+        // Update speed attribute
+        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        if (progressHandler != null)
+        {
+            yield return progressHandler.UpdateSpeed(studentId, lessonId, gameModeId, subjectId, solveTime);
+        }
+        else
+        {
+            Debug.LogWarning("GameProgressHandler not found.");
         }
     }
 

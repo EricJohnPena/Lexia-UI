@@ -213,6 +213,17 @@ public class JumbledLettersManager : MonoBehaviour
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
         }
+
+        // Update speed attribute
+        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        if (progressHandler != null)
+        {
+            yield return progressHandler.UpdateSpeed(studentId, lessonId, gameModeId, subjectId, solveTime);
+        }
+        else
+        {
+            Debug.LogWarning("GameProgressHandler not found.");
+        }
     }
 
     private void HandleLessonState()
