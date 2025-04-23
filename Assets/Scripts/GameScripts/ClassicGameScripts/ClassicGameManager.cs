@@ -297,7 +297,13 @@ public class ClassicGameManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateSpeed(studentId, lessonId, gameModeId, subjectId, solveTime);
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                solveTime
+            );
         }
         else
         {
@@ -406,7 +412,6 @@ public class ClassicGameManager : MonoBehaviour
 
         if (gameOver != null)
         {
-
             gameOver.SetActive(false);
         }
     }
@@ -624,7 +629,10 @@ public class ClassicGameManager : MonoBehaviour
             return;
 
         // Find the next available index that is not already answered
-        while (currentAnswerIndex < currentAnswer.Length && answerWordArray[currentAnswerIndex].charValue != '_')
+        while (
+            currentAnswerIndex < currentAnswer.Length
+            && answerWordArray[currentAnswerIndex].charValue != '_'
+        )
         {
             currentAnswerIndex++;
         }
@@ -730,8 +738,10 @@ public class ClassicGameManager : MonoBehaviour
             Debug.Log($"Question {currentQuestionIndex} skipped.");
 
             // Ensure the current question is added to the skipped list only once
-            if (!skippedQuestions.Contains(currentQuestionIndex) && 
-                !correctlyAnsweredQuestions.Contains(currentQuestionIndex))
+            if (
+                !skippedQuestions.Contains(currentQuestionIndex)
+                && !correctlyAnsweredQuestions.Contains(currentQuestionIndex)
+            )
             {
                 skippedQuestions.Add(currentQuestionIndex);
             }
@@ -799,7 +809,14 @@ public class ClassicGameManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
+            yield return progressHandler.UpdateAccuracy(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                correctAnswers,
+                totalAttempts
+            );
         }
     }
 
@@ -845,7 +862,9 @@ public class ClassicGameManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            int randomIndex = unrevealedIndices[
+                UnityEngine.Random.Range(0, unrevealedIndices.Count)
+            ];
             answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
             hintCounter--;
             UpdateHintCounterUI();

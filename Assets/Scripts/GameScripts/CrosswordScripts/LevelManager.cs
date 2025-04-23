@@ -15,7 +15,7 @@ public class LevelManager : MonoBehaviour
 
     public CrosswordLevel LoadLevel(string levelFileName)
     {
-        string filePath = Path.Combine(levelDirectory,"Levels/", levelFileName);
+        string filePath = Path.Combine(levelDirectory, "Levels/", levelFileName);
 
         // StreamingAssets behaves differently on Android; use UnityWebRequest for those cases
 #if UNITY_ANDROID
@@ -28,9 +28,6 @@ public class LevelManager : MonoBehaviour
             return JsonUtility.FromJson<CrosswordLevel>(json);
         }
 #endif
-
-        Debug.LogError("Level file not found: " + filePath);
-        return null;
     }
 
     public void SaveLevel(CrosswordLevel level, string levelFileName)
@@ -50,7 +47,10 @@ public class LevelManager : MonoBehaviour
     private CrosswordLevel LoadFromAndroid(string filePath)
     {
         // Use UnityWebRequest to access StreamingAssets on Android
-        using (UnityEngine.Networking.UnityWebRequest request = UnityEngine.Networking.UnityWebRequest.Get(filePath))
+        using (
+            UnityEngine.Networking.UnityWebRequest request =
+                UnityEngine.Networking.UnityWebRequest.Get(filePath)
+        )
         {
             request.SendWebRequest();
             while (!request.isDone)

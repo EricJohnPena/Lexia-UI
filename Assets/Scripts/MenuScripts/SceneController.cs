@@ -19,7 +19,7 @@ public class SceneController : MonoBehaviour
     public enum Scene
     {
         StartingScene,
-        GameScene
+        GameScene,
     }
 
     public void GoToStartingScene(string canvasName)
@@ -30,7 +30,11 @@ public class SceneController : MonoBehaviour
 
     public Canvas studentDashboardCanvas; // Assign this in the Inspector
 
-    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, LoadSceneMode mode, string canvasName)
+    private void OnSceneLoaded(
+        UnityEngine.SceneManagement.Scene scene,
+        LoadSceneMode mode,
+        string canvasName
+    )
     {
         if (scene.name == Scene.StartingScene.ToString())
         {

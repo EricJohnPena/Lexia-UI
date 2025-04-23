@@ -1,23 +1,26 @@
 // GridCell.cs
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using System;
 using System.Collections;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class GridCell : MonoBehaviour, IPointerClickHandler
 {
     public int Row { get; private set; }
     public int Col { get; private set; }
-    
-    [SerializeField] private Text letterText;
-    [SerializeField] private Text numberText;
+
+    [SerializeField]
+    private Text letterText;
+
+    [SerializeField]
+    private Text numberText;
     private Image cellBackground;
     private char correctLetter = ' ';
     public bool IsLocked { get; private set; }
-    
+
     public event Action<GridCell> OnCellClicked;
-    
+
     private Color defaultColor = Color.white;
     private Color highlightColor = new Color(0.8f, 0.9f, 1f);
     private Color lockedColor = new Color(0.9f, 0.9f, 0.9f);
@@ -29,10 +32,12 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
     {
         cellBackground = GetComponent<Image>();
         animator = GetComponent<Animator>();
-        
-        if (letterText == null) letterText = transform.Find("LetterText")?.GetComponent<Text>();
-        if (numberText == null) numberText = transform.Find("NumberText")?.GetComponent<Text>();
-        
+
+        if (letterText == null)
+            letterText = transform.Find("LetterText")?.GetComponent<Text>();
+        if (numberText == null)
+            numberText = transform.Find("NumberText")?.GetComponent<Text>();
+
         if (letterText == null || numberText == null)
         {
             Debug.LogError("Missing required Text components on GridCell!");

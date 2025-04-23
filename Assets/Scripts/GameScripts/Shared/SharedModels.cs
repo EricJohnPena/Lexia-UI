@@ -17,7 +17,7 @@ public class QuestionsContainer
 public enum GameStatus
 {
     Playing,
-    Next
+    Next,
 }
 
 [System.Serializable]

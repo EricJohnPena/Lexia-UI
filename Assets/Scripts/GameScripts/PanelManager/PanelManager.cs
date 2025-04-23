@@ -6,7 +6,7 @@ public enum GamePanel
     ClassicGamePanel,
     JumbledLettersGamePanel,
     CrosswordGamePanel,
-    GameComplete
+    GameComplete,
 }
 
 public class PanelManager : MonoBehaviour
@@ -20,6 +20,9 @@ public class PanelManager : MonoBehaviour
     // Array of panel game objects
     [SerializeField]
     private GameObject[] panels; // Ensure these are assigned in the Unity Editor in order of GamePanel enum
+
+    [SerializeField]
+    private GameObject gameOver;
 
     private void Awake()
     {
@@ -140,18 +143,29 @@ public class PanelManager : MonoBehaviour
             case GamePanel.ClassicGamePanel:
                 Debug.Log("Reloading questions for Classic Game Panel...");
                 ClassicGameManager.instance.LoadQuestionsOnButtonClick();
-                //DatabaseManager.Instance.ReloadQuestionsForGameMode("Classic");
+                gameOver.SetActive(false);
                 break;
 
             case GamePanel.JumbledLettersGamePanel:
                 Debug.Log("Reloading questions for Jumbled Letters Game Panel...");
-                
-               // DatabaseManager.Instance.ReloadQuestionsForGameMode("JumbledLetters");
+                JumbledLettersManager.instance.LoadQuestionsOnButtonClick();
+                gameOver.SetActive(false);
                 break;
 
             case GamePanel.CrosswordGamePanel:
                 Debug.Log("Reloading questions for Crossword Game Panel...");
-               // DatabaseManager.Instance.ReloadQuestionsForGameMode("Crossword");
+                gameOver.SetActive(false);
+                CrosswordGridManager crosswordGridManager =
+                    FindObjectOfType<CrosswordGridManager>();
+                if (crosswordGridManager != null)
+                {
+                    crosswordGridManager.LoadQuestionsOnButtonClick();
+                }
+                else
+                {
+                    Debug.LogError("CrosswordGridManager instance not found!");
+                }
+
                 break;
 
             default:

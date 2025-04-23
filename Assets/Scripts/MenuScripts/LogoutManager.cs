@@ -1,7 +1,6 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-
 
 public class LogoutManager : MonoBehaviour
 {
@@ -36,8 +35,6 @@ public class LogoutManager : MonoBehaviour
         {
             radarChart.ClearRadarItems();
         }
-
-
 
         // Redirect to the login page
         if (menuManager != null)

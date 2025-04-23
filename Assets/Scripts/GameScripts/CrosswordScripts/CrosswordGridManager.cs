@@ -1,10 +1,10 @@
 // CrosswordGridManager.cs
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
-using System.Linq;
 
 public class CrosswordGridManager : MonoBehaviour
 {
@@ -31,14 +31,17 @@ public class CrosswordGridManager : MonoBehaviour
     private bool isRefreshing = false;
     public GameObject gameOver;
     public TimerManager timerManager; // Assign in the Inspector
+
     [SerializeField]
     private Button hintButton; // Assign the hint button in the Inspector
+
     [SerializeField]
     private Text hintCounterText; // Assign the Text UI in the Inspector
 
     private int hintCounter = 3; // Maximum number of hints allowed
     private int correctAnswers = 0;
     private int totalAttempts = 0;
+    internal static object instance;
 
     void Start()
     {
@@ -269,12 +272,7 @@ public class CrosswordGridManager : MonoBehaviour
 
     private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
     {
-        if (isLessonCompleted)
-        {
-            Debug.Log("Game is already completed. Skipping question loading.");
-            yield break; // Exit the coroutine if the game is completed
-        }
-
+        // Remove the condition that skips loading when the game is completed
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
         Debug.Log("Fetching crossword data from URL: " + url);
 
@@ -314,7 +312,7 @@ public class CrosswordGridManager : MonoBehaviour
 
                     if (currentLevel.fixedLayout.Count > 0)
                     {
-                        timerManager?.StartTimer(); // Start the timer only if the lesson is not completed
+                        timerManager?.StartTimer(); // Start the timer
                     }
 
                     GenerateGrid();
@@ -378,7 +376,7 @@ public class CrosswordGridManager : MonoBehaviour
     {
         if (selectedCell == null)
         {
-            Debug.Log("No selected cell.");
+            //Debug.Log("No selected cell.");
             return;
         }
         HandleKeyboardInput();
@@ -535,7 +533,11 @@ public class CrosswordGridManager : MonoBehaviour
     void CheckWord()
     {
         totalAttempts++;
-        string enteredWord = string.Join("", GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())).ToUpper();
+        string enteredWord = string.Join(
+                "",
+                GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())
+            )
+            .ToUpper();
         string expectedWord = currentWord.word.ToUpper();
 
         Debug.Log($"Expected Word: {expectedWord}");
@@ -628,7 +630,9 @@ public class CrosswordGridManager : MonoBehaviour
             int subjectId = LessonsLoader.subjectId;
             float solveTime = timerManager?.elapsedTime ?? 0;
 
-            StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime));
+            StartCoroutine(
+                UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
+            );
             StartCoroutine(UpdateAccuracy());
         }
     }
@@ -667,7 +671,13 @@ public class CrosswordGridManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateSpeed(studentId, lessonId, gameModeId, subjectId, solveTime);
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                solveTime
+            );
         }
         else
         {
@@ -685,7 +695,14 @@ public class CrosswordGridManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
+            yield return progressHandler.UpdateAccuracy(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                correctAnswers,
+                totalAttempts
+            );
         }
     }
 
@@ -991,12 +1008,16 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (unrevealedCells.Count > 0)
         {
-            GridCell randomCell = unrevealedCells[UnityEngine.Random.Range(0, unrevealedCells.Count)];
+            GridCell randomCell = unrevealedCells[
+                UnityEngine.Random.Range(0, unrevealedCells.Count)
+            ];
             int indexInWord = GetCellIndexInWord(randomCell);
             randomCell.SetInputLetter(currentWord.word[indexInWord]);
             hintCounter--;
             UpdateHintCounterUI();
-            Debug.Log($"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}");
+            Debug.Log(
+                $"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}"
+            );
         }
         else
         {
@@ -1010,5 +1031,21 @@ public class CrosswordGridManager : MonoBehaviour
         {
             hintCounterText.text = $"Hints Remaining: {hintCounter}";
         }
+    }
+
+    public void LoadQuestionsOnButtonClick()
+    {
+        // Reset the game state and reload crossword data
+        ClearGrid();
+        ResetGameState();
+
+        // Always load crossword data, regardless of lesson completion status
+        StartCoroutine(
+            LoadCrosswordData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 }

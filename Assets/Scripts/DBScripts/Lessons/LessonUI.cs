@@ -14,10 +14,15 @@ public class LessonUI : MonoBehaviour
     private string currentSubject;
     private string currentModule;
     private string currentLessonNumber;
-    private string lessonId;    // Field to store the lesson ID
+    private string lessonId; // Field to store the lesson ID
     public static int lesson_id = 1; // Default to 1 to avoid null issues
 
-    public void SetLessonData(string lessonName, string lessonNumber, string subjectName, string moduleName)
+    public void SetLessonData(
+        string lessonName,
+        string lessonNumber,
+        string subjectName,
+        string moduleName
+    )
     {
         if (isLessonDataSet)
         {
@@ -35,27 +40,28 @@ public class LessonUI : MonoBehaviour
 
         MenuManager.InstanceMenu.subjectName.text = subjectName;
 
-        Debug.Log($"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}");
+        Debug.Log(
+            $"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}"
+        );
 
         actionButton.onClick.RemoveAllListeners();
         Debug.Log("Removed all listeners from actionButton.");
-        actionButton.onClick.AddListener(() => {
+        actionButton.onClick.AddListener(() =>
+        {
             Debug.Log("Action button clicked. Starting lesson.");
             StartLesson();
         });
 
         playMenuButton.onClick.RemoveAllListeners();
         Debug.Log("Removed all listeners from playMenuButton.");
-        playMenuButton.onClick.AddListener(() => {
+        playMenuButton.onClick.AddListener(() =>
+        {
             Debug.Log($"Play button clicked. Recording lesson number: {currentLessonNumber}");
             MenuManager.InstanceMenu.ToGameScene(); // Use MenuManager for page transition
             lesson_id = int.Parse(currentLessonNumber);
             RecordLessonNumber();
-           
         });
     }
-
-    
 
     public string GetLessonId()
     {
@@ -66,13 +72,13 @@ public class LessonUI : MonoBehaviour
     {
         LessonManager.instance.SetCurrentLesson(currentLessonNumber);
         Debug.Log($"Starting lesson: {currentLessonNumber}");
-        
-
     }
 
     private void RecordLessonNumber()
     {
         // Logic to record the lesson number
-        Debug.Log($"Recorded lesson number: {currentLessonNumber} for Subject: {currentSubject}, Module: {currentModule}");
+        Debug.Log(
+            $"Recorded lesson number: {currentLessonNumber} for Subject: {currentSubject}, Module: {currentModule}"
+        );
     }
 }

@@ -3,9 +3,14 @@ using UnityEngine.UI;
 
 public class CrosswordKeyboard : MonoBehaviour
 {
-    [SerializeField] private GameObject keyboardPanel;
-    [SerializeField] public Button[] letterButtons;
-    [SerializeField] public Button backspaceButton;
+    [SerializeField]
+    private GameObject keyboardPanel;
+
+    [SerializeField]
+    public Button[] letterButtons;
+
+    [SerializeField]
+    public Button backspaceButton;
 
     private CrosswordGridManager gridManager;
 

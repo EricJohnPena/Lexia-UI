@@ -221,7 +221,13 @@ public class JumbledLettersManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateSpeed(studentId, lessonId, gameModeId, subjectId, solveTime);
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                solveTime
+            );
         }
         else
         {
@@ -403,7 +409,10 @@ public class JumbledLettersManager : MonoBehaviour
             return;
 
         // Find the next available index that is not already answered
-        while (currentAnswerIndex < answerWord.Length && answerWordArray[currentAnswerIndex].charValue != '_')
+        while (
+            currentAnswerIndex < answerWord.Length
+            && answerWordArray[currentAnswerIndex].charValue != '_'
+        )
         {
             currentAnswerIndex++;
         }
@@ -425,7 +434,11 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void CheckAnswer()
     {
-        string formedWord = string.Join("", answerWordArray.Take(answerWord.Length).Select(a => a.charValue)).ToUpper();
+        string formedWord = string.Join(
+                "",
+                answerWordArray.Take(answerWord.Length).Select(a => a.charValue)
+            )
+            .ToUpper();
         string expectedAnswer = answerWord.ToUpper();
 
         Debug.Log($"Expected Answer: {expectedAnswer}");
@@ -556,8 +569,10 @@ public class JumbledLettersManager : MonoBehaviour
             Debug.Log($"Question {currentQuestionIndex} skipped.");
 
             // Add the current question to the skipped list if not already answered or skipped
-            if (!skippedQuestions.Contains(currentQuestionIndex) && 
-                !correctlyAnsweredQuestions.Contains(currentQuestionIndex))
+            if (
+                !skippedQuestions.Contains(currentQuestionIndex)
+                && !correctlyAnsweredQuestions.Contains(currentQuestionIndex)
+            )
             {
                 skippedQuestions.Add(currentQuestionIndex);
             }
@@ -649,7 +664,14 @@ public class JumbledLettersManager : MonoBehaviour
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
-            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
+            yield return progressHandler.UpdateAccuracy(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                correctAnswers,
+                totalAttempts
+            );
         }
     }
 
@@ -705,7 +727,9 @@ public class JumbledLettersManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            int randomIndex = unrevealedIndices[
+                UnityEngine.Random.Range(0, unrevealedIndices.Count)
+            ];
             answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
             hintCounter--;
             UpdateHintCounterUI();
@@ -726,5 +750,22 @@ public class JumbledLettersManager : MonoBehaviour
         {
             hintCounterText.text = $"Hints Remaining: {hintCounter}";
         }
+    }
+
+    public void LoadQuestionsOnButtonClick()
+    {
+        // Reset the question index and other related variables
+        currentQuestionIndex = 0;
+        currentAnswerIndex = 0;
+        selectedWordIndex.Clear();
+        gameStatus = GameStatus.Playing;
+
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 }
