@@ -235,7 +235,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         // Reset game state
         ClearGrid();
-        ResetGameState();
+        ResetCrosswordGameState();
         DisplayEmptyMessage();
 
         // Reload crossword data
@@ -248,7 +248,7 @@ public class CrosswordGridManager : MonoBehaviour
         );
     }
 
-    private void ResetGameState()
+    private void ResetCrosswordGameState()
     {
         Debug.Log("Resetting crossword game state...");
 
@@ -257,6 +257,11 @@ public class CrosswordGridManager : MonoBehaviour
         highlightedCells.Clear();
         currentWord = null;
         wordNumbers.Clear();
+        isRefreshing = false;
+        isLessonCompleted = false;
+        correctAnswers = 0;
+        totalAttempts = 0;
+        hintCounter = 3;
 
         // Reset UI
         if (cluesPanelText != null)
@@ -268,6 +273,15 @@ public class CrosswordGridManager : MonoBehaviour
         {
             currentClueText.text = "";
         }
+
+        ClearGrid();
+
+        if (gameOver != null)
+        {
+            gameOver.SetActive(false);
+        }
+
+        UpdateHintCounterUI();
     }
 
     private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
@@ -1073,5 +1087,41 @@ public class CrosswordGridManager : MonoBehaviour
                 LessonUI.lesson_id
             )
         );
+    }
+
+    public void ReplayGame()
+    {
+        Debug.Log("Replay button clicked. Resetting Crossword game state...");
+
+        // Reset game state
+        ResetGameState();
+
+        // Reload crossword data
+        StartCoroutine(
+            LoadCrosswordData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
+    }
+
+    private void ResetGameState()
+    {
+        Debug.Log("Resetting Crossword game state...");
+        isRefreshing = false;
+        isLessonCompleted = false;
+        correctAnswers = 0;
+        totalAttempts = 0;
+        hintCounter = 3;
+
+        ClearGrid();
+
+        if (gameOver != null)
+        {
+            gameOver.SetActive(false);
+        }
+
+        UpdateHintCounterUI();
     }
 }

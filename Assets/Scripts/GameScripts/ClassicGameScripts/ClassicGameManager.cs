@@ -384,14 +384,15 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetGameState()
     {
-        isRefreshing = false; // Reset the refreshing flag
-        isLessonCompleted = false; // Reset the lesson completion flag
-        Debug.Log("Resetting classic game state...");
-
-        // Reset variables
+        Debug.Log("Resetting Classic Game state...");
+        isRefreshing = false;
+        isLessonCompleted = false;
         currentQuestionIndex = 0;
         currentAnswerIndex = 0;
+        hintCounter = 3; // Reset hint counter
         selectedKeyIndex.Clear();
+        skippedQuestions.Clear();
+        correctlyAnsweredQuestions.Clear();
         gameStatus = GameStatus.Playing;
 
         // Reset UI
@@ -919,6 +920,23 @@ public class ClassicGameManager : MonoBehaviour
         {
             CheckAnswer();
         }
+    }
+
+    public void ReplayGame()
+    {
+        Debug.Log("Replay button clicked. Resetting Classic Game state...");
+
+        // Reset game state
+        ResetGameState();
+
+        // Reload questions
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
     }
 
     [System.Serializable]

@@ -122,11 +122,26 @@ public class PanelManager : MonoBehaviour
     {
         Debug.Log("Replay button clicked. Resetting game state...");
 
-        // Reset game state
-        ResetGameState();
+        // Reset game state based on the current active panel
+        switch (_currentActivePanel)
+        {
+            case GamePanel.ClassicGamePanel:
+                ClassicGameManager.instance?.ReplayGame();
+                break;
 
-        // Switch to the current game mode panel
-        ActivatePanel(_currentActivePanel);
+            case GamePanel.JumbledLettersGamePanel:
+                JumbledLettersManager.instance?.ReplayGame();
+                break;
+
+            case GamePanel.CrosswordGamePanel:
+                CrosswordGridManager crosswordGridManager = FindObjectOfType<CrosswordGridManager>();
+                crosswordGridManager?.ReplayGame();
+                break;
+
+            default:
+                Debug.LogWarning("No specific replay logic for the current game panel.");
+                break;
+        }
     }
 
     private void ResetGameState()

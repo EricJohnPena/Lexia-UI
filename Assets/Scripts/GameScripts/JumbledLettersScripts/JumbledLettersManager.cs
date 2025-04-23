@@ -271,6 +271,7 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("Resetting Jumbled Letters game state...");
         currentQuestionIndex = 0;
         currentAnswerIndex = 0;
+        hintCounter = 3; // Reset hint counter
         selectedWordIndex.Clear();
         skippedQuestions.Clear(); // Clear skipped questions
         correctlyAnsweredQuestions.Clear(); // Clear correctly answered questions
@@ -783,6 +784,23 @@ public class JumbledLettersManager : MonoBehaviour
         selectedWordIndex.Clear();
         gameStatus = GameStatus.Playing;
 
+        StartCoroutine(
+            LoadQuestionData(
+                LessonsLoader.subjectId,
+                int.Parse(LessonsLoader.moduleNumber),
+                LessonUI.lesson_id
+            )
+        );
+    }
+
+    public void ReplayGame()
+    {
+        Debug.Log("Replay button clicked. Resetting Jumbled Letters game state...");
+
+        // Reset game state
+        ResetGameState();
+
+        // Reload questions
         StartCoroutine(
             LoadQuestionData(
                 LessonsLoader.subjectId,
