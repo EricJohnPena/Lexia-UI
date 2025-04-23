@@ -833,7 +833,11 @@ public class ClassicGameManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 3 - hintCounter, // Calculate total hints used
-                totalSkipsUsed   // Pass the total skips used
+                totalSkipsUsed // Pass the total skips used
+            );
+            yield return progressHandler.UpdateConsistency(
+                studentId,
+                10 // Use as the current score default value
             );
         }
     }

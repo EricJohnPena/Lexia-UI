@@ -167,4 +167,43 @@ public class GameProgressHandler : MonoBehaviour
             }
         }
     }
+
+    public IEnumerator UpdateConsistency(int studentId, int currentScore)
+    {
+        if (studentId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters for UpdateConsistency. Ensure all IDs are valid. "
+                    + $"studentId={studentId}, currentScore={currentScore}"
+            );
+            yield break;
+        }
+
+        string url = $"{Web.BaseApiUrl}updateConsistencyAttribute.php";
+        WWWForm form = new WWWForm();
+
+        // Log the parameters being sent for debugging
+        Debug.Log(
+            $"Sending UpdateConsistency request with parameters: studentId={studentId},currentScore={currentScore}"
+        );
+
+        form.AddField("student_id", studentId);
+        form.AddField("current_score", currentScore);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Consistency attribute updated successfully.");
+            }
+            else
+            {
+                Debug.LogError(
+                    $"Failed to update consistency attribute: {www.error}. Response: {www.downloadHandler.text}"
+                );
+            }
+        }
+    }
 }

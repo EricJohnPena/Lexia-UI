@@ -724,6 +724,11 @@ public class CrosswordGridManager : MonoBehaviour
                 3 - hintCounter, // Calculate total hints used
                 0 // Assuming no skips in crossword
             );
+
+            yield return progressHandler.UpdateConsistency(
+                studentId,
+                10 // Use as the current score default value
+            );
         }
     }
 
