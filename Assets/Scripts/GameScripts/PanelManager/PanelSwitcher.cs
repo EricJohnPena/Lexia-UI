@@ -55,11 +55,18 @@ public class PanelSwitcher : MonoBehaviour
 
     public void SwitchToJumbledLettersGamePanel()
     {
+        Debug.Log("Switching to Jumbled Letters Game Panel...");
         PanelManager.Instance.ActivatePanel(GamePanel.JumbledLettersGamePanel);
     }
 
     public void SwitchToCrosswordGamePanel()
     {
         PanelManager.Instance.ActivatePanel(GamePanel.CrosswordGamePanel);
+    }
+
+    public void SwitchToReplayGame()
+    {
+        Debug.Log("Switching to replay the game...");
+        PanelManager.Instance.ReplayGame();
     }
 }

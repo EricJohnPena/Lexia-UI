@@ -69,6 +69,8 @@ public class MenuManager : MonoBehaviour
     public Canvas LessonsPage;
     public Canvas GameScene;
 
+    public Button replayButton; // Assign this in the Unity Editor
+
     void Start()
     {
         // Check if user is already logged in
@@ -104,6 +106,23 @@ public class MenuManager : MonoBehaviour
         toStudentDashboardPageBtn3.onClick.AddListener(() => OpenPage(StudentDashboardPage));
 
         backToDashboard.onClick.AddListener(BackToStudentDashboard);
+
+        // Add listener to the Replay button
+        if (replayButton != null)
+        {
+            replayButton.onClick.AddListener(() =>
+            {
+                Debug.Log("Replay button clicked from GameComplete panel.");
+                if (PanelManager.Instance != null)
+                {
+                    PanelManager.Instance.ReplayGame();
+                }
+                else
+                {
+                    Debug.LogError("PanelManager instance not found.");
+                }
+            });
+        }
     }
 
     public void OpenPage(Canvas canvas)

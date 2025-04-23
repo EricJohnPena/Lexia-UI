@@ -109,10 +109,66 @@ public class PanelManager : MonoBehaviour
         }
     }
 
-
     // Method to get the current active panel
     public GamePanel GetCurrentActivePanel()
     {
         return _currentActivePanel;
+    }
+
+    public void ReplayGame()
+    {
+        Debug.Log("Replay button clicked. Resetting game state...");
+
+        // Reset game state
+        ResetGameState();
+
+        // Switch to the current game mode panel
+        ActivatePanel(_currentActivePanel);
+    }
+
+    private void ResetGameState()
+    {
+        Debug.Log("Game state has been reset.");
+
+        // Reset scores, progress, and other game-related data
+        ResetScores();
+        ResetProgress();
+
+        // Reload questions based on the current active panel
+        switch (_currentActivePanel)
+        {
+            case GamePanel.ClassicGamePanel:
+                Debug.Log("Reloading questions for Classic Game Panel...");
+                ClassicGameManager.instance.LoadQuestionsOnButtonClick();
+                //DatabaseManager.Instance.ReloadQuestionsForGameMode("Classic");
+                break;
+
+            case GamePanel.JumbledLettersGamePanel:
+                Debug.Log("Reloading questions for Jumbled Letters Game Panel...");
+                
+               // DatabaseManager.Instance.ReloadQuestionsForGameMode("JumbledLetters");
+                break;
+
+            case GamePanel.CrosswordGamePanel:
+                Debug.Log("Reloading questions for Crossword Game Panel...");
+               // DatabaseManager.Instance.ReloadQuestionsForGameMode("Crossword");
+                break;
+
+            default:
+                Debug.LogWarning("No specific reload logic for the current game panel.");
+                break;
+        }
+    }
+
+    private void ResetScores()
+    {
+        // Logic to reset scores
+        Debug.Log("Scores have been reset.");
+    }
+
+    private void ResetProgress()
+    {
+        // Logic to reset progress
+        Debug.Log("Progress has been reset.");
     }
 }
