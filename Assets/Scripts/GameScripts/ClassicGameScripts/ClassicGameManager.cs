@@ -76,6 +76,8 @@ public class ClassicGameManager : MonoBehaviour
     private string apiUrl = $"{Web.BaseApiUrl}getClassicQuestions.php"; // Define API URL for fetching questions
 
     private HashSet<int> correctlyAnsweredQuestions = new HashSet<int>(); // Track correctly answered questions
+    private int correctAnswers = 0;
+    private int totalAttempts = 0;
 
     private void Awake()
     {
@@ -669,9 +671,11 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log($"Expected Answer: {expectedAnswer}");
         Debug.Log($"User Input: {userInput}");
 
+        totalAttempts++;
         // Compare user input with the expected answer
         if (userInput.Equals(expectedAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
+            correctAnswers++;
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
 
@@ -782,6 +786,21 @@ public class ClassicGameManager : MonoBehaviour
         StartCoroutine(
             UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
         );
+        StartCoroutine(UpdateAccuracy());
+    }
+
+    private IEnumerator UpdateAccuracy()
+    {
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int lessonId = LessonUI.lesson_id;
+        int gameModeId = 1; // Assuming 1 is the ID for Classic mode
+        int subjectId = LessonsLoader.subjectId;
+
+        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        if (progressHandler != null)
+        {
+            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
+        }
     }
 
     public void LoadQuestionsOnButtonClick()

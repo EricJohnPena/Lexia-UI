@@ -49,6 +49,9 @@ public class JumbledLettersManager : MonoBehaviour
 
     private HashSet<int> correctlyAnsweredQuestions = new HashSet<int>(); // Track correctly answered questions
 
+    private int correctAnswers = 0;
+    private int totalAttempts = 0;
+
     private void Awake()
     {
         if (instance == null)
@@ -428,8 +431,10 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log($"Expected Answer: {expectedAnswer}");
         Debug.Log($"Formed Word: {formedWord}");
 
+        totalAttempts++;
         if (formedWord.Equals(expectedAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
+            correctAnswers++;
             Debug.Log("Answer correct!");
             gameStatus = GameStatus.Next;
 
@@ -630,6 +635,22 @@ public class JumbledLettersManager : MonoBehaviour
         StartCoroutine(
             UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
         );
+
+        StartCoroutine(UpdateAccuracy());
+    }
+
+    private IEnumerator UpdateAccuracy()
+    {
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int lessonId = LessonUI.lesson_id;
+        int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+        int subjectId = LessonsLoader.subjectId;
+
+        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        if (progressHandler != null)
+        {
+            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
+        }
     }
 
     private void ResetCurrentInput()

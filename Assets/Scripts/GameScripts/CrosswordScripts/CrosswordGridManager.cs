@@ -37,6 +37,8 @@ public class CrosswordGridManager : MonoBehaviour
     private Text hintCounterText; // Assign the Text UI in the Inspector
 
     private int hintCounter = 3; // Maximum number of hints allowed
+    private int correctAnswers = 0;
+    private int totalAttempts = 0;
 
     void Start()
     {
@@ -532,6 +534,7 @@ public class CrosswordGridManager : MonoBehaviour
 
     void CheckWord()
     {
+        totalAttempts++;
         string enteredWord = string.Join("", GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())).ToUpper();
         string expectedWord = currentWord.word.ToUpper();
 
@@ -540,6 +543,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (enteredWord.Equals(expectedWord, System.StringComparison.OrdinalIgnoreCase))
         {
+            correctAnswers++;
             // Word is correct - lock it in
             foreach (var cell in GetCurrentWordCells())
             {
@@ -625,6 +629,7 @@ public class CrosswordGridManager : MonoBehaviour
             float solveTime = timerManager?.elapsedTime ?? 0;
 
             StartCoroutine(UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime));
+            StartCoroutine(UpdateAccuracy());
         }
     }
 
@@ -667,6 +672,20 @@ public class CrosswordGridManager : MonoBehaviour
         else
         {
             Debug.LogWarning("GameProgressHandler not found.");
+        }
+    }
+
+    private IEnumerator UpdateAccuracy()
+    {
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int lessonId = LessonUI.lesson_id;
+        int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
+        int subjectId = LessonsLoader.subjectId;
+
+        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        if (progressHandler != null)
+        {
+            yield return progressHandler.UpdateAccuracy(studentId, lessonId, gameModeId, subjectId, correctAnswers, totalAttempts);
         }
     }
 
