@@ -51,6 +51,7 @@ public class JumbledLettersManager : MonoBehaviour
 
     private int correctAnswers = 0;
     private int totalAttempts = 0;
+    private int totalSkipsUsed = 0; // Track the total number of skips used
 
     private void Awake()
     {
@@ -218,21 +219,21 @@ public class JumbledLettersManager : MonoBehaviour
         }
 
         // Update speed attribute
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
-        {
-            yield return progressHandler.UpdateSpeed(
-                studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
-                solveTime
-            );
-        }
-        else
-        {
-            Debug.LogWarning("GameProgressHandler not found.");
-        }
+        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        // if (progressHandler != null)
+        // {
+        //     yield return progressHandler.UpdateSpeed(
+        //         studentId,
+        //         lessonId,
+        //         gameModeId,
+        //         subjectId,
+        //         solveTime
+        //     );
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("GameProgressHandler not found.");
+        // }
     }
 
     private void HandleLessonState()
@@ -568,6 +569,9 @@ public class JumbledLettersManager : MonoBehaviour
         {
             Debug.Log($"Question {currentQuestionIndex} skipped.");
 
+            // Increment the skip counter
+            totalSkipsUsed++;
+
             // Add the current question to the skipped list if not already answered or skipped
             if (
                 !skippedQuestions.Contains(currentQuestionIndex)
@@ -640,10 +644,9 @@ public class JumbledLettersManager : MonoBehaviour
         timerManager?.StopTimer();
         gameOver.SetActive(true);
 
-        // Update game completion status
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
-        int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+        int gameModeId = 2; // Jumbled Letters mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
 
@@ -651,10 +654,11 @@ public class JumbledLettersManager : MonoBehaviour
             UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
         );
 
-        StartCoroutine(UpdateAccuracy());
+        // Ensure all attributes are updated
+        StartCoroutine(UpdateAttributes());
     }
 
-    private IEnumerator UpdateAccuracy()
+    private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
@@ -671,6 +675,21 @@ public class JumbledLettersManager : MonoBehaviour
                 subjectId,
                 correctAnswers,
                 totalAttempts
+            );
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                timerManager.elapsedTime
+            );
+            yield return progressHandler.UpdateProblemSolving(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                3 - hintCounter, // Calculate total hints used
+                totalSkipsUsed   // Pass the total skips used
             );
         }
     }

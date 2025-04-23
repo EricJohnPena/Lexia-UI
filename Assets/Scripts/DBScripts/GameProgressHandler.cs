@@ -114,4 +114,57 @@ public class GameProgressHandler : MonoBehaviour
             }
         }
     }
+
+    public IEnumerator UpdateProblemSolving(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId,
+        int totalHintsUsed,
+        int totalSkipsUsed
+    )
+    {
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters for UpdateProblemSolving. Ensure all IDs are valid. "
+                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, totalHintsUsed={totalHintsUsed}, totalSkipsUsed={totalSkipsUsed}"
+            );
+            yield break;
+        }
+
+        string url = $"{Web.BaseApiUrl}updateProblemSolvingAttribute.php";
+        WWWForm form = new WWWForm();
+
+        // Calculate problem-solving score (lower hints/skips = higher score, max 10)
+        int problemSolvingScore = Mathf.Clamp(10 - (totalHintsUsed + totalSkipsUsed), 0, 10);
+
+        Debug.Log(
+            $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"
+        );
+
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+        form.AddField("problem_solving", problemSolvingScore);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log(
+                    $"Problem-solving attribute updated successfully. Response: {www.downloadHandler.text}"
+                );
+            }
+            else
+            {
+                Debug.LogError(
+                    $"Failed to update problem-solving attribute: {www.error}. Response: {www.downloadHandler.text}"
+                );
+            }
+        }
+    }
 }

@@ -626,14 +626,16 @@ public class CrosswordGridManager : MonoBehaviour
 
             int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
             int lessonId = LessonUI.lesson_id;
-            int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
+            int gameModeId = 3; // Crossword mode ID
             int subjectId = LessonsLoader.subjectId;
             float solveTime = timerManager?.elapsedTime ?? 0;
 
             StartCoroutine(
                 UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
             );
-            StartCoroutine(UpdateAccuracy());
+
+            // Ensure all attributes are updated
+            StartCoroutine(UpdateAttributes());
         }
     }
 
@@ -668,33 +670,35 @@ public class CrosswordGridManager : MonoBehaviour
         }
 
         // Update speed attribute
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
-        {
-            yield return progressHandler.UpdateSpeed(
-                studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
-                solveTime
-            );
-        }
-        else
-        {
-            Debug.LogWarning("GameProgressHandler not found.");
-        }
+        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        // if (progressHandler != null)
+        // {
+        //     yield return progressHandler.UpdateSpeed(
+        //         studentId,
+        //         lessonId,
+        //         gameModeId,
+        //         subjectId,
+        //         solveTime
+        //     );
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("GameProgressHandler not found.");
+        // }
     }
 
-    private IEnumerator UpdateAccuracy()
+    private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
-        int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
+        int gameModeId = 3; // Crossword mode ID
         int subjectId = LessonsLoader.subjectId;
 
         GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
         if (progressHandler != null)
         {
+            Debug.Log($"Hint Counter: {hintCounter}, Total Skips: 0"); // Log values for debugging
+
             yield return progressHandler.UpdateAccuracy(
                 studentId,
                 lessonId,
@@ -702,6 +706,23 @@ public class CrosswordGridManager : MonoBehaviour
                 subjectId,
                 correctAnswers,
                 totalAttempts
+            );
+
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                timerManager?.elapsedTime ?? 0
+            );
+
+            yield return progressHandler.UpdateProblemSolving(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                3 - hintCounter, // Calculate total hints used
+                0 // Assuming no skips in crossword
             );
         }
     }

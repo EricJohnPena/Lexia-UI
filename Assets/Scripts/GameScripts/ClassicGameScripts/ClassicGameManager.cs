@@ -41,6 +41,7 @@ public class ClassicGameManager : MonoBehaviour
     private int hintCounter = 3; // Maximum number of hints allowed
 
     private List<int> skippedQuestions = new List<int>(); // Track skipped questions
+    private int totalSkipsUsed = 0; // Track the total number of skips used
 
     public TimerManager timerManager; // Assign in the Inspector
 
@@ -294,21 +295,21 @@ public class ClassicGameManager : MonoBehaviour
         }
 
         // Update speed attribute
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
-        {
-            yield return progressHandler.UpdateSpeed(
-                studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
-                solveTime
-            );
-        }
-        else
-        {
-            Debug.LogWarning("GameProgressHandler not found.");
-        }
+        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
+        // if (progressHandler != null)
+        // {
+        //     yield return progressHandler.UpdateSpeed(
+        //         studentId,
+        //         lessonId,
+        //         gameModeId,
+        //         subjectId,
+        //         solveTime
+        //     );
+        // }
+        // else
+        // {
+        //     Debug.LogWarning("GameProgressHandler not found.");
+        // }
     }
 
     private void HandleLessonCompleted()
@@ -736,6 +737,7 @@ public class ClassicGameManager : MonoBehaviour
         if (currentQuestionIndex < questionData.questions.Count)
         {
             Debug.Log($"Question {currentQuestionIndex} skipped.");
+            totalSkipsUsed++; // Increment the total skips used
 
             // Ensure the current question is added to the skipped list only once
             if (
@@ -786,20 +788,21 @@ public class ClassicGameManager : MonoBehaviour
         timerManager?.StopTimer();
         gameOver.SetActive(true);
 
-        // Update game completion status
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
-        int gameModeId = 1; // Assuming 1 is the ID for Classic mode
+        int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
 
         StartCoroutine(
             UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
         );
-        StartCoroutine(UpdateAccuracy());
+
+        // Ensure all attributes are updated
+        StartCoroutine(UpdateAttributes());
     }
 
-    private IEnumerator UpdateAccuracy()
+    private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
@@ -816,6 +819,21 @@ public class ClassicGameManager : MonoBehaviour
                 subjectId,
                 correctAnswers,
                 totalAttempts
+            );
+            yield return progressHandler.UpdateSpeed(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                timerManager.elapsedTime
+            );
+            yield return progressHandler.UpdateProblemSolving(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                3 - hintCounter, // Calculate total hints used
+                totalSkipsUsed   // Pass the total skips used
             );
         }
     }
