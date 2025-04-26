@@ -413,6 +413,9 @@ public class ClassicGameManager : MonoBehaviour
         {
             gameOver.SetActive(false);
         }
+
+        // Update hint counter UI after reset
+        UpdateHintCounterUI();
     }
 
     private void LoadValidWords()
