@@ -5,7 +5,85 @@ using UnityEngine.Networking;
 public class GameProgressHandler : MonoBehaviour
 {
     private const string UpdateSpeedUrl = "updateSpeedAttribute.php";
+    private const string UpdateVocabularyRangeUrl = "updateVocabularyRangeAttribute.php";
     private const int BaseTime = 30; // Base time in seconds
+
+    private ComplexWordsHandler complexWordsHandler;
+
+    private int rareWordCount = 0;
+    private int hintUsageCount = 0;
+    private int wordDifficultyScore = 0;
+    private int incorrectAnswerCount = 0;
+    private int skipUsageCount = 0;
+    private int complexWordAttemptCount = 0;
+
+    public int WordDifficultyScore => wordDifficultyScore;
+    public int RareWordCount => rareWordCount;
+    public int HintUsageCount => hintUsageCount;
+    public int IncorrectAnswerCount => incorrectAnswerCount;
+    public int SkipUsageCount => skipUsageCount;
+    public int ComplexWordAttemptCount => complexWordAttemptCount;
+
+    private void Awake()
+    {
+        complexWordsHandler = GetComponent<ComplexWordsHandler>();
+        if (complexWordsHandler == null)
+        {
+            complexWordsHandler = gameObject.AddComponent<ComplexWordsHandler>();
+        }
+        complexWordsHandler.LoadComplexWords();
+    }
+
+    public void OnWordSolved(string word, int difficulty)
+    {
+        wordDifficultyScore += difficulty;
+
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        {
+            rareWordCount++;
+        }
+    }
+
+    public void OnHintUsed(string word)
+    {
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        {
+            Debug.Log("Hint used on complex word!");
+            hintUsageCount++;
+        }
+    }
+
+    public void OnIncorrectAnswer(string word)
+    {
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        {
+            Debug.Log("Incorrect answer on complex word!");
+            incorrectAnswerCount++;
+        }
+        else
+        {
+            Debug.Log("Incorrect answer on non-complex word!");
+            Debug.Log($"Word: {word}");
+        }
+    }
+
+    public void OnSkipUsed(string word)
+    {
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        {
+            Debug.Log("Skip used on complex word!");
+            skipUsageCount++;
+        }
+    }
+
+    public void ResetVocabularyRangeCounters()
+    {
+        rareWordCount = 0;
+        hintUsageCount = 0;
+        wordDifficultyScore = 0;
+        incorrectAnswerCount = 0;
+        skipUsageCount = 0;
+    }
 
     public IEnumerator UpdateSpeed(
         int studentId,
@@ -58,6 +136,62 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
+    public IEnumerator UpdateVocabularyRange(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId,
+        int skipUsageCount,
+        int hintUsageCount,
+        int incorrectAnswerCount
+    )
+    {
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters for UpdateVocabularyRange. Ensure all IDs are valid. "
+                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, wordDifficultyScore={wordDifficultyScore}, rareWordCount={rareWordCount}, hintUsageCount={hintUsageCount}"
+            );
+            yield break;
+        }
+
+        string url = $"{Web.BaseApiUrl}{UpdateVocabularyRangeUrl}";
+        WWWForm form = new WWWForm();
+
+        // Calculate vocabulary range score with default 10, decrease by incorrect answers, hints, and skips
+        int vocabularyRangeScore = Mathf.Clamp(
+            10 - ((incorrectAnswerCount / 2) + (hintUsageCount / 2) + (skipUsageCount / 2)),
+            0,
+            10
+        );
+
+        Debug.Log(
+            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}"
+        );
+
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+        form.AddField("vocabulary_range_score", vocabularyRangeScore);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Vocabulary range attribute updated successfully.");
+            }
+            else
+            {
+                Debug.LogError(
+                    $"Failed to update vocabulary range attribute: {www.error}. Response: {www.downloadHandler.text}"
+                );
+            }
+        }
+    }
+
     public IEnumerator UpdateAccuracy(
         int studentId,
         int lessonId,
@@ -86,7 +220,7 @@ public class GameProgressHandler : MonoBehaviour
         WWWForm form = new WWWForm();
 
         // Calculate accuracy as a percentage and round to the nearest integer
-        int accuracy = Mathf.RoundToInt((float)correctAnswers / totalAttempts * 10);
+        int accuracy = Mathf.RoundToInt((float)(correctAnswers / 2) / (totalAttempts / 2) * 10);
 
         Debug.Log(
             $"Sending UpdateAccuracy request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, accuracy={accuracy}"
@@ -137,7 +271,11 @@ public class GameProgressHandler : MonoBehaviour
         WWWForm form = new WWWForm();
 
         // Calculate problem-solving score (lower hints/skips = higher score, max 10)
-        int problemSolvingScore = Mathf.Clamp(10 - (totalHintsUsed + totalSkipsUsed), 0, 10);
+        int problemSolvingScore = Mathf.Clamp(
+            10 - ((totalHintsUsed / 2) + (totalSkipsUsed / 2)),
+            0,
+            10
+        );
 
         Debug.Log(
             $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"

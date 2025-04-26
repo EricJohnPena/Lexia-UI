@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -44,6 +43,8 @@ public class ClassicGameManager : MonoBehaviour
     private int totalSkipsUsed = 0; // Track the total number of skips used
 
     public TimerManager timerManager; // Assign in the Inspector
+
+    private GameProgressHandler gameProgressHandler; // Added declaration
 
     private KeyboardQuestionList defaultQuestionData = new KeyboardQuestionList
     {
@@ -110,6 +111,13 @@ public class ClassicGameManager : MonoBehaviour
         }
 
         UpdateHintCounterUI();
+
+        // Initialize GameProgressHandler reference
+        gameProgressHandler = FindObjectOfType<GameProgressHandler>();
+        if (gameProgressHandler == null)
+        {
+            Debug.LogError("GameProgressHandler not found in the scene.");
+        }
     }
 
     void OnEnable()
@@ -293,23 +301,6 @@ public class ClassicGameManager : MonoBehaviour
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
         }
-
-        // Update speed attribute
-        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        // if (progressHandler != null)
-        // {
-        //     yield return progressHandler.UpdateSpeed(
-        //         studentId,
-        //         lessonId,
-        //         gameModeId,
-        //         subjectId,
-        //         solveTime
-        //     );
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("GameProgressHandler not found.");
-        // }
     }
 
     private void HandleLessonCompleted()
@@ -394,6 +385,12 @@ public class ClassicGameManager : MonoBehaviour
         skippedQuestions.Clear();
         correctlyAnsweredQuestions.Clear();
         gameStatus = GameStatus.Playing;
+
+        // Reset GameProgressHandler counters
+        if (gameProgressHandler != null)
+        {
+            gameProgressHandler.ResetVocabularyRangeCounters();
+        }
 
         // Reset UI
         if (questionText != null)
@@ -716,7 +713,8 @@ public class ClassicGameManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Incorrect Answer!");
+            gameProgressHandler?.OnIncorrectAnswer(currentAnswer);
+            Debug.Log("Incorrect Answer!" + currentAnswer);
             ResetCurrentInput();
         }
     }
@@ -739,6 +737,7 @@ public class ClassicGameManager : MonoBehaviour
         {
             Debug.Log($"Question {currentQuestionIndex} skipped.");
             totalSkipsUsed++; // Increment the total skips used
+            gameProgressHandler?.OnSkipUsed(currentAnswer);
 
             // Ensure the current question is added to the skipped list only once
             if (
@@ -810,10 +809,9 @@ public class ClassicGameManager : MonoBehaviour
         int gameModeId = 1; // Assuming 1 is the ID for Classic mode
         int subjectId = LessonsLoader.subjectId;
 
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
+        if (gameProgressHandler != null)
         {
-            yield return progressHandler.UpdateAccuracy(
+            yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -821,14 +819,14 @@ public class ClassicGameManager : MonoBehaviour
                 correctAnswers,
                 totalAttempts
             );
-            yield return progressHandler.UpdateSpeed(
+            yield return gameProgressHandler.UpdateSpeed(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
                 timerManager.elapsedTime
             );
-            yield return progressHandler.UpdateProblemSolving(
+            yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -836,9 +834,20 @@ public class ClassicGameManager : MonoBehaviour
                 3 - hintCounter, // Calculate total hints used
                 totalSkipsUsed // Pass the total skips used
             );
-            yield return progressHandler.UpdateConsistency(
+            yield return gameProgressHandler.UpdateConsistency(
                 studentId,
                 10 // Use as the current score default value
+            );
+
+            // Update vocabulary range score
+            yield return gameProgressHandler.UpdateVocabularyRange(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                gameProgressHandler.SkipUsageCount,
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
             );
         }
     }
@@ -891,6 +900,7 @@ public class ClassicGameManager : MonoBehaviour
             answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
             hintCounter--;
             UpdateHintCounterUI();
+            gameProgressHandler?.OnHintUsed(currentAnswer);
             Debug.Log($"Hint revealed at index {randomIndex}: {currentAnswer[randomIndex]}");
 
             // Check if the answer is complete

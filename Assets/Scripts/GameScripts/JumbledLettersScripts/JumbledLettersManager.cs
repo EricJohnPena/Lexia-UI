@@ -35,6 +35,8 @@ public class JumbledLettersManager : MonoBehaviour
 
     private int hintCounter = 3; // Maximum number of hints allowed
 
+    private GameProgressHandler gameProgressHandler; // Added declaration
+
     private string apiUrl = $"{Web.BaseApiUrl}getJumbledLettersQuestions.php";
 
     private JLQuestionList questionData;
@@ -71,6 +73,12 @@ public class JumbledLettersManager : MonoBehaviour
         if (hintButton != null)
         {
             hintButton.onClick.AddListener(RevealHint);
+        }
+        // Initialize GameProgressHandler reference
+        gameProgressHandler = FindObjectOfType<GameProgressHandler>();
+        if (gameProgressHandler == null)
+        {
+            Debug.LogError("GameProgressHandler not found in the scene.");
         }
 
         UpdateHintCounterUI();
@@ -217,23 +225,6 @@ public class JumbledLettersManager : MonoBehaviour
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
         }
-
-        // Update speed attribute
-        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        // if (progressHandler != null)
-        // {
-        //     yield return progressHandler.UpdateSpeed(
-        //         studentId,
-        //         lessonId,
-        //         gameModeId,
-        //         subjectId,
-        //         solveTime
-        //     );
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("GameProgressHandler not found.");
-        // }
     }
 
     private void HandleLessonState()
@@ -276,7 +267,11 @@ public class JumbledLettersManager : MonoBehaviour
         skippedQuestions.Clear(); // Clear skipped questions
         correctlyAnsweredQuestions.Clear(); // Clear correctly answered questions
         gameStatus = GameStatus.Playing;
-
+        // Reset GameProgressHandler counters
+        if (gameProgressHandler != null)
+        {
+            gameProgressHandler.ResetVocabularyRangeCounters();
+        }
         if (questionText != null)
             questionText.text = "";
 
@@ -472,7 +467,8 @@ public class JumbledLettersManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("Answer incorrect!");
+            gameProgressHandler.OnIncorrectAnswer(answerWord); // Call the incorrect answer method
+            Debug.Log("Answer incorrect!" + answerWord);
             ResetCurrentInput();
         }
     }
@@ -569,7 +565,7 @@ public class JumbledLettersManager : MonoBehaviour
         if (currentQuestionIndex < questionData.questions.Count)
         {
             Debug.Log($"Question {currentQuestionIndex} skipped.");
-
+            gameProgressHandler.OnSkipUsed(answerWord); // Call the skip question method
             // Increment the skip counter
             totalSkipsUsed++;
 
@@ -696,6 +692,15 @@ public class JumbledLettersManager : MonoBehaviour
                 studentId,
                 10 // Use as the current score default value
             );
+            yield return progressHandler.UpdateVocabularyRange(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                gameProgressHandler.SkipUsageCount,
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
+            );
         }
     }
 
@@ -756,6 +761,7 @@ public class JumbledLettersManager : MonoBehaviour
             ];
             answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
             hintCounter--;
+            gameProgressHandler.OnHintUsed(answerWord); // Call the hint used method
             UpdateHintCounterUI();
             Debug.Log($"Hint revealed at index {randomIndex}: {answerWord[randomIndex]}");
 

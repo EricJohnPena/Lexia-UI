@@ -14,6 +14,7 @@ public class CrosswordGridManager : MonoBehaviour
     public Text cluesPanelText;
     public Text currentClueText;
     public int gridSize = 10;
+    private GameProgressHandler gameProgressHandler; // Added declaration
 
     private GridCell[,] gridCells;
     private LevelManager levelManager;
@@ -66,6 +67,12 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.LogError("Word clues in level data are null or empty!");
         }
 
+        // Initialize GameProgressHandler reference
+        gameProgressHandler = FindObjectOfType<GameProgressHandler>();
+        if (gameProgressHandler == null)
+        {
+            Debug.LogError("GameProgressHandler not found in the scene.");
+        }
         // Initialize the Trie and insert words
         wordTrie = new Trie();
         foreach (var placement in currentLevel.fixedLayout)
@@ -99,6 +106,25 @@ public class CrosswordGridManager : MonoBehaviour
         UpdateHintCounterUI();
 
         // Do not load crossword data here; it will be loaded after checking lesson completion
+    }
+
+    private int CalculateWordDifficulty(string word)
+    {
+        if (string.IsNullOrEmpty(word))
+            return 0;
+
+        int length = word.Length;
+
+        if (length <= 3)
+            return 1;
+        else if (length <= 5)
+            return 3;
+        else if (length <= 7)
+            return 5;
+        else if (length <= 9)
+            return 7;
+        else
+            return 10;
     }
 
     void OnEnable()
@@ -551,8 +577,9 @@ public class CrosswordGridManager : MonoBehaviour
                 "",
                 GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())
             )
+            .Trim()
             .ToUpper();
-        string expectedWord = currentWord.word.ToUpper();
+        string expectedWord = currentWord.word.Trim().ToUpper();
 
         Debug.Log($"Expected Word: {expectedWord}");
         Debug.Log($"Entered Word: {enteredWord}");
@@ -566,6 +593,13 @@ public class CrosswordGridManager : MonoBehaviour
                 cell.LockCell();
             }
 
+            // Update vocabulary range tracking
+            if (gameProgressHandler != null)
+            {
+                int difficulty = CalculateWordDifficulty(currentWord.word);
+                gameProgressHandler.OnWordSolved(currentWord.word, difficulty);
+            }
+
             // Move to next word if available
             SelectNextWord();
         }
@@ -574,9 +608,14 @@ public class CrosswordGridManager : MonoBehaviour
             // Word is incorrect - flash cells red
             foreach (var cell in GetCurrentWordCells())
             {
-                cell.FlashRed(0.5f);
+                cell.FlashRed(1f);
                 cell.SetInputLetter(' ');
             }
+            if (gameProgressHandler != null)
+            {
+                gameProgressHandler.OnIncorrectAnswer(currentWord.word); // Call the method to update incorrect answer count
+            }
+            Debug.Log("Incorrect word. Try again.");
 
             // Return to first cell of word
             SelectCell(GetCurrentWordCells().First());
@@ -682,23 +721,6 @@ public class CrosswordGridManager : MonoBehaviour
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
         }
-
-        // Update speed attribute
-        // GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        // if (progressHandler != null)
-        // {
-        //     yield return progressHandler.UpdateSpeed(
-        //         studentId,
-        //         lessonId,
-        //         gameModeId,
-        //         subjectId,
-        //         solveTime
-        //     );
-        // }
-        // else
-        // {
-        //     Debug.LogWarning("GameProgressHandler not found.");
-        // }
     }
 
     private IEnumerator UpdateAttributes()
@@ -742,6 +764,16 @@ public class CrosswordGridManager : MonoBehaviour
             yield return progressHandler.UpdateConsistency(
                 studentId,
                 10 // Use as the current score default value
+            );
+            // Update vocabulary range score
+            yield return gameProgressHandler.UpdateVocabularyRange(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                0, // Assuming no skips in crossword
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
             );
         }
     }
@@ -1054,6 +1086,7 @@ public class CrosswordGridManager : MonoBehaviour
             int indexInWord = GetCellIndexInWord(randomCell);
             randomCell.SetInputLetter(currentWord.word[indexInWord]);
             hintCounter--;
+            gameProgressHandler.OnHintUsed(currentWord.word); // Call the method to update hint usage
             UpdateHintCounterUI();
             Debug.Log(
                 $"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}"
@@ -1114,7 +1147,11 @@ public class CrosswordGridManager : MonoBehaviour
         correctAnswers = 0;
         totalAttempts = 0;
         hintCounter = 3;
-
+        // Reset GameProgressHandler counters
+        if (gameProgressHandler != null)
+        {
+            gameProgressHandler.ResetVocabularyRangeCounters();
+        }
         ClearGrid();
 
         if (gameOver != null)
