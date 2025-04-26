@@ -739,7 +739,7 @@ public class ClassicGameManager : MonoBehaviour
             totalSkipsUsed++; // Increment the total skips used
             gameProgressHandler?.OnSkipUsed(currentAnswer);
 
-            // Ensure the current question is added to the skipped list only once
+            // Add the current question to skippedQuestions only if it is unanswered and not already skipped
             if (
                 !skippedQuestions.Contains(currentQuestionIndex)
                 && !correctlyAnsweredQuestions.Contains(currentQuestionIndex)
@@ -748,17 +748,25 @@ public class ClassicGameManager : MonoBehaviour
                 skippedQuestions.Add(currentQuestionIndex);
             }
 
-            // Move to the next question
-            currentQuestionIndex++;
-
-            // Check if there are more questions to display
-            if (currentQuestionIndex < questionData.questions.Count)
+            // Move to the next unanswered question or stay if none found
+            int nextIndex = currentQuestionIndex + 1;
+            while (
+                nextIndex < questionData.questions.Count
+                && (correctlyAnsweredQuestions.Contains(nextIndex) || skippedQuestions.Contains(nextIndex))
+            )
             {
+                nextIndex++;
+            }
+
+            if (nextIndex < questionData.questions.Count)
+            {
+                currentQuestionIndex = nextIndex;
                 SetQuestion();
             }
             else
             {
-                HandleSkippedQuestions(); // Handle skipped questions if all questions are traversed
+                // If no next unanswered question, revisit skipped questions
+                HandleSkippedQuestions();
             }
         }
     }
@@ -769,12 +777,28 @@ public class ClassicGameManager : MonoBehaviour
         {
             Debug.Log("Revisiting skipped questions...");
 
-            // Retrieve the first skipped question and remove it from the list
-            currentQuestionIndex = skippedQuestions[0];
-            skippedQuestions.RemoveAt(0);
+            // Find the next skipped question that is not answered yet
+            int nextSkippedIndex = -1;
+            for (int i = 0; i < skippedQuestions.Count; i++)
+            {
+                int skippedIndex = skippedQuestions[i];
+                if (!correctlyAnsweredQuestions.Contains(skippedIndex))
+                {
+                    nextSkippedIndex = skippedIndex;
+                    skippedQuestions.RemoveAt(i);
+                    break;
+                }
+            }
 
-            // Set the question for the skipped index
-            SetQuestion();
+            if (nextSkippedIndex != -1)
+            {
+                currentQuestionIndex = nextSkippedIndex;
+                SetQuestion();
+            }
+            else if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
+            {
+                CheckGameCompletion(); // Complete the game if all questions are answered correctly
+            }
         }
         else if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
         {
