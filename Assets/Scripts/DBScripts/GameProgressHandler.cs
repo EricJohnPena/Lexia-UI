@@ -1,11 +1,13 @@
 using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.Networking;
 
 public class GameProgressHandler : MonoBehaviour
 {
     private const string UpdateSpeedUrl = "updateSpeedAttribute.php";
     private const string UpdateVocabularyRangeUrl = "updateVocabularyRangeAttribute.php";
+    private const string UpdateRetentionUrl = "updateRetentionAttribute.php";
     private const int BaseTime = 30; // Base time in seconds
 
     private ComplexWordsHandler complexWordsHandler;
@@ -340,6 +342,53 @@ public class GameProgressHandler : MonoBehaviour
             {
                 Debug.LogError(
                     $"Failed to update consistency attribute: {www.error}. Response: {www.downloadHandler.text}"
+                );
+            }
+        }
+    }
+
+    public IEnumerator UpdateRetention(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId,
+        int retentionScore
+    )
+    {
+        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        {
+            Debug.LogError(
+                $"Invalid parameters for UpdateRetention. Ensure all IDs are valid. "
+                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, retention={retentionScore}"
+            );
+            yield break;
+        }
+
+        string url = $"{Web.BaseApiUrl}{UpdateRetentionUrl}";
+        WWWForm form = new WWWForm();
+
+        Debug.Log(
+            $"Sending UpdateRetention request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, retentionScore={retentionScore}"
+        );
+
+        form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+        form.AddField("retention", retentionScore);
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Retention attribute updated successfully.");
+            }
+            else
+            {
+                Debug.LogError(
+                    $"Failed to update retention attribute: {www.error}. Response: {www.downloadHandler.text}"
                 );
             }
         }

@@ -775,6 +775,16 @@ public class CrosswordGridManager : MonoBehaviour
                 gameProgressHandler.HintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );
+
+            // New: Update retention attribute
+            int retentionScore = 10; // Default retention score, adjust as needed
+            yield return progressHandler.UpdateRetention(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                retentionScore
+            );
         }
     }
 
