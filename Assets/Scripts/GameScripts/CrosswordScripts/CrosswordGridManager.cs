@@ -760,9 +760,6 @@ public class CrosswordGridManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateConsistency(
                 studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
                 10 // Use as the current score default value
             );
             // Update vocabulary range score
@@ -782,8 +779,8 @@ public class CrosswordGridManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 0, // Assuming no skips in crossword
-                gameProgressHandler.HintUsageCount,
-                gameProgressHandler.IncorrectAnswerCount
+                gameProgressHandler.HintOnRepeatingWordCount,
+                gameProgressHandler.IncorrectRepeatingAnswerCount
             );
         }
     }

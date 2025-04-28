@@ -14,13 +14,21 @@ public class GameProgressHandler : MonoBehaviour
     private RepeatingWordsHandler repeatingWordsHandler;
     private int rareWordCount = 0;
     private int hintUsageCount = 0;
+    private int hintOnRepeatingWordCount = 0;
     private int wordDifficultyScore = 0;
     private int incorrectAnswerCount = 0;
+    private int incorrectRepeatingAnswerCount = 0;
     private int skipUsageCount = 0;
+    private int skipRepeatingUsageCount = 0;
     private int complexWordAttemptCount = 0;
+
+    private HashSet<string> encounteredRepeatingWords = new HashSet<string>(); // Track encountered repeating words
 
     public int WordDifficultyScore => wordDifficultyScore;
     public int RareWordCount => rareWordCount;
+    public int HintOnRepeatingWordCount => hintOnRepeatingWordCount;
+    public int IncorrectRepeatingAnswerCount => incorrectRepeatingAnswerCount;
+    public int SkipRepeatingUsageCount => skipRepeatingUsageCount;
     public int HintUsageCount => hintUsageCount;
     public int IncorrectAnswerCount => incorrectAnswerCount;
     public int SkipUsageCount => skipUsageCount;
@@ -53,15 +61,6 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
-    public void OnHintUsed(string word)
-    {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
-        {
-            Debug.Log("Hint used on complex word!");
-            hintUsageCount++;
-        }
-    }
-
     public void OnIncorrectAnswer(string word)
     {
         if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
@@ -74,6 +73,42 @@ public class GameProgressHandler : MonoBehaviour
             Debug.Log("Incorrect answer on non-complex word!");
             Debug.Log($"Word: {word}");
         }
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        {
+            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            {
+                Debug.Log("First incorrect answer on repeating word. No retention penalty.");
+                encounteredRepeatingWords.Add(word.ToUpper());
+            }
+            else
+            {
+                Debug.Log("Incorrect answer on repeating word!");
+                incorrectRepeatingAnswerCount++;
+            }
+        }
+    }
+
+    public void OnHintUsed(string word)
+    {
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        {
+            Debug.Log("Hint used on complex word!");
+            hintUsageCount++;
+        }
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        {
+            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            {
+                Debug.Log("First hint used on repeating word. No retention penalty.");
+                encounteredRepeatingWords.Add(word.ToUpper());
+            }
+            else
+            {
+                Debug.Log("Hint used on repeating word!");
+                hintOnRepeatingWordCount++;
+            }
+        }
+        
     }
 
     public void OnSkipUsed(string word)
@@ -82,6 +117,19 @@ public class GameProgressHandler : MonoBehaviour
         {
             Debug.Log("Skip used on complex word!");
             skipUsageCount++;
+        }
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        {
+            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            {
+                Debug.Log("First skip used on repeating word. No retention penalty.");
+                encounteredRepeatingWords.Add(word.ToUpper());
+            }
+            else
+            {
+                Debug.Log("Skip used on repeating word!");
+                skipRepeatingUsageCount++;
+            }
         }
     }
 
@@ -92,6 +140,7 @@ public class GameProgressHandler : MonoBehaviour
         wordDifficultyScore = 0;
         incorrectAnswerCount = 0;
         skipUsageCount = 0;
+        encounteredRepeatingWords.Clear(); // Reset encountered repeating words
     }
 
     public IEnumerator UpdateSpeed(
@@ -315,13 +364,7 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
-    public IEnumerator UpdateConsistency(
-        int studentId,
-        int lessonId,
-        int gameModeId,
-        int subjectId,
-        int currentScore
-    )
+    public IEnumerator UpdateConsistency(int studentId, int currentScore)
     {
         if (studentId <= 0)
         {
@@ -341,9 +384,6 @@ public class GameProgressHandler : MonoBehaviour
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
-        form.AddField("game_mode_id", gameModeId);
-        form.AddField("subject_id", subjectId);
         form.AddField("current_score", currentScore);
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, form))

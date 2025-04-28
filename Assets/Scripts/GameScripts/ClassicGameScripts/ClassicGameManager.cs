@@ -868,9 +868,6 @@ public class ClassicGameManager : MonoBehaviour
             );
             yield return gameProgressHandler.UpdateConsistency(
                 studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
                 10 // Use as the current score default value
             );
 
@@ -890,9 +887,9 @@ public class ClassicGameManager : MonoBehaviour
                 lessonId,
                 gameModeId,
                 subjectId,
-                totalSkipsUsed,
-                gameProgressHandler.HintUsageCount,
-                gameProgressHandler.IncorrectAnswerCount
+                gameProgressHandler.SkipRepeatingUsageCount,
+                gameProgressHandler.HintOnRepeatingWordCount,
+                gameProgressHandler.IncorrectRepeatingAnswerCount
             );
         }
     }

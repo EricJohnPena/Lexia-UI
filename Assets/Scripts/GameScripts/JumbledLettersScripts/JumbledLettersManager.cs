@@ -692,9 +692,6 @@ public class JumbledLettersManager : MonoBehaviour
             );
             yield return gameProgressHandler.UpdateConsistency(
                 studentId,
-                lessonId,
-                gameModeId,
-                subjectId,
                 10
             );
 
@@ -713,9 +710,9 @@ public class JumbledLettersManager : MonoBehaviour
                 lessonId,
                 gameModeId,
                 subjectId,
-                totalSkipsUsed,
-                gameProgressHandler.HintUsageCount,
-                gameProgressHandler.IncorrectAnswerCount
+                gameProgressHandler.SkipRepeatingUsageCount,
+                gameProgressHandler.HintOnRepeatingWordCount,
+                gameProgressHandler.IncorrectRepeatingAnswerCount
             );
         }
     }

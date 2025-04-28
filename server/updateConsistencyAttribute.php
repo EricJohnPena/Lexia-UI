@@ -5,16 +5,13 @@ include 'db_connection.php';
 
 // Retrieve and validate parameters
 $student_id = isset($_POST['student_id']) ? intval($_POST['student_id']) : 0;
-$lesson_id = isset($_POST['lesson_id']) ? intval($_POST['lesson_id']) : 0;
-$game_mode_id = isset($_POST['game_mode_id']) ? intval($_POST['game_mode_id']) : 0;
-$subject_id = isset($_POST['subject_id']) ? intval($_POST['subject_id']) : 0;
 
 // Log received parameters for debugging
-error_log("Received parameters: student_id=$student_id, lesson_id=$lesson_id, game_mode_id=$game_mode_id, subject_id=$subject_id");
+error_log("Received parameters: student_id=$student_id");
 
-if ($student_id === 0 || $lesson_id === 0 || $game_mode_id === 0 || $subject_id === 0) {
+if ($student_id === 0) {
     http_response_code(400);
-    echo json_encode(["error" => "Invalid parameters. Ensure all required fields are provided and valid."]);
+    echo json_encode(["error" => "Invalid parameters. Ensure student_id is provided and valid."]);
     exit;
 }
 
@@ -22,10 +19,10 @@ if ($student_id === 0 || $lesson_id === 0 || $game_mode_id === 0 || $subject_id 
 $query = "
     SELECT speed, accuracy 
     FROM students_progress_tbl 
-    WHERE student_id = ? AND lesson_id = ? AND fk_game_mode_id = ? AND fk_subject_id = ?
+    WHERE student_id = ?
 ";
 $stmt = $conn->prepare($query);
-$stmt->bind_param("iiii", $student_id, $lesson_id, $game_mode_id, $subject_id);
+$stmt->bind_param("i", $student_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -58,17 +55,17 @@ $accuracyStdDev = calculateStandardDeviation($accuracies);
 // Calculate consistency score (lower variance = higher consistency, max 10)
 $consistency = max(0, 10 - round(($speedStdDev + $accuracyStdDev) / 2));
 
-// Update the consistency attribute for the specific record
+// Update the consistency attribute for all records of the current student ID
 $updateQuery = "
     UPDATE students_progress_tbl 
     SET consistency = ?
-    WHERE student_id = ? AND lesson_id = ? AND fk_game_mode_id = ? AND fk_subject_id = ?
+    WHERE student_id = ?
 ";
 $updateStmt = $conn->prepare($updateQuery);
-$updateStmt->bind_param("diiii", $consistency, $student_id, $lesson_id, $game_mode_id, $subject_id);
+$updateStmt->bind_param("di", $consistency, $student_id);
 
 if ($updateStmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Consistency updated successfully."]);
+    echo json_encode(["success" => true, "message" => "Consistency updated for all records of the student."]);
 } else {
     http_response_code(500);
     echo json_encode(["error" => $updateStmt->error]);
