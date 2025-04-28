@@ -1,6 +1,6 @@
 using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
 public class GameProgressHandler : MonoBehaviour
@@ -11,7 +11,7 @@ public class GameProgressHandler : MonoBehaviour
     private const int BaseTime = 30; // Base time in seconds
 
     private ComplexWordsHandler complexWordsHandler;
-
+    private RepeatingWordsHandler repeatingWordsHandler;
     private int rareWordCount = 0;
     private int hintUsageCount = 0;
     private int wordDifficultyScore = 0;
@@ -34,6 +34,13 @@ public class GameProgressHandler : MonoBehaviour
             complexWordsHandler = gameObject.AddComponent<ComplexWordsHandler>();
         }
         complexWordsHandler.LoadComplexWords();
+
+        repeatingWordsHandler = GetComponent<RepeatingWordsHandler>();
+        if (repeatingWordsHandler == null)
+        {
+            repeatingWordsHandler = gameObject.AddComponent<RepeatingWordsHandler>();
+        }
+        repeatingWordsHandler.LoadRepeatingWords();
     }
 
     public void OnWordSolved(string word, int difficulty)
@@ -308,7 +315,13 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
-    public IEnumerator UpdateConsistency(int studentId, int currentScore)
+    public IEnumerator UpdateConsistency(
+        int studentId,
+        int lessonId,
+        int gameModeId,
+        int subjectId,
+        int currentScore
+    )
     {
         if (studentId <= 0)
         {
@@ -328,6 +341,9 @@ public class GameProgressHandler : MonoBehaviour
         );
 
         form.AddField("student_id", studentId);
+        form.AddField("lesson_id", lessonId);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
         form.AddField("current_score", currentScore);
 
         using (UnityWebRequest www = UnityWebRequest.Post(url, form))
@@ -347,22 +363,40 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
+    private int CalculateRetentionScore(
+        int incorrectAnswerCount,
+        int hintUsageCount,
+        int skipUsageCount
+    )
+    {
+        return Mathf.Clamp(
+            10 - ((incorrectAnswerCount / 2) + (hintUsageCount / 2) + (skipUsageCount / 2)),
+            0,
+            10
+        );
+    }
+
     public IEnumerator UpdateRetention(
         int studentId,
         int lessonId,
         int gameModeId,
         int subjectId,
-        int retentionScore
+        int skipUsageCount,
+        int hintUsageCount,
+        int incorrectAnswerCount
     )
     {
         if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
-            Debug.LogError(
-                $"Invalid parameters for UpdateRetention. Ensure all IDs are valid. "
-                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, retention={retentionScore}"
-            );
+            Debug.LogError($"Invalid parameters for UpdateRetention. Ensure all IDs are valid. ");
             yield break;
         }
+
+        int retentionScore = CalculateRetentionScore(
+            incorrectAnswerCount,
+            hintUsageCount,
+            skipUsageCount
+        );
 
         string url = $"{Web.BaseApiUrl}{UpdateRetentionUrl}";
         WWWForm form = new WWWForm();

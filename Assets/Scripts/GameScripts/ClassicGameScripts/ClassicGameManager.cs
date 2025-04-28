@@ -755,7 +755,10 @@ public class ClassicGameManager : MonoBehaviour
             int nextIndex = currentQuestionIndex + 1;
             while (
                 nextIndex < questionData.questions.Count
-                && (correctlyAnsweredQuestions.Contains(nextIndex) || skippedQuestions.Contains(nextIndex))
+                && (
+                    correctlyAnsweredQuestions.Contains(nextIndex)
+                    || skippedQuestions.Contains(nextIndex)
+                )
             )
             {
                 nextIndex++;
@@ -833,7 +836,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
-        int gameModeId = 1; // Assuming 1 is the ID for Classic mode
+        int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
 
         if (gameProgressHandler != null)
@@ -846,13 +849,15 @@ public class ClassicGameManager : MonoBehaviour
                 correctAnswers,
                 totalAttempts
             );
+
             yield return gameProgressHandler.UpdateSpeed(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
-                timerManager.elapsedTime
+                timerManager?.elapsedTime ?? 0
             );
+
             yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
                 lessonId,
@@ -863,6 +868,9 @@ public class ClassicGameManager : MonoBehaviour
             );
             yield return gameProgressHandler.UpdateConsistency(
                 studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
                 10 // Use as the current score default value
             );
 
@@ -877,14 +885,14 @@ public class ClassicGameManager : MonoBehaviour
                 gameProgressHandler.IncorrectAnswerCount
             );
 
-            // New: Update retention attribute
-            int retentionScore = 10; // Default retention score, adjust as needed
             yield return gameProgressHandler.UpdateRetention(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
-                retentionScore
+                totalSkipsUsed,
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
             );
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -659,13 +660,12 @@ public class JumbledLettersManager : MonoBehaviour
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int lessonId = LessonUI.lesson_id;
-        int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
+        int gameModeId = 2; // Jumbled Letters mode ID
         int subjectId = LessonsLoader.subjectId;
 
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
+        if (gameProgressHandler != null)
         {
-            yield return progressHandler.UpdateAccuracy(
+            yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -673,14 +673,16 @@ public class JumbledLettersManager : MonoBehaviour
                 correctAnswers,
                 totalAttempts
             );
-            yield return progressHandler.UpdateSpeed(
+
+            yield return gameProgressHandler.UpdateSpeed(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
-                timerManager.elapsedTime
+                timerManager?.elapsedTime ?? 0
             );
-            yield return progressHandler.UpdateProblemSolving(
+
+            yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -688,16 +690,30 @@ public class JumbledLettersManager : MonoBehaviour
                 3 - hintCounter, // Calculate total hints used
                 totalSkipsUsed // Pass the total skips used
             );
-            yield return progressHandler.UpdateConsistency(
+            yield return gameProgressHandler.UpdateConsistency(
                 studentId,
-                10 // Use as the current score default value
+                lessonId,
+                gameModeId,
+                subjectId,
+                10
             );
-            yield return progressHandler.UpdateVocabularyRange(
+
+            yield return gameProgressHandler.UpdateVocabularyRange(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipUsageCount,
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
+            );
+
+            yield return gameProgressHandler.UpdateRetention(
+                studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
+                totalSkipsUsed,
                 gameProgressHandler.HintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );

@@ -730,12 +730,9 @@ public class CrosswordGridManager : MonoBehaviour
         int gameModeId = 3; // Crossword mode ID
         int subjectId = LessonsLoader.subjectId;
 
-        GameProgressHandler progressHandler = FindObjectOfType<GameProgressHandler>();
-        if (progressHandler != null)
+        if (gameProgressHandler != null)
         {
-            Debug.Log($"Hint Counter: {hintCounter}, Total Skips: 0"); // Log values for debugging
-
-            yield return progressHandler.UpdateAccuracy(
+            yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -744,7 +741,7 @@ public class CrosswordGridManager : MonoBehaviour
                 totalAttempts
             );
 
-            yield return progressHandler.UpdateSpeed(
+            yield return gameProgressHandler.UpdateSpeed(
                 studentId,
                 lessonId,
                 gameModeId,
@@ -752,17 +749,20 @@ public class CrosswordGridManager : MonoBehaviour
                 timerManager?.elapsedTime ?? 0
             );
 
-            yield return progressHandler.UpdateProblemSolving(
+            yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
-                3 - hintCounter, // Calculate total hints used
+                3 - hintCounter,
                 0 // Assuming no skips in crossword
             );
 
-            yield return progressHandler.UpdateConsistency(
+            yield return gameProgressHandler.UpdateConsistency(
                 studentId,
+                lessonId,
+                gameModeId,
+                subjectId,
                 10 // Use as the current score default value
             );
             // Update vocabulary range score
@@ -776,14 +776,14 @@ public class CrosswordGridManager : MonoBehaviour
                 gameProgressHandler.IncorrectAnswerCount
             );
 
-            // New: Update retention attribute
-            int retentionScore = 10; // Default retention score, adjust as needed
-            yield return progressHandler.UpdateRetention(
+            yield return gameProgressHandler.UpdateRetention(
                 studentId,
                 lessonId,
                 gameModeId,
                 subjectId,
-                retentionScore
+                0, // Assuming no skips in crossword
+                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.IncorrectAnswerCount
             );
         }
     }

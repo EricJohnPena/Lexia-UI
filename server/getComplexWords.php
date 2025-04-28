@@ -1,27 +1,31 @@
 <?php
 header('Content-Type: application/json');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include 'db_connection.php';
 
-// Array to hold complex words from all tables
 $complexWords = array();
 
-// List of tables to query
-$tables = ['crossword_data', 'jumbled_letters_questions', 'classic_questions_tbl']; 
+$sql = "
+    SELECT CAST(word AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value FROM crossword_data WHERE is_complex = 1
+    UNION
+    SELECT CAST(answer AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value FROM jumbled_letters_questions WHERE is_complex = 1
+    UNION
+    SELECT CAST(answer AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value FROM classic_questions_tbl WHERE is_complex = 1
+";
 
-foreach ($tables as $table) {
-    $sql = "SELECT word FROM $table WHERE is_complex = 1";
-    $result = $conn->query($sql);
+$result = $conn->query($sql);
 
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $complexWords[] = $row['word'];
-        }
-    }
+if (!$result) {
+    echo json_encode(["error" => "Query failed: " . $conn->error]);
+    exit;
 }
 
-// Remove duplicates
-$complexWords = array_unique($complexWords);
+while ($row = $result->fetch_assoc()) {
+    $complexWords[] = $row['value'];
+}
 
-// Return JSON response
-echo json_encode(array_values($complexWords));
+echo json_encode(array_values(array_unique($complexWords)));
 ?>
