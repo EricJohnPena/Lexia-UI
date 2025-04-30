@@ -53,34 +53,26 @@ namespace RadarChart
             string currentUserId = PlayerPrefs.GetString("User ID");
             Debug.Log("User ID: " + currentUserId);
 
-            // Only fetch if we haven't fetched for this user yet
-            if (lastFetchedUserId != currentUserId)
+            Debug.Log($"Fetching radar items for user: {currentUserId}");
+
+            // Clear existing radar items and force a redraw to clear the mesh
+            ClearRadarItems();
+            ForceRedraw();
+
+            lastFetchedUserId = currentUserId;
+
+            // Check if the GameObject is active before starting the coroutine
+            if (gameObject.activeInHierarchy)
             {
-                Debug.Log($"Fetching radar items for new user: {currentUserId}");
-
-                // Clear existing radar items and force a redraw to clear the mesh
-                ClearRadarItems();
-                ForceRedraw();
-
-                lastFetchedUserId = currentUserId;
-
-                // Check if the GameObject is active before starting the coroutine
-                if (gameObject.activeInHierarchy)
-                {
-                    StartCoroutine(FetchRadarItems(currentUserId));
-                }
-                else
-                {
-                    Debug.LogWarning(
-                        $"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated."
-                    );
-                    // Store the user ID to fetch data when activated
-                    PlayerPrefs.SetString("PendingRadarFetch", currentUserId);
-                }
+                StartCoroutine(FetchRadarItems(currentUserId));
             }
             else
             {
-                Debug.Log($"Already fetched radar items for user: {currentUserId}");
+                Debug.LogWarning(
+                    $"Cannot start radar chart coroutine - GameObject '{gameObject.name}' is inactive. Will fetch data when activated."
+                );
+                // Store the user ID to fetch data when activated
+                PlayerPrefs.SetString("PendingRadarFetch", currentUserId);
             }
         }
 
@@ -176,6 +168,7 @@ namespace RadarChart
                             };
 
                             // Create radar items in the correct order
+                            radarItems.Clear(); // Ensure the list is cleared before adding new items
                             foreach (string itemName in expectedItems)
                             {
                                 if (radarValues.ContainsKey(itemName))
@@ -201,6 +194,15 @@ namespace RadarChart
                                     radarItems.Add(radarItem);
                                     Debug.Log($"Added default radar item: {itemName} = 0");
                                 }
+                            }
+
+                            // Ensure the radar items count does not exceed 6
+                            if (radarItems.Count > 6)
+                            {
+                                radarItems = radarItems.GetRange(0, 6);
+                                Debug.LogWarning(
+                                    "Radar items count exceeded 6. Truncated to 6 items."
+                                );
                             }
 
                             // Save radar items to PlayerPrefs as JSON

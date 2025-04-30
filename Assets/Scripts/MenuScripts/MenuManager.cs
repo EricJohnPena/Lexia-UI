@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
+using RadarChart;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
     public static MenuManager InstanceMenu;
+
+    [SerializeField]
+    private RadarChart.RadarChart radarChart;
 
     private void Awake()
     {
@@ -149,6 +153,12 @@ public class MenuManager : MonoBehaviour
 
         // Activate the selected canvas
         canvas.gameObject.SetActive(true);
+
+        // If the profile page is opened, fetch radar chart data
+        if (canvas == ProfilePage && radarChart != null)
+        {
+            radarChart.FetchItemsForCurrentUser();
+        }
     }
 
     public void LogintoPage()
