@@ -7,16 +7,53 @@ public class LogoutManager : MonoBehaviour
     // Reference to the MenuManager to navigate between pages
     public MenuManager menuManager;
 
-    // Reference to a button to trigger logout (optional)
+    [SerializeField]
     public Button logoutButton;
 
-    private void Start()
+    [SerializeField]
+    public Button YesBtn;
+
+    [SerializeField]
+    public Button NoBtn;
+
+    [SerializeField]
+    public GameObject LogoutPanel;
+
+    private void Update()
     {
-        // If you have a logout button, add a listener to it
-        if (logoutButton != null)
+        logoutButton.onClick.AddListener(() =>
         {
-            logoutButton.onClick.AddListener(Logout);
+            // Show the LogoutPanel when the logout button is clicked
+            LogoutPanel.SetActive(true);
+        });
+        // Check if the LogoutPanel is active and handle Yes/No button clicks
+        if (LogoutPanel.activeSelf)
+        {
+            if (YesBtn != null)
+            {
+                YesBtn.onClick.AddListener(ConfirmLogout);
+            }
+
+            if (NoBtn != null)
+            {
+                NoBtn.onClick.AddListener(CancelLogout);
+            }
         }
+    }
+
+    public void ConfirmLogout()
+    {
+        // Hide the LogoutPanel
+        LogoutPanel.SetActive(false);
+
+        // Call the Logout method to perform logout actions
+        Logout();
+    }
+
+    public void CancelLogout()
+    {
+        // Hide the LogoutPanel
+        LogoutPanel.SetActive(false);
     }
 
     public void Logout()
