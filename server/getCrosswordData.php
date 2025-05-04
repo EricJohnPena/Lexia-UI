@@ -1,10 +1,7 @@
 <?php
 header('Content-Type: application/json');
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "lexia_ui";
+require('db_connection.php');
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 

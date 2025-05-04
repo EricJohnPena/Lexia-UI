@@ -19,7 +19,7 @@ try {
     // Ensure all inputs are provided
     if (!$subject_id || !$module_id || !$lesson_id) {
         http_response_code(400);
-        echo json_encode(["message" => "All parameters (subject_id, module_id, lesson_id) are required."]);
+        echo json_encode(["message" => "All parameters (subject_id, module_id, lesson_number) are required."]);
         exit;
     }
 

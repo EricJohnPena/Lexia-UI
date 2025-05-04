@@ -6,11 +6,11 @@ include 'db_connection.php';
 $student_id = isset($_GET['student_id']) ? intval($_GET['student_id']) : 0;
 $lesson_id = isset($_GET['lesson_id']) ? intval($_GET['lesson_id']) : 0;
 $game_mode_id = isset($_GET['game_mode_id']) ? intval($_GET['game_mode_id']) : 0;
-$subject_id = isset($_GET['fk_subject_id']) ? intval($_GET['fk_subject_id']) : 0;
+$subject_id = isset($_GET['subject_id']) ? intval($_GET['subject_id']) : 0;
 
 if ($student_id === 0 || $lesson_id === 0 || $game_mode_id === 0 || $subject_id === 0) {
     http_response_code(400);
-    echo json_encode(["error" => "Invalid parameters: student_id, lesson_id, game_mode_id, and fk_subject_id are required."]);
+    echo json_encode(["error" => "Invalid parameters."]);
     exit;
 }
 

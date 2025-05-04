@@ -10,6 +10,7 @@ public class Web : MonoBehaviour
 {
     // Base URL for all API endpoints
     public static string BaseApiUrl = "https://lexiaweb.io/db_unity/";
+
     //public static string BaseApiUrl = "http://localhost/db_unity/";
 
 
@@ -79,13 +80,35 @@ public class Web : MonoBehaviour
                 Debug.LogError($"Login Error: {www.error}");
                 // Display the error message in a Text component
                 GameObject errorTextObject = GameObject.Find("ErrorText");
-                Text errorText = errorTextObject.GetComponent<Text>();
-                errorText.text = errorMessage;
+                if (errorTextObject != null)
+                {
+                    Text errorText = errorTextObject.GetComponent<Text>();
+                    if (errorText != null)
+                    {
+                        errorText.text = errorMessage;
+                    }
+                }
                 yield break;
             }
 
             string response = www.downloadHandler.text.Trim();
             Debug.Log("Raw Response: " + response);
+
+            // Check if response is an error message (not JSON)
+            if (!response.StartsWith("{") && !response.StartsWith("["))
+            {
+                // Display server error message in ErrorText UI
+                GameObject errorTextObject = GameObject.Find("ErrorText");
+                if (errorTextObject != null)
+                {
+                    Text errorText = errorTextObject.GetComponent<Text>();
+                    if (errorText != null)
+                    {
+                        errorText.text = response;
+                    }
+                }
+                yield break;
+            }
 
             if (response.StartsWith("{") || response.StartsWith("["))
             {
@@ -126,10 +149,6 @@ public class Web : MonoBehaviour
                     Login loginComponent = FindObjectOfType<Login>();
                     loginComponent?.OnLoginSuccess();
                 }
-            }
-            else
-            {
-                Debug.LogError("Invalid JSON Response: " + response);
             }
         }
     }
@@ -236,26 +255,31 @@ public class Web : MonoBehaviour
     {
         // Fetch the current tracking IDs from PlayerPrefs or set defaults
         int subjectId = PlayerPrefs.GetInt("CurrentSubjectId", 1); // Default to 1 if not set
-        int moduleId = PlayerPrefs.GetInt("CurrentModuleId", 1);   // Default to 1 if not set
-        int lessonId = PlayerPrefs.GetInt("CurrentLessonId", 1);   // Default to 1 if not set
+        int moduleId = PlayerPrefs.GetInt("CurrentModuleId", 1); // Default to 1 if not set
+        int lessonId = PlayerPrefs.GetInt("CurrentLessonId", 1); // Default to 1 if not set
 
-        Debug.Log($"GetCurrentTrackingIds called. Returning Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"); // Debug log
+        Debug.Log(
+            $"GetCurrentTrackingIds called. Returning Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
+        ); // Debug log
         return (subjectId, moduleId, lessonId);
     }
 
     public static void SetCurrentTrackingIds(int subjectId, int moduleId, int lessonId)
     {
         string subjectName = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
-        Debug.Log($"Setting Tracking IDs - Subject: {subjectName} ({subjectId}), Module: {moduleId}, Lesson: {lessonId}");
+        Debug.Log(
+            $"Setting Tracking IDs - Subject: {subjectName} ({subjectId}), Module: {moduleId}, Lesson: {lessonId}"
+        );
 
         PlayerPrefs.SetInt("CurrentSubjectId", subjectId);
         PlayerPrefs.SetInt("CurrentModuleId", moduleId);
         PlayerPrefs.SetInt("CurrentLessonId", lessonId);
         PlayerPrefs.Save();
 
-        Debug.Log($"SetCurrentTrackingIds called. Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}");
+        Debug.Log(
+            $"SetCurrentTrackingIds called. Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
+        );
     }
-
 }
 
 // JSON response models
