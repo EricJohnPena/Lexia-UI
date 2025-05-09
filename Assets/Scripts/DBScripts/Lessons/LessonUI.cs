@@ -8,6 +8,7 @@ public class LessonUI : MonoBehaviour
     public Text lessonNameText;
     public Button actionButton;
     public Button playMenuButton;
+    public string curentLessonLink; // Field to store the current lesson link
 
     private bool isLessonDataSet = false;
 
@@ -15,13 +16,15 @@ public class LessonUI : MonoBehaviour
     private string currentModule;
     private string currentLessonNumber;
     private string lessonId; // Field to store the lesson ID
+    private string lessonLink;
     public static int lesson_id = 1; // Default to 1 to avoid null issues
 
     public void SetLessonData(
         string lessonName,
         string lessonNumber,
         string subjectName,
-        string moduleName
+        string moduleName,
+        string lessonLink
     )
     {
         if (isLessonDataSet)
@@ -32,6 +35,7 @@ public class LessonUI : MonoBehaviour
 
         isLessonDataSet = true;
         lessonNameText.text = lessonName;
+        curentLessonLink = lessonLink;
 
         currentSubject = subjectName;
         currentModule = moduleName;
@@ -70,7 +74,7 @@ public class LessonUI : MonoBehaviour
 
     private void StartLesson()
     {
-        LessonManager.instance.SetCurrentLesson(currentLessonNumber);
+        Application.OpenURL(curentLessonLink);
         Debug.Log($"Starting lesson: {currentLessonNumber}");
     }
 

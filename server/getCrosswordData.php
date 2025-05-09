@@ -11,13 +11,13 @@ if ($conn->connect_error) {
 
 $subject_id = $_GET['subject_id'];
 $module_id = $_GET['module_id'];
-$lesson_id = $_GET['lesson_id'];
+
 
 $sql = "SELECT word, start_row, start_col, horizontal, clue 
         FROM crossword_data 
-        WHERE subject_id = ? AND module_id = ? AND lesson_id = ?";
+        WHERE subject_id = ? AND module_id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("iii", $subject_id, $module_id, $lesson_id);
+$stmt->bind_param("ii", $subject_id, $module_id,);
 $stmt->execute();
 $result = $stmt->get_result();
 

@@ -145,17 +145,17 @@ public class GameProgressHandler : MonoBehaviour
 
     public IEnumerator UpdateSpeed(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         float solveTime
     )
     {
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0 || solveTime <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0 || subjectId <= 0 || solveTime <= 0)
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateSpeed. Ensure all IDs and solveTime are valid. "
-                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, solveTime={solveTime}"
+                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, solveTime={solveTime}"
             );
             yield break;
         }
@@ -168,11 +168,11 @@ public class GameProgressHandler : MonoBehaviour
 
         // Log the parameters being sent for debugging
         Debug.Log(
-            $"Sending UpdateSpeed request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, speed={speed}"
+            $"Sending UpdateSpeed request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, speed={speed}"
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("speed", speed); // Send calculated speed
@@ -196,7 +196,7 @@ public class GameProgressHandler : MonoBehaviour
 
     public IEnumerator UpdateVocabularyRange(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         int skipUsageCount,
@@ -204,11 +204,11 @@ public class GameProgressHandler : MonoBehaviour
         int incorrectAnswerCount
     )
     {
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateVocabularyRange. Ensure all IDs are valid. "
-                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, wordDifficultyScore={wordDifficultyScore}, rareWordCount={rareWordCount}, hintUsageCount={hintUsageCount}"
+                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, wordDifficultyScore={wordDifficultyScore}, rareWordCount={rareWordCount}, hintUsageCount={hintUsageCount}"
             );
             yield break;
         }
@@ -224,11 +224,11 @@ public class GameProgressHandler : MonoBehaviour
         );
 
         Debug.Log(
-            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}"
+            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}"
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("vocabulary_range_score", vocabularyRangeScore);
@@ -252,7 +252,7 @@ public class GameProgressHandler : MonoBehaviour
 
     public IEnumerator UpdateAccuracy(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         int correctAnswers,
@@ -261,7 +261,7 @@ public class GameProgressHandler : MonoBehaviour
     {
         if (
             studentId <= 0
-            || lessonId <= 0
+            || module_number <= 0
             || gameModeId <= 0
             || subjectId <= 0
             || totalAttempts <= 0
@@ -269,7 +269,7 @@ public class GameProgressHandler : MonoBehaviour
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateAccuracy. Ensure all IDs and attempts are valid. "
-                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, correctAnswers={correctAnswers}, totalAttempts={totalAttempts}"
+                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, correctAnswers={correctAnswers}, totalAttempts={totalAttempts}"
             );
             yield break;
         }
@@ -281,11 +281,11 @@ public class GameProgressHandler : MonoBehaviour
         int accuracy = Mathf.RoundToInt((float)(correctAnswers / 2) / (totalAttempts / 2) * 10);
 
         Debug.Log(
-            $"Sending UpdateAccuracy request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, accuracy={accuracy}"
+            $"Sending UpdateAccuracy request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, accuracy={accuracy}"
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("accuracy", accuracy); // Use the rounded integer value
@@ -309,18 +309,18 @@ public class GameProgressHandler : MonoBehaviour
 
     public IEnumerator UpdateProblemSolving(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         int totalHintsUsed,
         int totalSkipsUsed
     )
     {
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateProblemSolving. Ensure all IDs are valid. "
-                    + $"studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, totalHintsUsed={totalHintsUsed}, totalSkipsUsed={totalSkipsUsed}"
+                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, totalHintsUsed={totalHintsUsed}, totalSkipsUsed={totalSkipsUsed}"
             );
             yield break;
         }
@@ -336,11 +336,11 @@ public class GameProgressHandler : MonoBehaviour
         );
 
         Debug.Log(
-            $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"
+            $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("problem_solving", problemSolvingScore);
@@ -418,7 +418,7 @@ public class GameProgressHandler : MonoBehaviour
 
     public IEnumerator UpdateRetention(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         int skipUsageCount,
@@ -426,7 +426,7 @@ public class GameProgressHandler : MonoBehaviour
         int incorrectAnswerCount
     )
     {
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
             Debug.LogError($"Invalid parameters for UpdateRetention. Ensure all IDs are valid. ");
             yield break;
@@ -442,11 +442,11 @@ public class GameProgressHandler : MonoBehaviour
         WWWForm form = new WWWForm();
 
         Debug.Log(
-            $"Sending UpdateRetention request with parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}, retentionScore={retentionScore}"
+            $"Sending UpdateRetention request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, retentionScore={retentionScore}"
         );
 
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("retention", retentionScore);
@@ -464,6 +464,38 @@ public class GameProgressHandler : MonoBehaviour
                 Debug.LogError(
                     $"Failed to update retention attribute: {www.error}. Response: {www.downloadHandler.text}"
                 );
+            }
+        }
+    }
+
+
+    public IEnumerator UpdateGameCompletionStatus(
+        int studentId,
+        int module_number,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
+    {
+        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
+        WWWForm form = new WWWForm();
+        form.AddField("student_id", studentId);
+        form.AddField("module_number", module_number);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Game completion status updated successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to update game completion status: " + www.error);
             }
         }
     }

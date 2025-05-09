@@ -8,9 +8,9 @@ require('db_connection.php');
 // Get parameters
 $subject_id = isset($_GET['subject_id']) ? intval($_GET['subject_id']) : 0;
 $module_id = isset($_GET['module_id']) ? intval($_GET['module_id']) : 0;
-$lesson_id = isset($_GET['lesson_id']) ? intval($_GET['lesson_id']) : 0;
 
-if ($subject_id === 0 || $module_id === 0 || $lesson_id === 0) {
+
+if ($subject_id === 0 || $module_id === 0) {
     echo json_encode(["error" => "Invalid parameters."]);
     exit;
 }
@@ -19,9 +19,9 @@ if ($subject_id === 0 || $module_id === 0 || $lesson_id === 0) {
 $query = $conn->prepare("
     SELECT question_text, answer 
     FROM jumbled_letters_questions 
-    WHERE fk_subject_id = ? AND fk_module_id = ? AND fk_lesson_id = ?
+    WHERE fk_subject_id = ? AND fk_module_id = ? 
 ");
-$query->bind_param("iii", $subject_id, $module_id, $lesson_id);
+$query->bind_param("ii", $subject_id, $module_id);
 $query->execute();
 $result = $query->get_result();
 

@@ -16,18 +16,20 @@ $query = "
     SELECT 
         m.module_id, 
         m.module_number, 
-        EXISTS(
-            SELECT 1 
-            FROM students_progress_tbl 
-            WHERE module_id = m.module_id AND student_id = ?
-        ) AS is_completed
+        (
+            SELECT COUNT(*) 
+            FROM students_progress_tbl sp
+            WHERE sp.module_id = m.module_id 
+              AND sp.student_id = ? 
+              AND sp.fk_subject_id = ?
+        ) >= 3 AS is_completed
     FROM modules_tbl m
     WHERE m.fk_subject_id = ?
     ORDER BY m.module_number
 ";
 
 $stmt = $conn->prepare($query);
-$stmt->bind_param("ii", $student_id, $subject_id);
+$stmt->bind_param("iii", $student_id, $subject_id, $subject_id);
 $stmt->execute();
 $result = $stmt->get_result();
 

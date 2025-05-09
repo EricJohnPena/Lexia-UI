@@ -114,13 +114,13 @@ public class JumbledLettersManager : MonoBehaviour
                 return;
             }
 
-            int lessonId = LessonUI.lesson_id;
+            int module_number = int.Parse(LessonsLoader.moduleNumber);
             int gameModeId = 2; // Assuming 2 is the ID for Jumbled Letters mode
 
             StartCoroutine(
                 CheckLessonCompletion(
                     int.Parse(PlayerPrefs.GetString("User ID")),
-                    lessonId,
+                    module_number,
                     gameModeId,
                     subjectId
                 )
@@ -130,7 +130,7 @@ public class JumbledLettersManager : MonoBehaviour
 
     private IEnumerator CheckLessonCompletion(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId
     )
@@ -143,20 +143,20 @@ public class JumbledLettersManager : MonoBehaviour
 
         isRefreshing = true; // Mark as running
         Debug.Log(
-            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            $"CheckLessonCompletion called with studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
         );
 
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0)
         {
             Debug.LogError(
-                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+                $"Invalid parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
             yield break;
         }
 
         string url =
-            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={module_number}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -199,7 +199,7 @@ public class JumbledLettersManager : MonoBehaviour
 
     private IEnumerator UpdateGameCompletionStatus(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId,
         float solveTime
@@ -208,7 +208,7 @@ public class JumbledLettersManager : MonoBehaviour
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
         WWWForm form = new WWWForm();
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
@@ -250,11 +250,7 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("Refreshing Jumbled Letters data...");
         ResetGameState();
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -291,9 +287,9 @@ public class JumbledLettersManager : MonoBehaviour
             gameOver.SetActive(false);
     }
 
-    private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
+    private IEnumerator LoadQuestionData(int subjectId, int module_number)
     {
-        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching Jumbled Letters questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -403,28 +399,37 @@ public class JumbledLettersManager : MonoBehaviour
 
     public void SelectedOption(WordData wordData)
     {
-        if (gameStatus == GameStatus.Next || currentAnswerIndex >= answerWord.Length)
+        if (gameStatus == GameStatus.Next)
             return;
 
-        // Find the next available index that is not already answered
-        while (
-            currentAnswerIndex < answerWord.Length
-            && answerWordArray[currentAnswerIndex].charValue != '_'
-        )
+        // Find the first available (empty) index in answerWordArray
+        int inputIndex = -1;
+        for (int i = 0; i < answerWord.Length; i++)
         {
-            currentAnswerIndex++;
+            if (answerWordArray[i].charValue == '_')
+            {
+                inputIndex = i;
+                break;
+            }
         }
 
-        if (currentAnswerIndex >= answerWord.Length)
+        if (inputIndex == -1)
         {
             Debug.Log("No available indices to place the letter.");
             return;
         }
 
-        selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
+        // Insert the selectedWordIndex at the correct position
+        if (inputIndex < selectedWordIndex.Count)
+            selectedWordIndex.Insert(inputIndex, wordData.transform.GetSiblingIndex());
+        else
+            selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
+
         wordData.gameObject.SetActive(false);
-        answerWordArray[currentAnswerIndex].SetChar(wordData.charValue);
-        currentAnswerIndex++;
+        answerWordArray[inputIndex].SetChar(wordData.charValue);
+
+        // Update currentAnswerIndex to reflect the number of filled slots
+        currentAnswerIndex = selectedWordIndex.Count;
 
         // Check if the answer is complete
         CheckIfAnswerComplete();
@@ -509,21 +514,27 @@ public class JumbledLettersManager : MonoBehaviour
     {
         Debug.Log("Clearing current answer...");
 
-        // Reset the current input
-        for (int i = 0; i < currentAnswerIndex; i++)
+        // Only clear user-inputted letters, not hints
+        for (int i = 0; i < selectedWordIndex.Count; i++)
         {
             int originalIndex = selectedWordIndex[i];
-            optionWordArray[originalIndex].gameObject.SetActive(true); // Make options visible again
+            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+            {
+                optionWordArray[originalIndex].gameObject.SetActive(true);
+                answerWordArray[i].SetChar('_');
+            }
         }
 
-        selectedWordIndex.Clear();
-        currentAnswerIndex = 0;
-
-        // Reset the answerWordArray display
-        for (int i = 0; i < answerWordArray.Length; i++)
+        // Remove only user-inputted indices from selectedWordIndex, keep hints (-1)
+        for (int i = selectedWordIndex.Count - 1; i >= 0; i--)
         {
-            answerWordArray[i].SetChar('_');
+            if (selectedWordIndex[i] >= 0)
+            {
+                selectedWordIndex.RemoveAt(i);
+            }
         }
+
+        currentAnswerIndex = selectedWordIndex.Count;
 
         Debug.Log("Answer cleared successfully.");
     }
@@ -643,13 +654,13 @@ public class JumbledLettersManager : MonoBehaviour
         gameOver.SetActive(true);
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int lessonId = LessonUI.lesson_id;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 2; // Jumbled Letters mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
 
         StartCoroutine(
-            UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
+            UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
 
         // Ensure all attributes are updated
@@ -659,7 +670,7 @@ public class JumbledLettersManager : MonoBehaviour
     private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int lessonId = LessonUI.lesson_id;
+        int module_number = LessonUI.lesson_id;
         int gameModeId = 2; // Jumbled Letters mode ID
         int subjectId = LessonsLoader.subjectId;
 
@@ -667,7 +678,7 @@ public class JumbledLettersManager : MonoBehaviour
         {
             yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 correctAnswers,
@@ -676,7 +687,7 @@ public class JumbledLettersManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateSpeed(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 timerManager?.elapsedTime ?? 0
@@ -684,20 +695,17 @@ public class JumbledLettersManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 3 - hintCounter, // Calculate total hints used
                 totalSkipsUsed // Pass the total skips used
             );
-            yield return gameProgressHandler.UpdateConsistency(
-                studentId,
-                10
-            );
+            yield return gameProgressHandler.UpdateConsistency(studentId, 10);
 
             yield return gameProgressHandler.UpdateVocabularyRange(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipUsageCount,
@@ -707,7 +715,7 @@ public class JumbledLettersManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateRetention(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipRepeatingUsageCount,
@@ -719,15 +727,30 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void ResetCurrentInput()
     {
-        for (int i = 0; i < currentAnswerIndex; i++)
+        // Only clear user-inputted letters, not hints
+        for (int i = 0; i < selectedWordIndex.Count; i++)
         {
             int originalIndex = selectedWordIndex[i];
-            optionWordArray[originalIndex].gameObject.SetActive(true);
+            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+            {
+                optionWordArray[originalIndex].gameObject.SetActive(true);
+                answerWordArray[i].SetChar('_');
+            }
         }
 
-        selectedWordIndex.Clear();
-        currentAnswerIndex = 0;
-        ResetQuestion();
+        // Remove only user-inputted indices from selectedWordIndex, keep hints (-1)
+        for (int i = selectedWordIndex.Count - 1; i >= 0; i--)
+        {
+            if (selectedWordIndex[i] >= 0)
+            {
+                selectedWordIndex.RemoveAt(i);
+            }
+        }
+
+        // Update currentAnswerIndex to reflect only hints left
+        currentAnswerIndex = selectedWordIndex.Count;
+
+        // Do not call ResetQuestion() here, as it would clear hints as well
     }
 
     private void ResetQuestion()
@@ -752,12 +775,7 @@ public class JumbledLettersManager : MonoBehaviour
             return;
         }
 
-        if (currentAnswerIndex >= answerWord.Length)
-        {
-            Debug.Log("Answer is already complete. No hint needed.");
-            return;
-        }
-
+        // Find all unrevealed indices
         List<int> unrevealedIndices = new List<int>();
         for (int i = 0; i < answerWord.Length; i++)
         {
@@ -773,6 +791,12 @@ public class JumbledLettersManager : MonoBehaviour
                 UnityEngine.Random.Range(0, unrevealedIndices.Count)
             ];
             answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
+            // Insert -1 at the correct position in selectedWordIndex
+            if (randomIndex < selectedWordIndex.Count)
+                selectedWordIndex.Insert(randomIndex, -1);
+            else
+                selectedWordIndex.Add(-1);
+            currentAnswerIndex = selectedWordIndex.Count;
             hintCounter--;
             gameProgressHandler.OnHintUsed(answerWord); // Call the hint used method
             UpdateHintCounterUI();
@@ -804,11 +828,7 @@ public class JumbledLettersManager : MonoBehaviour
         gameStatus = GameStatus.Playing;
 
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -821,11 +841,7 @@ public class JumbledLettersManager : MonoBehaviour
 
         // Reload questions
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 }

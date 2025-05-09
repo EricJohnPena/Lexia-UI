@@ -14,19 +14,19 @@ try {
     // Get parameters from the request
     $subject_id = isset($_GET['subject_id']) ? $_GET['subject_id'] : null;
     $module_id = isset($_GET['module_id']) ? $_GET['module_id'] : null;
-    $lesson_id = isset($_GET['lesson_id']) ? $_GET['lesson_id'] : null;
+   
 
     // Ensure all inputs are provided
-    if (!$subject_id || !$module_id || !$lesson_id) {
+    if (!$subject_id || !$module_id) {
         http_response_code(400);
-        echo json_encode(["message" => "All parameters (subject_id, module_id, lesson_number) are required."]);
+        echo json_encode(["message" => "All parameters (subject_id, module_id) are required."]);
         exit;
     }
 
-    // Build the query with required filters
-    $query = "SELECT question_text, answer, image_path FROM classic_questions_tbl WHERE fk_subject_id = ? AND fk_module_id = ? AND fk_lesson_id = ?";
-    $params = [$subject_id, $module_id, $lesson_id];
-    $types = "iii";
+    // Build the query to get questions by module_id
+    $query = "SELECT question_text, answer, image_path FROM classic_questions_tbl WHERE fk_subject_id = ? AND fk_module_id = ?";
+    $params = [$subject_id, $module_id];
+    $types = "ii";
 
     $stmt = $conn->prepare($query);
 

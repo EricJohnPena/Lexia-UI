@@ -102,12 +102,13 @@ public class LessonsLoader : MonoBehaviour
                     Debug.Log("Lesson item: " + lesson);
                     string lessonName = lesson.lesson_name;
                     string lessonNumber = lesson.lesson_number; // Use lesson_number from the fetched data
+                    string lessonLink = lesson.lesson_link;
                     GameObject lessonInstance = Instantiate(lessonPrefab, parentTransform);
                     LessonUI lessonUI = lessonInstance.GetComponent<LessonUI>();
 
                     if (lessonUI != null)
                     {
-                        lessonUI.SetLessonData(lessonName, lessonNumber, subjectName, moduleNumber);
+                        lessonUI.SetLessonData(lessonName, lessonNumber, subjectName, moduleNumber,lessonLink);
 
                         // Add a listener to track the clicked lesson
                         lessonUI.actionButton.onClick.AddListener(() =>
@@ -137,6 +138,7 @@ public class LessonData
     public string subject_id;
     public string lesson_number;
     public string lesson_name;
+    public string lesson_link;
 }
 
 //utility class to parse JSON arrays into lists

@@ -214,7 +214,7 @@ GameObject:
   - component: {fileID: 8913914018749326282}
   - component: {fileID: -8222982646632583089}
   m_Layer: 5
-  m_Name: LessonTabPrefab
+  m_Name: LessonTabPrefab 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -355,7 +355,6 @@ MonoBehaviour:
   lessonNameText: {fileID: 7562632822411910021}
   actionButton: {fileID: 3087388346609493291}
   playMenuButton: {fileID: 1918430748113671973}
-  curentLessonLink: 
 --- !u!1 &5229198119921110248
 GameObject:
   m_ObjectHideFlags: 0
@@ -470,8 +469,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 300, y: -116.44879}
-  m_SizeDelta: {x: 600, y: 184.8976}
+  m_AnchoredPosition: {x: 300, y: -124}
+  m_SizeDelta: {x: 600, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1269356682348279983
 CanvasRenderer:

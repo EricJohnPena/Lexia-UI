@@ -1,17 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
-using Newtonsoft.Json;
 
 public class ModuleLoader : MonoBehaviour
 {
     public GameObject modulePrefab; // Prefab for modules
     public Transform parentTransform; // Parent transform for module instantiation
     public List<ModuleData> modules = new List<ModuleData>();
+
     private void Start()
     {
-
         // Automatically load modules for the default selected button when the scene starts
         LoadModulesForSelectedSubject();
     }
@@ -32,7 +32,12 @@ public class ModuleLoader : MonoBehaviour
         form.AddField("fk_subject_id", subjectId);
         form.AddField("student_id", PlayerPrefs.GetString("User ID")); // Pass the student ID
 
-        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getModulesWithProgress.php", form))
+        using (
+            UnityWebRequest www = UnityWebRequest.Post(
+                Web.BaseApiUrl + "getModulesWithProgress.php",
+                form
+            )
+        )
         {
             yield return www.SendWebRequest();
 
@@ -47,7 +52,8 @@ public class ModuleLoader : MonoBehaviour
                 modules.Clear();
                 modules = JsonConvert.DeserializeObject<List<ModuleData>>(jsonResponse);
 
-                string subjectName = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
+                string subjectName =
+                    subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
 
                 foreach (Transform child in parentTransform)
                 {
@@ -64,7 +70,11 @@ public class ModuleLoader : MonoBehaviour
                     if (moduleUI != null)
                     {
                         bool isCompleted = module.is_completed; // Check if the module is completed
-                        moduleUI.SetModuleData(module.module_number, subjectName, previousModuleCompleted);
+                        moduleUI.SetModuleData(
+                            module.module_number,
+                            subjectName,
+                            previousModuleCompleted
+                        );
                         previousModuleCompleted = isCompleted; // Unlock the next module only if the current one is completed
                     }
                     else
@@ -75,11 +85,7 @@ public class ModuleLoader : MonoBehaviour
             }
         }
     }
-
-
- 
 }
-
 
 [System.Serializable]
 public class ModuleData

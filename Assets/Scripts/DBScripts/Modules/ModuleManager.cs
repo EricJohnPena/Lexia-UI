@@ -6,7 +6,7 @@ public class ModuleManager : MonoBehaviour
 {
     public static ModuleManager Instance { get; private set; }
 
-    private string currentModuleNumber;
+    public string currentModuleNumber;
 
     private void Awake()
     {

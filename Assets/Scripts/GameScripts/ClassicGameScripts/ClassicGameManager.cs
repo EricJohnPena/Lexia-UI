@@ -149,13 +149,13 @@ public class ClassicGameManager : MonoBehaviour
                 return;
             }
 
-            int lessonId = LessonUI.lesson_id;
+            int moduleNumber = int.Parse(LessonsLoader.moduleNumber);
             int gameModeId = 1; // Assuming 1 is the ID for Classic mode
 
             StartCoroutine(
                 CheckLessonCompletion(
                     int.Parse(PlayerPrefs.GetString("User ID")),
-                    lessonId,
+                    moduleNumber,
                     gameModeId,
                     subjectId
                 )
@@ -196,7 +196,7 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator CheckLessonCompletion(
         int studentId,
-        int lessonId,
+        int moduleNumber,
         int gameModeId,
         int subjectId
     )
@@ -209,20 +209,20 @@ public class ClassicGameManager : MonoBehaviour
 
         isRefreshing = true; // Mark as running
         Debug.Log(
-            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            $"CheckLessonCompletion called with studentId={studentId}, moduleNumber={moduleNumber}, gameModeId={gameModeId}, subjectId={subjectId}"
         );
 
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0 || subjectId <= 0)
+        if (studentId <= 0 || moduleNumber <= 0 || gameModeId <= 0 || subjectId <= 0)
         {
             Debug.LogError(
-                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+                $"Invalid parameters: studentId={studentId}, moduleNumber={moduleNumber}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
             yield break;
         }
 
         string url =
-            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={moduleNumber}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -263,18 +263,14 @@ public class ClassicGameManager : MonoBehaviour
         else
         {
             StartCoroutine(
-                LoadQuestionData(
-                    LessonsLoader.subjectId,
-                    int.Parse(LessonsLoader.moduleNumber),
-                    LessonUI.lesson_id
-                )
+                LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
             );
         }
     }
 
     private IEnumerator UpdateGameCompletionStatus(
         int studentId,
-        int lessonId,
+        int moduleNumber,
         int gameModeId,
         int subjectId,
         float solveTime
@@ -283,7 +279,7 @@ public class ClassicGameManager : MonoBehaviour
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
         WWWForm form = new WWWForm();
         form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
+        form.AddField("module_number", moduleNumber);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
@@ -334,11 +330,7 @@ public class ClassicGameManager : MonoBehaviour
         if (!isRefreshing)
         {
             StartCoroutine(
-                LoadQuestionData(
-                    LessonsLoader.subjectId,
-                    int.Parse(LessonsLoader.moduleNumber),
-                    LessonUI.lesson_id
-                )
+                LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
             );
         }
     }
@@ -359,11 +351,7 @@ public class ClassicGameManager : MonoBehaviour
 
         // Reload classic game data
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -469,13 +457,12 @@ public class ClassicGameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadQuestionData(int subjectId, int moduleId, int lessonId)
+    private IEnumerator LoadQuestionData(int subjectId, int moduleId)
     {
         Debug.Log("LoadQuestionData called.");
-        Debug.Log($"{subjectId}, {moduleId}, {lessonId} from loadlessondata");
-        Debug.Log(int.Parse(LessonsLoader.moduleNumber));
+        Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
 
-        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}";
         Debug.Log("Fetching questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -819,13 +806,14 @@ public class ClassicGameManager : MonoBehaviour
         gameOver.SetActive(true);
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int lessonId = LessonUI.lesson_id;
+        
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
 
         StartCoroutine(
-            UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
+            UpdateGameCompletionStatus(studentId, module_number,  gameModeId, subjectId, solveTime)
         );
 
         // Ensure all attributes are updated
@@ -835,15 +823,16 @@ public class ClassicGameManager : MonoBehaviour
     private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int lessonId = LessonUI.lesson_id;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
+        Debug.Log($"Updating attributes for studentId: {studentId}, module_number: {module_number}");
 
         if (gameProgressHandler != null)
         {
             yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 correctAnswers,
@@ -852,7 +841,7 @@ public class ClassicGameManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateSpeed(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 timerManager?.elapsedTime ?? 0
@@ -860,7 +849,7 @@ public class ClassicGameManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 3 - hintCounter, // Calculate total hints used
@@ -874,7 +863,7 @@ public class ClassicGameManager : MonoBehaviour
             // Update vocabulary range score
             yield return gameProgressHandler.UpdateVocabularyRange(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipUsageCount,
@@ -884,7 +873,7 @@ public class ClassicGameManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateRetention(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipRepeatingUsageCount,
@@ -903,11 +892,7 @@ public class ClassicGameManager : MonoBehaviour
         gameStatus = GameStatus.Playing;
 
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -983,11 +968,7 @@ public class ClassicGameManager : MonoBehaviour
 
         // Reload questions
         StartCoroutine(
-            LoadQuestionData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 

@@ -156,13 +156,13 @@ public class CrosswordGridManager : MonoBehaviour
                 return;
             }
 
-            int lessonId = LessonUI.lesson_id;
+            int module_number = int.Parse(LessonsLoader.moduleNumber);
             int gameModeId = 3; // Assuming 3 is the ID for Crossword mode
 
             StartCoroutine(
                 CheckLessonCompletion(
                     int.Parse(PlayerPrefs.GetString("User ID")),
-                    lessonId,
+                    module_number,
                     gameModeId,
                     subjectId
                 )
@@ -172,7 +172,7 @@ public class CrosswordGridManager : MonoBehaviour
 
     private IEnumerator CheckLessonCompletion(
         int studentId,
-        int lessonId,
+        int module_number,
         int gameModeId,
         int subjectId
     )
@@ -185,20 +185,20 @@ public class CrosswordGridManager : MonoBehaviour
 
         isRefreshing = true; // Mark as running
         Debug.Log(
-            $"CheckLessonCompletion called with studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+            $"CheckLessonCompletion called with studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
         );
 
-        if (studentId <= 0 || lessonId <= 0 || gameModeId <= 0)
+        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0)
         {
             Debug.LogError(
-                $"Invalid parameters: studentId={studentId}, lessonId={lessonId}, gameModeId={gameModeId}, subjectId={subjectId}"
+                $"Invalid parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
             yield break;
         }
 
         string url =
-            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&lesson_id={lessonId}&game_mode_id={gameModeId}&subject_id={subjectId}";
+            $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={module_number}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -236,11 +236,7 @@ public class CrosswordGridManager : MonoBehaviour
         else
         {
             StartCoroutine(
-                LoadCrosswordData(
-                    LessonsLoader.subjectId,
-                    int.Parse(LessonsLoader.moduleNumber),
-                    LessonUI.lesson_id
-                )
+                LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
             );
         }
     }
@@ -266,11 +262,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         // Reload crossword data
         StartCoroutine(
-            LoadCrosswordData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -310,10 +302,10 @@ public class CrosswordGridManager : MonoBehaviour
         UpdateHintCounterUI();
     }
 
-    private IEnumerator LoadCrosswordData(int subjectId, int moduleId, int lessonId)
+    private IEnumerator LoadCrosswordData(int subjectId, int module_number)
     {
         // Remove the condition that skips loading when the game is completed
-        string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}&lesson_id={lessonId}";
+        string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching crossword data from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
@@ -677,64 +669,23 @@ public class CrosswordGridManager : MonoBehaviour
             currentClueText.text = "Congratulations! Puzzle Complete!";
             gameOver.SetActive(true);
 
-            int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-            int lessonId = LessonUI.lesson_id;
-            int gameModeId = 3; // Crossword mode ID
-            int subjectId = LessonsLoader.subjectId;
-            float solveTime = timerManager?.elapsedTime ?? 0;
-
-            StartCoroutine(
-                UpdateGameCompletionStatus(studentId, lessonId, gameModeId, subjectId, solveTime)
-            );
-
             // Ensure all attributes are updated
             StartCoroutine(UpdateAttributes());
-        }
-    }
-
-    private IEnumerator UpdateGameCompletionStatus(
-        int studentId,
-        int lessonId,
-        int gameModeId,
-        int subjectId,
-        float solveTime
-    )
-    {
-        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
-        WWWForm form = new WWWForm();
-        form.AddField("student_id", studentId);
-        form.AddField("lesson_id", lessonId);
-        form.AddField("game_mode_id", gameModeId);
-        form.AddField("subject_id", subjectId);
-        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
-        {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Game completion status updated successfully.");
-            }
-            else
-            {
-                Debug.LogError("Failed to update game completion status: " + www.error);
-            }
         }
     }
 
     private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int lessonId = LessonUI.lesson_id;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 3; // Crossword mode ID
         int subjectId = LessonsLoader.subjectId;
-
+        float solveTime = timerManager?.elapsedTime ?? 0;
         if (gameProgressHandler != null)
         {
             yield return gameProgressHandler.UpdateAccuracy(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 correctAnswers,
@@ -743,7 +694,7 @@ public class CrosswordGridManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateSpeed(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 timerManager?.elapsedTime ?? 0
@@ -751,7 +702,7 @@ public class CrosswordGridManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateProblemSolving(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 3 - hintCounter,
@@ -765,7 +716,7 @@ public class CrosswordGridManager : MonoBehaviour
             // Update vocabulary range score
             yield return gameProgressHandler.UpdateVocabularyRange(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 0, // Assuming no skips in crossword
@@ -775,12 +726,19 @@ public class CrosswordGridManager : MonoBehaviour
 
             yield return gameProgressHandler.UpdateRetention(
                 studentId,
-                lessonId,
+                module_number,
                 gameModeId,
                 subjectId,
                 0, // Assuming no skips in crossword
                 gameProgressHandler.HintOnRepeatingWordCount,
                 gameProgressHandler.IncorrectRepeatingAnswerCount
+            );
+            yield return gameProgressHandler.UpdateGameCompletionStatus(
+                studentId,
+                module_number,
+                gameModeId,
+                subjectId,
+                solveTime
             );
         }
     }
@@ -1121,11 +1079,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         // Always load crossword data, regardless of lesson completion status
         StartCoroutine(
-            LoadCrosswordData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
@@ -1138,11 +1092,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         // Reload crossword data
         StartCoroutine(
-            LoadCrosswordData(
-                LessonsLoader.subjectId,
-                int.Parse(LessonsLoader.moduleNumber),
-                LessonUI.lesson_id
-            )
+            LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
     }
 
