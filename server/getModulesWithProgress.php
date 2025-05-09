@@ -1,0 +1,47 @@
+<?php
+header("Content-Type: application/json");
+
+include 'db_connection.php';
+
+$subject_id = isset($_POST['fk_subject_id']) ? intval($_POST['fk_subject_id']) : 0;
+$student_id = isset($_POST['student_id']) ? intval($_POST['student_id']) : 0;
+
+if ($subject_id === 0 || $student_id === 0) {
+    http_response_code(400);
+    echo json_encode(["error" => "Invalid parameters."]);
+    exit;
+}
+
+$query = "
+    SELECT 
+        m.module_id, 
+        m.module_number, 
+        EXISTS(
+            SELECT 1 
+            FROM students_progress_tbl 
+            WHERE module_id = m.module_id AND student_id = ?
+        ) AS is_completed
+    FROM modules_tbl m
+    WHERE m.fk_subject_id = ?
+    ORDER BY m.module_number
+";
+
+$stmt = $conn->prepare($query);
+$stmt->bind_param("ii", $student_id, $subject_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$modules = [];
+while ($row = $result->fetch_assoc()) {
+    $modules[] = [
+        "module_id" => $row["module_id"],
+        "module_number" => $row["module_number"],
+        "is_completed" => boolval($row["is_completed"])
+    ];
+}
+
+echo json_encode($modules);
+
+$stmt->close();
+$conn->close();
+?>

@@ -7,13 +7,21 @@ public class ModuleUI : MonoBehaviour
     public Text moduleNumberText; // Assign this to the "Module 01" text element
     public Button actionButton; // Assign this to the button
 
-    public void SetModuleData(string moduleNumber, string subjectName)
+    public void SetModuleData(string moduleNumber, string subjectName, bool isEnabled)
     {
         moduleNameText.text = subjectName;
-        moduleNumberText.text = "Module " + moduleNumber;
+        moduleNumberText.text = "Week " + moduleNumber;
 
-        // Set up button action (e.g., start module)
-        actionButton.onClick.AddListener(() => StartModule(moduleNumber));
+        actionButton.interactable = isEnabled; // Enable or disable the button based on the parameter
+
+        if (isEnabled)
+        {
+            actionButton.onClick.AddListener(() => StartModule(moduleNumber));
+        }
+        else
+        {
+            Debug.Log($"Module {moduleNumber} is locked.");
+        }
     }
 
     private void StartModule(string moduleNumber)
