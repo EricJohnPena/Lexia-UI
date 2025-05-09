@@ -790,6 +790,17 @@ public class JumbledLettersManager : MonoBehaviour
             int randomIndex = unrevealedIndices[
                 UnityEngine.Random.Range(0, unrevealedIndices.Count)
             ];
+
+            // Remove the character from the option buttons
+            for (int i = 0; i < optionWordArray.Length; i++)
+            {
+                if (optionWordArray[i].gameObject.activeSelf && optionWordArray[i].charValue == answerWord[randomIndex])
+                {
+                    optionWordArray[i].gameObject.SetActive(false);
+                    break;
+                }
+            }
+
             answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
             // Insert -1 at the correct position in selectedWordIndex
             if (randomIndex < selectedWordIndex.Count)
