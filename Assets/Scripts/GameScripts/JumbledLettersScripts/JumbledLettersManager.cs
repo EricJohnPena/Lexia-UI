@@ -23,6 +23,12 @@ public class JumbledLettersManager : MonoBehaviour
     [SerializeField]
     private WordData[] optionWordArray;
 
+    [SerializeField]
+    private GridLayoutGroup optionGridLayout; // Reference to the GridLayoutGroup component
+
+    [SerializeField]
+    private RectTransform optionHolderRect; // Reference to the OptionHolder's RectTransform
+
     public TimerManager timerManager; // Assign in the Inspector
 
     [SerializeField]
@@ -83,6 +89,96 @@ public class JumbledLettersManager : MonoBehaviour
         }
 
         UpdateHintCounterUI();
+        InitializeOptionGrid();
+    }
+
+    private void InitializeOptionGrid()
+    {
+        if (optionGridLayout == null)
+        {
+            Debug.LogError("GridLayoutGroup component not assigned!");
+            return;
+        }
+
+        // Set initial grid properties
+        //optionGridLayout.childAlignment = TextAnchor.MiddleCenter;
+        optionGridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
+        optionGridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+        optionGridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        optionGridLayout.constraintCount = 6; // Default to 6 columns
+        optionGridLayout.spacing = new Vector2(20f, 20f); // Add some spacing between cells
+    }
+
+    private void UpdateOptionGridLayout()
+    {
+        if (optionGridLayout == null || optionHolderRect == null)
+            return;
+
+        // Calculate the number of active options
+        int activeOptions = optionWordArray.Count(option => option.gameObject.activeSelf);
+        if (activeOptions == 0)
+            return;
+
+        // Set maximum columns to 6
+        int maxColumns = 6;
+        int columns = Mathf.Min(maxColumns, activeOptions);
+        int rows = Mathf.CeilToInt((float)activeOptions / columns);
+
+        // Update grid layout
+        optionGridLayout.constraintCount = columns;
+
+        // Calculate cell size based on container size and spacing
+        float containerWidth = optionHolderRect.rect.width;
+        float containerHeight = optionHolderRect.rect.height;
+        float spacingX = optionGridLayout.spacing.x;
+        float spacingY = optionGridLayout.spacing.y;
+
+        float cellWidth = (containerWidth - (spacingX * (columns - 1))) / columns;
+        float cellHeight = (containerHeight - (spacingY * (rows - 1))) / rows;
+
+        // Set cell size (use the smaller dimension to maintain square cells)
+        float cellSize = Mathf.Min(cellWidth, cellHeight);
+        // Limit the maximum cell size to 100x100
+        cellSize = Mathf.Min(cellSize, 100f);
+        optionGridLayout.cellSize = new Vector2(cellSize, cellSize);
+
+        // Calculate total width of all cells in a row
+        float totalRowWidth = (cellSize * columns) + (spacingX * (columns - 1));
+        
+        // Calculate padding to center the grid
+        float paddingX = (containerWidth - totalRowWidth) / 2;
+        float paddingY = (containerHeight - (cellSize * rows + spacingY * (rows - 1))) / 2;
+
+        // If we have more than 6 characters, we need to center the last row
+        if (activeOptions > maxColumns)
+        {
+            int lastRowItems = activeOptions % maxColumns;
+            if (lastRowItems == 0) lastRowItems = maxColumns;
+            
+            // Calculate the width of the last row
+            float lastRowWidth = (cellSize * lastRowItems) + (spacingX * (lastRowItems - 1));
+            
+            // Calculate the padding needed to center the last row
+            float lastRowPadding = (containerWidth - lastRowWidth) / 2;
+            
+            // Set the padding to center the last row
+            optionGridLayout.padding = new RectOffset(
+                Mathf.RoundToInt(lastRowPadding),
+                Mathf.RoundToInt(lastRowPadding),
+                Mathf.RoundToInt(paddingY),
+                Mathf.RoundToInt(paddingY)
+            );
+        }
+        else
+        {
+            // For 6 or fewer characters, center the entire grid
+            optionGridLayout.padding = new RectOffset(
+                Mathf.RoundToInt(paddingX),
+                Mathf.RoundToInt(paddingX),
+                Mathf.RoundToInt(paddingY),
+                Mathf.RoundToInt(paddingY)
+            );
+        }
     }
 
     void OnEnable()
@@ -264,27 +360,52 @@ public class JumbledLettersManager : MonoBehaviour
         skippedQuestions.Clear(); // Clear skipped questions
         correctlyAnsweredQuestions.Clear(); // Clear correctly answered questions
         gameStatus = GameStatus.Playing;
+
         // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
+
+        // Reset question text
         if (questionText != null)
+        {
             questionText.text = "";
-
-        foreach (var word in answerWordArray)
-        {
-            word.SetChar('_');
-            word.gameObject.SetActive(true);
         }
 
-        foreach (var word in optionWordArray)
+        // Reset answer word array
+        if (answerWordArray != null)
         {
-            word.gameObject.SetActive(true);
+            foreach (var word in answerWordArray)
+            {
+                if (word != null)
+                {
+                    word.SetChar('_');
+                    word.gameObject.SetActive(true);
+                }
+            }
         }
 
+        // Reset option word array
+        if (optionWordArray != null)
+        {
+            foreach (var word in optionWordArray)
+            {
+                if (word != null)
+                {
+                    word.gameObject.SetActive(true);
+                }
+            }
+        }
+
+        // Reset game over panel
         if (gameOver != null)
+        {
             gameOver.SetActive(false);
+        }
+
+        // Update hint counter UI
+        UpdateHintCounterUI();
     }
 
     private IEnumerator LoadQuestionData(int subjectId, int module_number)
@@ -361,25 +482,32 @@ public class JumbledLettersManager : MonoBehaviour
 
         ResetQuestion();
 
+        // Only use letters from the answer word
+        charArray = new char[answerWord.Length];
         for (int i = 0; i < answerWord.Length; i++)
         {
             charArray[i] = answerWord[i];
         }
 
-        for (int i = answerWord.Length; i < optionWordArray.Length; i++)
-        {
-            charArray[i] = (char)UnityEngine.Random.Range(65, 91); // Random uppercase letters
-        }
-
         // Shuffle the characters
-        charArray = ShuffleList
-            .ShuffleListItems(charArray.Take(optionWordArray.Length).ToList())
-            .ToArray();
+        charArray = ShuffleList.ShuffleListItems(charArray.ToList()).ToArray();
 
+        // Only activate the number of option buttons needed for the answer
         for (int i = 0; i < optionWordArray.Length; i++)
         {
-            optionWordArray[i].SetChar(charArray[i]);
+            if (i < charArray.Length)
+            {
+                optionWordArray[i].SetChar(charArray[i]);
+                optionWordArray[i].gameObject.SetActive(true);
+            }
+            else
+            {
+                optionWordArray[i].gameObject.SetActive(false);
+            }
         }
+
+        // Update the grid layout after setting up the options
+        UpdateOptionGridLayout();
 
         currentQuestionIndex++;
         gameStatus = GameStatus.Playing;
@@ -670,7 +798,7 @@ public class JumbledLettersManager : MonoBehaviour
     private IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int module_number = LessonUI.lesson_id;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 2; // Jumbled Letters mode ID
         int subjectId = LessonsLoader.subjectId;
 
@@ -851,8 +979,15 @@ public class JumbledLettersManager : MonoBehaviour
         ResetGameState();
 
         // Reload questions
-        StartCoroutine(
-            LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
-        );
+        if (LessonsLoader.moduleNumber != null)
+        {
+            StartCoroutine(
+                LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
+            );
+        }
+        else
+        {
+            Debug.LogError("LessonsLoader.moduleNumber is null. Cannot reload questions.");
+        }
     }
 }
