@@ -185,6 +185,12 @@ public class CrosswordGridManager : MonoBehaviour
             yield break;
         }
 
+        // Show loading screen at the start of lesson completion check
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         isRefreshing = true; // Mark as running
         Debug.Log(
             $"CheckLessonCompletion called with studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
@@ -196,6 +202,11 @@ public class CrosswordGridManager : MonoBehaviour
                 $"Invalid parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
+            // Hide loading screen if there's an error
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             yield break;
         }
 
@@ -233,10 +244,16 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (isLessonCompleted)
         {
+            // Hide loading screen before handling lesson state
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             HandleLessonState();
         }
         else
         {
+            // Don't hide loading screen here as LoadCrosswordData will handle it
             StartCoroutine(
                 LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
             );
@@ -307,9 +324,14 @@ public class CrosswordGridManager : MonoBehaviour
 
     private IEnumerator LoadCrosswordData(int subjectId, int module_number)
     {
-        // Remove the condition that skips loading when the game is completed
+        // Show loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
-        Debug.Log("Fetching crossword data from URL: " + url);
+        Debug.Log("Fetching Crossword questions from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
@@ -373,6 +395,12 @@ public class CrosswordGridManager : MonoBehaviour
                 ClearGrid();
                 DisplayEmptyMessage();
             }
+        }
+
+        // Hide loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 

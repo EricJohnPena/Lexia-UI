@@ -209,6 +209,12 @@ public class ClassicGameManager : MonoBehaviour
             yield break;
         }
 
+        // Show loading screen at the start of lesson completion check
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         isRefreshing = true; // Mark as running
         Debug.Log(
             $"CheckLessonCompletion called with studentId={studentId}, moduleNumber={moduleNumber}, gameModeId={gameModeId}, subjectId={subjectId}"
@@ -220,12 +226,17 @@ public class ClassicGameManager : MonoBehaviour
                 $"Invalid parameters: studentId={studentId}, moduleNumber={moduleNumber}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
+            // Hide loading screen if there's an error
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             yield break;
         }
 
         string url =
             $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={moduleNumber}&game_mode_id={gameModeId}&subject_id={subjectId}";
-        Debug.Log("Checking lesson completion from URL: " + url);
+        Debug.Log("Checking lesson completion from URL: " +url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
@@ -257,13 +268,18 @@ public class ClassicGameManager : MonoBehaviour
         isLessonCheckCompleted = true; // Mark lesson check as completed
         isRefreshing = false; // Reset flag
 
-        // Explicitly control the flow based on the lesson completion status
         if (isLessonCompleted)
         {
+            // Hide loading screen before handling lesson state
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             HandleLessonCompleted();
         }
         else
         {
+            // Don't hide loading screen here as LoadQuestionData will handle it
             StartCoroutine(
                 LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
             );
@@ -465,6 +481,12 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
 
+        // Show loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}";
         Debug.Log("Fetching questions from URL: " + url);
 
@@ -515,6 +537,12 @@ public class ClassicGameManager : MonoBehaviour
         {
             Debug.LogWarning("No questions available. Using default questions.");
             questionData = defaultQuestionData;
+        }
+
+        // Hide loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
 
         if (questionData != null && questionData.questions.Count > 0)

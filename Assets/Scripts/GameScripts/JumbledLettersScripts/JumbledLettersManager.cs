@@ -238,6 +238,12 @@ public class JumbledLettersManager : MonoBehaviour
             yield break;
         }
 
+        // Show loading screen at the start of lesson completion check
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         isRefreshing = true; // Mark as running
         Debug.Log(
             $"CheckLessonCompletion called with studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
@@ -249,6 +255,11 @@ public class JumbledLettersManager : MonoBehaviour
                 $"Invalid parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
+            // Hide loading screen if there's an error
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             yield break;
         }
 
@@ -286,10 +297,16 @@ public class JumbledLettersManager : MonoBehaviour
 
         if (isLessonCompleted)
         {
+            // Hide loading screen before handling lesson state
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.HideLoadingScreen();
+            }
             HandleLessonState();
         }
         else
         {
+            // Don't hide loading screen here as RefreshJumbledLettersData will handle it
             RefreshJumbledLettersData();
         }
     }
@@ -411,6 +428,12 @@ public class JumbledLettersManager : MonoBehaviour
 
     private IEnumerator LoadQuestionData(int subjectId, int module_number)
     {
+        // Show loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching Jumbled Letters questions from URL: " + url);
 
@@ -459,10 +482,16 @@ public class JumbledLettersManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Failed to fetch Jumbled Letters data: " + www.error);
+                Debug.LogError("Failed to fetch questions: " + www.error);
                 timerManager?.StopTimer();
                 gameOver.SetActive(true);
             }
+        }
+
+        // Hide loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 
