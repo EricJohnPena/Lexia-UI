@@ -18,9 +18,6 @@ public class JumbledLettersManager : MonoBehaviour
     private GameObject gameOver;
 
     [SerializeField]
-    private WordData[] answerWordArray;
-
-    [SerializeField]
     private WordData[] optionWordArray;
 
     [SerializeField]
@@ -61,6 +58,17 @@ public class JumbledLettersManager : MonoBehaviour
     private int correctAnswers = 0;
     private int totalAttempts = 0;
     private int totalSkipsUsed = 0; // Track the total number of skips used
+
+    [SerializeField]
+    private WordData answerWordPrefab; // Assign in Inspector
+
+    [SerializeField]
+    private RectTransform answerHolderRect; // Assign in Inspector (parent container for answer slots)
+
+    [SerializeField]
+    private GridLayoutGroup answerGridLayout; // Assign in Inspector
+
+    private List<WordData> answerWordList = new List<WordData>();
 
     private void Awake()
     {
@@ -392,16 +400,15 @@ public class JumbledLettersManager : MonoBehaviour
         }
 
         // Reset answer word array
-        if (answerWordArray != null)
+        if (answerWordPrefab != null && answerHolderRect != null)
         {
-            foreach (var word in answerWordArray)
+            // Destroy all dynamic answer slots
+            foreach (var word in answerWordList)
             {
                 if (word != null)
-                {
-                    word.SetChar('_');
-                    word.gameObject.SetActive(true);
-                }
+                    Destroy(word.gameObject);
             }
+            answerWordList.Clear();
         }
 
         // Reset option word array
@@ -545,10 +552,7 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void CheckIfAnswerComplete()
     {
-        // Count the number of non-empty characters in the answerWordArray
-        int filledCount = answerWordArray.Count(a => a.charValue != '_');
-
-        // If the number of filled characters matches the answer length, check the answer
+        int filledCount = answerWordList.Count(a => a.charValue != '_');
         if (filledCount == answerWord.Length)
         {
             CheckAnswer();
@@ -560,11 +564,11 @@ public class JumbledLettersManager : MonoBehaviour
         if (gameStatus == GameStatus.Next)
             return;
 
-        // Find the first available (empty) index in answerWordArray
+        // Find the first available (empty) index in answerWordList
         int inputIndex = -1;
         for (int i = 0; i < answerWord.Length; i++)
         {
-            if (answerWordArray[i].charValue == '_')
+            if (answerWordList[i].charValue == '_')
             {
                 inputIndex = i;
                 break;
@@ -584,7 +588,7 @@ public class JumbledLettersManager : MonoBehaviour
             selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
 
         wordData.gameObject.SetActive(false);
-        answerWordArray[inputIndex].SetChar(wordData.charValue);
+        answerWordList[inputIndex].SetChar(wordData.charValue);
 
         // Update currentAnswerIndex to reflect the number of filled slots
         currentAnswerIndex = selectedWordIndex.Count;
@@ -597,7 +601,7 @@ public class JumbledLettersManager : MonoBehaviour
     {
         string formedWord = string.Join(
                 "",
-                answerWordArray.Take(answerWord.Length).Select(a => a.charValue)
+                answerWordList.Take(answerWord.Length).Select(a => a.charValue)
             )
             .ToUpper();
         string expectedAnswer = answerWord.ToUpper();
@@ -694,12 +698,12 @@ public class JumbledLettersManager : MonoBehaviour
         // Shift the remaining letters in the answer to the left
         for (int i = answerIndex; i < currentAnswerIndex - 1; i++)
         {
-            answerWordArray[i].SetChar(answerWordArray[i + 1].charValue);
+            answerWordList[i].SetChar(answerWordList[i + 1].charValue);
             selectedWordIndex[i] = selectedWordIndex[i + 1];
         }
 
         // Clear the last letter in the answer
-        answerWordArray[currentAnswerIndex - 1].SetChar('_');
+        answerWordList[currentAnswerIndex - 1].SetChar('_');
 
         // Update the current answer index
         currentAnswerIndex--;
@@ -709,32 +713,36 @@ public class JumbledLettersManager : MonoBehaviour
 
     public void ClearAnswer()
     {
-        Debug.Log("Clearing current answer...");
+        Debug.Log("Clearing one character from current answer...");
 
-        // Only clear user-inputted letters, not hints
-        for (int i = 0; i < selectedWordIndex.Count; i++)
-        {
-            int originalIndex = selectedWordIndex[i];
-            // Only clear if it's not a hint (hints have index -1)
-            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
-            {
-                optionWordArray[originalIndex].gameObject.SetActive(true);
-                answerWordArray[i].SetChar('_');
-            }
-        }
-
-        // Remove only user-inputted indices from selectedWordIndex, keep hints (-1)
+        // Find the last user-inputted letter (not a hint, i.e., index >= 0)
+        int lastInputIndex = -1;
         for (int i = selectedWordIndex.Count - 1; i >= 0; i--)
         {
             if (selectedWordIndex[i] >= 0)
             {
-                selectedWordIndex.RemoveAt(i);
+                lastInputIndex = i;
+                break;
             }
         }
 
+        if (lastInputIndex == -1)
+        {
+            Debug.Log("No user-inputted letters to clear.");
+            return;
+        }
+
+        int originalIndex = selectedWordIndex[lastInputIndex];
+        if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+        {
+            optionWordArray[originalIndex].gameObject.SetActive(true);
+            answerWordList[lastInputIndex].SetChar('_');
+        }
+
+        selectedWordIndex.RemoveAt(lastInputIndex);
         currentAnswerIndex = selectedWordIndex.Count;
 
-        Debug.Log("Answer cleared successfully.");
+        Debug.Log("One character cleared successfully.");
     }
 
     private void PassQuestion()
@@ -912,7 +920,7 @@ public class JumbledLettersManager : MonoBehaviour
             if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
             {
                 optionWordArray[originalIndex].gameObject.SetActive(true);
-                answerWordArray[i].SetChar('_');
+                answerWordList[i].SetChar('_');
             }
         }
 
@@ -927,17 +935,44 @@ public class JumbledLettersManager : MonoBehaviour
 
         // Update currentAnswerIndex to reflect only hints left
         currentAnswerIndex = selectedWordIndex.Count;
-
-        // Do not call ResetQuestion() here, as it would clear hints as well
     }
 
     private void ResetQuestion()
     {
-        for (int i = 0; i < answerWordArray.Length; i++)
+        // Destroy any existing answerWord objects
+        foreach (var word in answerWordList)
         {
-            answerWordArray[i].SetChar('_');
-            answerWordArray[i].SetHintStyle(false); // Reset hint style
-            answerWordArray[i].gameObject.SetActive(i < answerWord.Length);
+            if (word != null)
+                Destroy(word.gameObject);
+        }
+        answerWordList.Clear();
+
+        // Configure grid layout for single row and dynamic cell size
+        if (answerGridLayout != null && answerHolderRect != null)
+        {
+            answerGridLayout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
+            answerGridLayout.constraintCount = 1;
+            answerGridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            answerGridLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            // Calculate cell size based on container width and answer length
+            float containerWidth = answerHolderRect.rect.width;
+            float spacing = answerGridLayout.spacing.x;
+            float minCellSize = 40f;
+            float maxCellSize = 100f;
+            float cellSize = (containerWidth - (spacing * (answerWord.Length - 1))) / answerWord.Length;
+            cellSize = Mathf.Clamp(cellSize, minCellSize, maxCellSize);
+            answerGridLayout.cellSize = new Vector2(cellSize, cellSize);
+        }
+
+        // Dynamically instantiate answerWord objects based on answerWord length
+        for (int i = 0; i < answerWord.Length; i++)
+        {
+            WordData wordObj = Instantiate(answerWordPrefab, answerHolderRect);
+            wordObj.SetChar('_');
+            wordObj.SetHintStyle(false);
+            wordObj.gameObject.SetActive(true);
+            answerWordList.Add(wordObj);
         }
 
         foreach (var word in optionWordArray)
@@ -958,7 +993,7 @@ public class JumbledLettersManager : MonoBehaviour
         List<int> unrevealedIndices = new List<int>();
         for (int i = 0; i < answerWord.Length; i++)
         {
-            if (answerWordArray[i].charValue == '_')
+            if (answerWordList[i].charValue == '_')
             {
                 unrevealedIndices.Add(i);
             }
@@ -983,8 +1018,8 @@ public class JumbledLettersManager : MonoBehaviour
                 }
             }
 
-            answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
-            answerWordArray[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
+            answerWordList[randomIndex].SetChar(answerWord[randomIndex]);
+            answerWordList[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
             // Insert -1 at the correct position in selectedWordIndex
             if (randomIndex < selectedWordIndex.Count)
                 selectedWordIndex.Insert(randomIndex, -1);
