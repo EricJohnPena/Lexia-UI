@@ -51,5 +51,15 @@ public class Login : MonoBehaviour
         {
             profileManager.UpdateProfileUI();
         }
+
+        // Show loading screen last, after all other operations are complete
+        if (MenuManager.InstanceMenu != null)
+        {
+            MenuManager.InstanceMenu.ToLoadingScene();
+        }
+        else
+        {
+            Debug.LogError("MenuManager instance not found!");
+        }
     }
 }

@@ -4,17 +4,56 @@ using System.Collections;
 
 public class LoadingScreenManager : MonoBehaviour
 {
-    
-    public float loadingDelay = 3f; // Duration to show loading screen (e.g., 3 seconds)
+    public float loadingDelay = 2f; // Duration to show loading screen (2 seconds)
+    private bool isLoading = false;
+    private Coroutine loadingCoroutine;
 
-    void Start()
+    void OnEnable()
     {
-        StartCoroutine(LoadNextSceneAfterDelay());
+        // Reset state when the loading screen is enabled
+        isLoading = false;
+        if (loadingCoroutine != null)
+        {
+            StopCoroutine(loadingCoroutine);
+        }
+        StartLoading();
+    }
+
+    void OnDisable()
+    {
+        // Clean up when the loading screen is disabled
+        if (loadingCoroutine != null)
+        {
+            StopCoroutine(loadingCoroutine);
+            loadingCoroutine = null;
+        }
+        isLoading = false;
+    }
+
+    public void StartLoading()
+    {
+        if (!isLoading)
+        {
+            isLoading = true;
+            loadingCoroutine = StartCoroutine(LoadNextSceneAfterDelay());
+        }
     }
 
     IEnumerator LoadNextSceneAfterDelay()
     {
         yield return new WaitForSeconds(loadingDelay);
-        MenuManager.InstanceMenu.LogintoPage();
+        
+        // Ensure MenuManager exists before proceeding
+        if (MenuManager.InstanceMenu != null)
+        {
+            MenuManager.InstanceMenu.LogintoPage();
+        }
+        else
+        {
+            Debug.LogError("MenuManager instance not found!");
+        }
+        
+        isLoading = false;
+        loadingCoroutine = null;
     }
 }

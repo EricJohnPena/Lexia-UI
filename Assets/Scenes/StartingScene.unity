@@ -7846,6 +7846,7 @@ RectTransform:
   - {fileID: 921924344}
   - {fileID: 1860174539}
   - {fileID: 2089758487}
+  - {fileID: 939923617}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10273,7 +10274,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72c49ebd0c2df1a44a5dc89f3941ccdd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadingDelay: 3
+  loadingDelay: 5
 --- !u!114 &925619843 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8474803731596562908, guid: b4d968988b9c5684d85e9ea614dfb383, type: 3}
@@ -10390,11 +10391,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2089758487}
+  m_Father: {fileID: 692885195}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -211}
+  m_AnchoredPosition: {x: 0, y: -230}
   m_SizeDelta: {x: 350, y: 58.725}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &939923618
@@ -20074,6 +20075,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 469cb64c0684caf479ad8fedbf21a971, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hintUsageCount: 0
 --- !u!1 &1741413984
 GameObject:
   m_ObjectHideFlags: 0
@@ -23817,14 +23819,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2089758486}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: 0.006320982, w: 0.99998003}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 939923617}
+  m_Children: []
   m_Father: {fileID: 692885195}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0.724}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
@@ -23843,7 +23844,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.5254902}
+  m_Color: {r: 0.21960786, g: 0.21960786, b: 0.21960786, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -23880,7 +23881,7 @@ Animator:
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 3e9fb860e8a73ae40a0855ae99153b1a, type: 2}
   m_CullingMode: 0
-  m_UpdateMode: 2
+  m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
