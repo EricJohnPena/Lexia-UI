@@ -715,6 +715,12 @@ public class CrosswordGridManager : MonoBehaviour
 
     private IEnumerator UpdateAttributes()
     {
+        // Show loading screen before updating attributes
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 3; // Crossword mode ID
@@ -779,6 +785,12 @@ public class CrosswordGridManager : MonoBehaviour
                 subjectId,
                 solveTime
             );
+        }
+
+        // Hide loading screen after all updates are complete
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 

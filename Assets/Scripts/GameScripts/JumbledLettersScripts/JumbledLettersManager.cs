@@ -835,6 +835,12 @@ public class JumbledLettersManager : MonoBehaviour
 
     private IEnumerator UpdateAttributes()
     {
+        // Show loading screen before updating attributes
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 2; // Jumbled Letters mode ID
@@ -888,6 +894,12 @@ public class JumbledLettersManager : MonoBehaviour
                 gameProgressHandler.HintOnRepeatingWordCount,
                 gameProgressHandler.IncorrectRepeatingAnswerCount
             );
+        }
+
+        // Hide loading screen after all updates are complete
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 
