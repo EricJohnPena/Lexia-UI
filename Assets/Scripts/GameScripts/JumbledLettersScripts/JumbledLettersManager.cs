@@ -144,7 +144,7 @@ public class JumbledLettersManager : MonoBehaviour
 
         // Calculate total width of all cells in a row
         float totalRowWidth = (cellSize * columns) + (spacingX * (columns - 1));
-        
+
         // Calculate padding to center the grid
         float paddingX = (containerWidth - totalRowWidth) / 2;
         float paddingY = (containerHeight - (cellSize * rows + spacingY * (rows - 1))) / 2;
@@ -153,14 +153,15 @@ public class JumbledLettersManager : MonoBehaviour
         if (activeOptions > maxColumns)
         {
             int lastRowItems = activeOptions % maxColumns;
-            if (lastRowItems == 0) lastRowItems = maxColumns;
-            
+            if (lastRowItems == 0)
+                lastRowItems = maxColumns;
+
             // Calculate the width of the last row
             float lastRowWidth = (cellSize * lastRowItems) + (spacingX * (lastRowItems - 1));
-            
+
             // Calculate the padding needed to center the last row
             float lastRowPadding = (containerWidth - lastRowWidth) / 2;
-            
+
             // Set the padding to center the last row
             optionGridLayout.padding = new RectOffset(
                 Mathf.RoundToInt(lastRowPadding),
@@ -886,6 +887,7 @@ public class JumbledLettersManager : MonoBehaviour
         for (int i = 0; i < answerWordArray.Length; i++)
         {
             answerWordArray[i].SetChar('_');
+            answerWordArray[i].SetHintStyle(false); // Reset hint style
             answerWordArray[i].gameObject.SetActive(i < answerWord.Length);
         }
 
@@ -922,7 +924,10 @@ public class JumbledLettersManager : MonoBehaviour
             // Remove the character from the option buttons
             for (int i = 0; i < optionWordArray.Length; i++)
             {
-                if (optionWordArray[i].gameObject.activeSelf && optionWordArray[i].charValue == answerWord[randomIndex])
+                if (
+                    optionWordArray[i].gameObject.activeSelf
+                    && optionWordArray[i].charValue == answerWord[randomIndex]
+                )
                 {
                     optionWordArray[i].gameObject.SetActive(false);
                     break;
@@ -930,6 +935,7 @@ public class JumbledLettersManager : MonoBehaviour
             }
 
             answerWordArray[randomIndex].SetChar(answerWord[randomIndex]);
+            answerWordArray[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
             // Insert -1 at the correct position in selectedWordIndex
             if (randomIndex < selectedWordIndex.Count)
                 selectedWordIndex.Insert(randomIndex, -1);

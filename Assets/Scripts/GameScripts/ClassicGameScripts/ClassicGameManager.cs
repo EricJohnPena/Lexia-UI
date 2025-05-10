@@ -391,6 +391,7 @@ public class ClassicGameManager : MonoBehaviour
         foreach (var word in answerWordArray)
         {
             word.SetChar('_');
+            word.SetHintStyle(false); // Reset hint style
             word.gameObject.SetActive(true);
         }
 
@@ -600,6 +601,7 @@ public class ClassicGameManager : MonoBehaviour
         {
             answerWordArray[i].gameObject.SetActive(false);
             answerWordArray[i].SetChar('_'); // Reset charValue to '_'
+            answerWordArray[i].SetHintStyle(false); // Reset hint style
         }
 
         // Clear the hinted indices when resetting the question
@@ -656,6 +658,7 @@ public class ClassicGameManager : MonoBehaviour
 
             currentAnswerIndex--;
             answerWordArray[currentAnswerIndex].SetChar('_');
+            answerWordArray[currentQuestionIndex].SetHintStyle(false); // Reset hint style
         }
     }
 
@@ -723,6 +726,7 @@ public class ClassicGameManager : MonoBehaviour
             if (!hintedIndices.Contains(i))
             {
                 answerWordArray[i].SetChar('_');
+                answerWordArray[i].SetHintStyle(false); // Reset hint style
             }
         }
 
@@ -815,14 +819,14 @@ public class ClassicGameManager : MonoBehaviour
         gameOver.SetActive(true);
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        
+
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
         int module_number = int.Parse(LessonsLoader.moduleNumber);
 
         StartCoroutine(
-            UpdateGameCompletionStatus(studentId, module_number,  gameModeId, subjectId, solveTime)
+            UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
 
         // Ensure all attributes are updated
@@ -835,7 +839,9 @@ public class ClassicGameManager : MonoBehaviour
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
-        Debug.Log($"Updating attributes for studentId: {studentId}, module_number: {module_number}");
+        Debug.Log(
+            $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
+        );
 
         if (gameProgressHandler != null)
         {
@@ -930,8 +936,11 @@ public class ClassicGameManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            int randomIndex = unrevealedIndices[
+                UnityEngine.Random.Range(0, unrevealedIndices.Count)
+            ];
             answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
+            answerWordArray[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
             hintedIndices.Add(randomIndex); // Track this index as a hinted letter
             hintCounter--;
             UpdateHintCounterUI();

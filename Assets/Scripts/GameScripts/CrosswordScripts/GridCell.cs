@@ -28,6 +28,9 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
 
     private Animator animator;
 
+    private bool isHinted = false;
+    private bool isCorrect = false;
+
     void Awake()
     {
         cellBackground = GetComponent<Image>();
@@ -69,7 +72,7 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
         SetInputLetter(' ');
     }
 
-    public void SetInputLetter(char letter)
+    public void SetInputLetter(char letter, bool isHint = false)
     {
         if (!IsLocked && letterText != null)
         {
@@ -78,6 +81,16 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
             {
                 PlayTypingAnimation();
             }
+            isHinted = isHint;
+            UpdateTextStyle();
+        }
+    }
+
+    private void UpdateTextStyle()
+    {
+        if (letterText != null)
+        {
+            letterText.fontStyle = (isHinted || isCorrect) ? FontStyle.Bold : FontStyle.Normal;
         }
     }
 
@@ -99,6 +112,8 @@ public class GridCell : MonoBehaviour, IPointerClickHandler
         IsLocked = true;
         letterText.text = correctLetter.ToString();
         cellBackground.color = lockedColor;
+        isCorrect = true;
+        UpdateTextStyle();
         PlayCorrectAnimation();
     }
 

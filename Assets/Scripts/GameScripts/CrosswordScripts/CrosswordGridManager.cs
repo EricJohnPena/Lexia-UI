@@ -476,7 +476,7 @@ public class CrosswordGridManager : MonoBehaviour
             return;
         }
 
-        selectedCell.SetInputLetter(letter);
+        selectedCell.SetInputLetter(letter, false); // Set isHint to false for user input
 
         // Move to the next cell in the word
         MoveCursorToNextCell();
@@ -1058,7 +1058,7 @@ public class CrosswordGridManager : MonoBehaviour
         {
             GridCell randomCell = unrevealedCells[UnityEngine.Random.Range(0, unrevealedCells.Count)];
             int indexInWord = GetCellIndexInWord(randomCell);
-            randomCell.SetInputLetter(currentWord.word[indexInWord]);
+            randomCell.SetInputLetter(currentWord.word[indexInWord], true); // Set isHint to true
             hintedCells.Add(randomCell); // Track this cell as a hinted cell
             hintCounter--;
             gameProgressHandler.OnHintUsed(currentWord.word);
