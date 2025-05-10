@@ -44,6 +44,8 @@ public class CrosswordGridManager : MonoBehaviour
     private int totalAttempts = 0;
     internal static object instance;
 
+    private HashSet<GridCell> hintedCells = new HashSet<GridCell>(); // Add this field to track hinted cells
+
     void Start()
     {
         levelManager = GetComponent<LevelManager>();
@@ -280,6 +282,7 @@ public class CrosswordGridManager : MonoBehaviour
         correctAnswers = 0;
         totalAttempts = 0;
         hintCounter = 3;
+        hintedCells.Clear(); // Clear the hinted cells when resetting the game
 
         // Reset UI
         if (cluesPanelText != null)
@@ -552,11 +555,20 @@ public class CrosswordGridManager : MonoBehaviour
     {
         if (selectedCell != null)
         {
-            selectedCell.SetInputLetter(' ');
-
-            // Only move to the previous cell if the current cell is empty
-            if (selectedCell.GetCurrentLetter() == ' ')
+            // Only remove the letter if it's not a hinted cell
+            if (!hintedCells.Contains(selectedCell))
             {
+                selectedCell.SetInputLetter(' ');
+
+                // Only move to the previous cell if the current cell is empty
+                if (selectedCell.GetCurrentLetter() == ' ')
+                {
+                    MoveCursorToPreviousCell();
+                }
+            }
+            else
+            {
+                // If the current cell is a hinted cell, move to the previous cell
                 MoveCursorToPreviousCell();
             }
         }
@@ -565,12 +577,7 @@ public class CrosswordGridManager : MonoBehaviour
     void CheckWord()
     {
         totalAttempts++;
-        string enteredWord = string.Join(
-                "",
-                GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())
-            )
-            .Trim()
-            .ToUpper();
+        string enteredWord = string.Join("", GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())).Trim().ToUpper();
         string expectedWord = currentWord.word.Trim().ToUpper();
 
         Debug.Log($"Expected Word: {expectedWord}");
@@ -601,11 +608,15 @@ public class CrosswordGridManager : MonoBehaviour
             foreach (var cell in GetCurrentWordCells())
             {
                 cell.FlashRed(1f);
-                cell.SetInputLetter(' ');
+                // Only clear non-hinted cells
+                if (!hintedCells.Contains(cell))
+                {
+                    cell.SetInputLetter(' ');
+                }
             }
             if (gameProgressHandler != null)
             {
-                gameProgressHandler.OnIncorrectAnswer(currentWord.word); // Call the method to update incorrect answer count
+                gameProgressHandler.OnIncorrectAnswer(currentWord.word);
             }
             Debug.Log("Incorrect word. Try again.");
 
@@ -1037,7 +1048,7 @@ public class CrosswordGridManager : MonoBehaviour
         List<GridCell> unrevealedCells = new List<GridCell>();
         foreach (var cell in GetCurrentWordCells())
         {
-            if (cell.GetCurrentLetter() == ' ')
+            if (cell.GetCurrentLetter() == ' ' && !hintedCells.Contains(cell))
             {
                 unrevealedCells.Add(cell);
             }
@@ -1045,17 +1056,14 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (unrevealedCells.Count > 0)
         {
-            GridCell randomCell = unrevealedCells[
-                UnityEngine.Random.Range(0, unrevealedCells.Count)
-            ];
+            GridCell randomCell = unrevealedCells[UnityEngine.Random.Range(0, unrevealedCells.Count)];
             int indexInWord = GetCellIndexInWord(randomCell);
             randomCell.SetInputLetter(currentWord.word[indexInWord]);
+            hintedCells.Add(randomCell); // Track this cell as a hinted cell
             hintCounter--;
-            gameProgressHandler.OnHintUsed(currentWord.word); // Call the method to update hint usage
+            gameProgressHandler.OnHintUsed(currentWord.word);
             UpdateHintCounterUI();
-            Debug.Log(
-                $"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}"
-            );
+            Debug.Log($"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}");
         }
         else
         {
@@ -1104,6 +1112,7 @@ public class CrosswordGridManager : MonoBehaviour
         correctAnswers = 0;
         totalAttempts = 0;
         hintCounter = 3;
+        hintedCells.Clear(); // Clear the hinted cells when resetting the game
         // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {

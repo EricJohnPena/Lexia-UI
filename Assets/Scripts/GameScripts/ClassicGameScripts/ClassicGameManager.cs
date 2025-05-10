@@ -81,6 +81,8 @@ public class ClassicGameManager : MonoBehaviour
     private int correctAnswers = 0;
     private int totalAttempts = 0;
 
+    private HashSet<int> hintedIndices = new HashSet<int>(); // Add this field to track hinted letters
+
     private void Awake()
     {
         if (instance == null)
@@ -600,6 +602,9 @@ public class ClassicGameManager : MonoBehaviour
             answerWordArray[i].SetChar('_'); // Reset charValue to '_'
         }
 
+        // Clear the hinted indices when resetting the question
+        hintedIndices.Clear();
+
         // Activate only the required number of elements based on currentAnswer length
         for (int i = 0; i < currentAnswer.Length; i++)
         {
@@ -711,10 +716,14 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetCurrentInput()
     {
-        // Reset the current input in the answerWordArray
+        // Reset only the user's input, preserving only the hinted letters
         for (int i = 0; i < currentAnswerIndex; i++)
         {
-            answerWordArray[i].SetChar('_');
+            // Only reset if this position wasn't revealed by a hint
+            if (!hintedIndices.Contains(i))
+            {
+                answerWordArray[i].SetChar('_');
+            }
         }
 
         currentAnswerIndex = 0;
@@ -921,10 +930,9 @@ public class ClassicGameManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[
-                UnityEngine.Random.Range(0, unrevealedIndices.Count)
-            ];
+            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
             answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
+            hintedIndices.Add(randomIndex); // Track this index as a hinted letter
             hintCounter--;
             UpdateHintCounterUI();
             gameProgressHandler?.OnHintUsed(currentAnswer);
