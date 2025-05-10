@@ -654,11 +654,18 @@ public class ClassicGameManager : MonoBehaviour
         if (selectedKeyIndex.Count > 0)
         {
             int index = selectedKeyIndex[selectedKeyIndex.Count - 1];
+            
+            // Check if the letter being deleted is a hint
+            if (hintedIndices.Contains(currentAnswerIndex - 1))
+            {
+                Debug.Log("Cannot delete a hinted letter.");
+                currentAnswerIndex--;
+                return;
+            }
+            
             selectedKeyIndex.RemoveAt(selectedKeyIndex.Count - 1);
-
             currentAnswerIndex--;
             answerWordArray[currentAnswerIndex].SetChar('_');
-            answerWordArray[currentQuestionIndex].SetHintStyle(false); // Reset hint style
         }
     }
 
@@ -882,7 +889,7 @@ public class ClassicGameManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipUsageCount,
-                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );
 

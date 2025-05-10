@@ -639,35 +639,6 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("Options shuffled successfully.");
     }
 
-    public void ClearAnswer()
-    {
-        Debug.Log("Clearing current answer...");
-
-        // Only clear user-inputted letters, not hints
-        for (int i = 0; i < selectedWordIndex.Count; i++)
-        {
-            int originalIndex = selectedWordIndex[i];
-            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
-            {
-                optionWordArray[originalIndex].gameObject.SetActive(true);
-                answerWordArray[i].SetChar('_');
-            }
-        }
-
-        // Remove only user-inputted indices from selectedWordIndex, keep hints (-1)
-        for (int i = selectedWordIndex.Count - 1; i >= 0; i--)
-        {
-            if (selectedWordIndex[i] >= 0)
-            {
-                selectedWordIndex.RemoveAt(i);
-            }
-        }
-
-        currentAnswerIndex = selectedWordIndex.Count;
-
-        Debug.Log("Answer cleared successfully.");
-    }
-
     public void ClearAnswerLetter(int answerIndex)
     {
         Debug.Log($"Clearing letter at answer index {answerIndex}...");
@@ -675,6 +646,13 @@ public class JumbledLettersManager : MonoBehaviour
         if (answerIndex < 0 || answerIndex >= currentAnswerIndex)
         {
             Debug.LogWarning("Invalid answer index. Ignoring clear request.");
+            return;
+        }
+
+        // Check if the letter is a hint (index -1 in selectedWordIndex)
+        if (selectedWordIndex[answerIndex] == -1)
+        {
+            Debug.Log("Cannot clear a hinted letter.");
             return;
         }
 
@@ -698,6 +676,36 @@ public class JumbledLettersManager : MonoBehaviour
         currentAnswerIndex--;
 
         Debug.Log("Letter cleared successfully.");
+    }
+
+    public void ClearAnswer()
+    {
+        Debug.Log("Clearing current answer...");
+
+        // Only clear user-inputted letters, not hints
+        for (int i = 0; i < selectedWordIndex.Count; i++)
+        {
+            int originalIndex = selectedWordIndex[i];
+            // Only clear if it's not a hint (hints have index -1)
+            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+            {
+                optionWordArray[originalIndex].gameObject.SetActive(true);
+                answerWordArray[i].SetChar('_');
+            }
+        }
+
+        // Remove only user-inputted indices from selectedWordIndex, keep hints (-1)
+        for (int i = selectedWordIndex.Count - 1; i >= 0; i--)
+        {
+            if (selectedWordIndex[i] >= 0)
+            {
+                selectedWordIndex.RemoveAt(i);
+            }
+        }
+
+        currentAnswerIndex = selectedWordIndex.Count;
+
+        Debug.Log("Answer cleared successfully.");
     }
 
     private void PassQuestion()
@@ -838,7 +846,7 @@ public class JumbledLettersManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 gameProgressHandler.SkipUsageCount,
-                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );
 

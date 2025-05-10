@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using System;
+using System.Threading.Tasks;
 
 public class GameProgressHandler : MonoBehaviour
 {
@@ -9,11 +11,13 @@ public class GameProgressHandler : MonoBehaviour
     private const string UpdateVocabularyRangeUrl = "updateVocabularyRangeAttribute.php";
     private const string UpdateRetentionUrl = "updateRetentionAttribute.php";
     private const int BaseTime = 30; // Base time in seconds
+    private const int MaxRetries = 3; // Maximum number of retry attempts
+    private const float RetryDelay = 1f; // Delay between retries in seconds
 
     private ComplexWordsHandler complexWordsHandler;
     private RepeatingWordsHandler repeatingWordsHandler;
     private int rareWordCount = 0;
-    private int hintUsageCount = 0;
+    public int hintUsageCount = 0;
     private int hintOnRepeatingWordCount = 0;
     private int wordDifficultyScore = 0;
     private int incorrectAnswerCount = 0;
@@ -24,15 +28,45 @@ public class GameProgressHandler : MonoBehaviour
 
     private HashSet<string> encounteredRepeatingWords = new HashSet<string>(); // Track encountered repeating words
 
+    // Field declarations
+    private int correctAnswers;
+    private int totalAttempts;
+    private TimerManager timerManager;
+    private int hintCounter;
+    private int totalSkipsUsed;
+
     public int WordDifficultyScore => wordDifficultyScore;
     public int RareWordCount => rareWordCount;
     public int HintOnRepeatingWordCount => hintOnRepeatingWordCount;
     public int IncorrectRepeatingAnswerCount => incorrectRepeatingAnswerCount;
     public int SkipRepeatingUsageCount => skipRepeatingUsageCount;
-    public int HintUsageCount => hintUsageCount;
     public int IncorrectAnswerCount => incorrectAnswerCount;
     public int SkipUsageCount => skipUsageCount;
     public int ComplexWordAttemptCount => complexWordAttemptCount;
+
+    private async Task<bool> RetryOperation(Func<Task<bool>> operation)
+    {
+        int attempts = 0;
+        while (attempts < MaxRetries)
+        {
+            try
+            {
+                bool success = await operation();
+                if (success) return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"Attempt {attempts + 1} failed: {e.Message}");
+            }
+            
+            attempts++;
+            if (attempts < MaxRetries)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(RetryDelay));
+            }
+        }
+        return false;
+    }
 
     private void Awake()
     {
@@ -497,6 +531,105 @@ public class GameProgressHandler : MonoBehaviour
             {
                 Debug.LogError("Failed to update game completion status: " + www.error);
             }
+        }
+    }
+
+    private IEnumerator ExecuteWithRetry(IEnumerator operation)
+    {
+        int attempts = 0;
+        bool success = false;
+        string errorMessage = null;
+
+        while (attempts < MaxRetries && !success)
+        {
+            // Create a wrapper coroutine to handle the operation
+            var wrapper = new CoroutineWrapper(operation);
+            yield return StartCoroutine(wrapper.Run());
+
+            if (wrapper.Error != null)
+            {
+                attempts++;
+                errorMessage = wrapper.Error;
+                Debug.LogWarning($"Attempt {attempts} failed: {errorMessage}");
+                if (attempts < MaxRetries)
+                {
+                    yield return new WaitForSeconds(RetryDelay);
+                }
+            }
+            else
+            {
+                success = true;
+            }
+        }
+
+        if (!success)
+        {
+            Debug.LogError($"Failed to execute operation after {MaxRetries} attempts. Last error: {errorMessage}");
+        }
+    }
+
+    // Helper class to handle coroutine errors
+    private class CoroutineWrapper
+    {
+        private readonly IEnumerator _operation;
+        public string Error { get; private set; }
+
+        public CoroutineWrapper(IEnumerator operation)
+        {
+            _operation = operation;
+        }
+
+        public IEnumerator Run()
+        {
+            bool hasError = false;
+            while (!hasError && _operation.MoveNext())
+            {
+                object current = null;
+                try
+                {
+                    current = _operation.Current;
+                }
+                catch (Exception e)
+                {
+                    Error = e.Message;
+                    hasError = true;
+                    yield break;
+                }
+                yield return current;
+            }
+        }
+    }
+
+    private IEnumerator UpdateAttributes()
+    {
+        int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
+        int gameModeId = 1; // Classic mode ID
+        int subjectId = LessonsLoader.subjectId;
+        Debug.Log($"Updating attributes for studentId: {studentId}, module_number: {module_number}");
+
+        // Create a list of update operations
+        var updateOperations = new List<IEnumerator>
+        {
+            UpdateAccuracy(studentId, module_number, gameModeId, subjectId, correctAnswers, totalAttempts),
+            UpdateSpeed(studentId, module_number, gameModeId, subjectId, timerManager?.elapsedTime ?? 0),
+            UpdateProblemSolving(studentId, module_number, gameModeId, subjectId, 3 - hintCounter, totalSkipsUsed),
+            UpdateConsistency(studentId, 10),
+            UpdateVocabularyRange(studentId, module_number, gameModeId, subjectId, SkipUsageCount, hintUsageCount, IncorrectAnswerCount)
+        };
+
+        // Execute all operations in parallel
+        var runningOperations = new List<Coroutine>();
+        foreach (var operation in updateOperations)
+        {
+            var coroutine = StartCoroutine(ExecuteWithRetry(operation));
+            runningOperations.Add(coroutine);
+        }
+
+        // Wait for all operations to complete
+        foreach (var operation in runningOperations)
+        {
+            yield return operation;
         }
     }
 }

@@ -731,7 +731,7 @@ public class CrosswordGridManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 0, // Assuming no skips in crossword
-                gameProgressHandler.HintUsageCount,
+                gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );
 
