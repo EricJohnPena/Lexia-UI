@@ -14,10 +14,19 @@ public class ClassicGameManager : MonoBehaviour
     private Text questionText;
 
     [SerializeField]
-    private Image questionImage; // New image component
+    private Image questionImage;
+
+    // Remove the fixed array and add prefab + parent for dynamic answer slots
+    [SerializeField]
+    private WordData answerWordPrefab; // Assign in Inspector
 
     [SerializeField]
-    private WordData[] answerWordArray;
+    private RectTransform answerHolderRect; // Assign in Inspector (parent container)
+
+    [SerializeField]
+    private GridLayoutGroup answerGridLayout; // Assign in Inspector
+
+    private List<WordData> answerWordList = new List<WordData>();
 
     [SerializeField]
     private GameObject gameOver;
@@ -236,7 +245,7 @@ public class ClassicGameManager : MonoBehaviour
 
         string url =
             $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={moduleNumber}&game_mode_id={gameModeId}&subject_id={subjectId}";
-        Debug.Log("Checking lesson completion from URL: " +url);
+        Debug.Log("Checking lesson completion from URL: " + url);
 
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
@@ -404,12 +413,15 @@ public class ClassicGameManager : MonoBehaviour
             questionText.text = "";
         }
 
-        foreach (var word in answerWordArray)
+        // Remove old array logic
+        // foreach (var word in answerWordArray) { ... }
+        // Instead, destroy all dynamic answer slots
+        foreach (var word in answerWordList)
         {
-            word.SetChar('_');
-            word.SetHintStyle(false); // Reset hint style
-            word.gameObject.SetActive(true);
+            if (word != null)
+                Destroy(word.gameObject);
         }
+        answerWordList.Clear();
 
         foreach (var button in keyboardButtons)
         {
@@ -624,21 +636,43 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetQuestion()
     {
-        // Reset all answerWordArray elements to inactive
-        for (int i = 0; i < answerWordArray.Length; i++)
+        // Destroy any existing answerWord objects
+        foreach (var word in answerWordList)
         {
-            answerWordArray[i].gameObject.SetActive(false);
-            answerWordArray[i].SetChar('_'); // Reset charValue to '_'
-            answerWordArray[i].SetHintStyle(false); // Reset hint style
+            if (word != null)
+                Destroy(word.gameObject);
         }
+        answerWordList.Clear();
 
         // Clear the hinted indices when resetting the question
         hintedIndices.Clear();
 
-        // Activate only the required number of elements based on currentAnswer length
+        // Configure grid layout for single row and dynamic cell size
+        if (answerGridLayout != null && answerHolderRect != null)
+        {
+            answerGridLayout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
+            answerGridLayout.constraintCount = 1;
+            answerGridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            answerGridLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            // Calculate cell size based on container width and answer length
+            float containerWidth = answerHolderRect.rect.width;
+            float spacing = answerGridLayout.spacing.x;
+            float minCellSize = 40f;
+            float maxCellSize = 100f;
+            float cellSize = (containerWidth - (spacing * (currentAnswer.Length - 1))) / currentAnswer.Length;
+            cellSize = Mathf.Clamp(cellSize, minCellSize, maxCellSize);
+            answerGridLayout.cellSize = new Vector2(cellSize, cellSize);
+        }
+
+        // Dynamically instantiate answerWord objects based on currentAnswer length
         for (int i = 0; i < currentAnswer.Length; i++)
         {
-            answerWordArray[i].gameObject.SetActive(true);
+            WordData wordObj = Instantiate(answerWordPrefab, answerHolderRect);
+            wordObj.SetChar('_');
+            wordObj.SetHintStyle(false);
+            wordObj.gameObject.SetActive(true);
+            answerWordList.Add(wordObj);
         }
 
         foreach (Button button in keyboardButtons)
@@ -655,7 +689,7 @@ public class ClassicGameManager : MonoBehaviour
         // Find the next available index that is not already answered
         while (
             currentAnswerIndex < currentAnswer.Length
-            && answerWordArray[currentAnswerIndex].charValue != '_'
+            && answerWordList[currentAnswerIndex].charValue != '_'
         )
         {
             currentAnswerIndex++;
@@ -667,10 +701,10 @@ public class ClassicGameManager : MonoBehaviour
             return;
         }
 
-        string keyPressed = keyButton.GetComponentInChildren<Text>().text.ToUpper(); // Convert input to uppercase
+        string keyPressed = keyButton.GetComponentInChildren<Text>().text.ToUpper();
         selectedKeyIndex.Add(System.Array.IndexOf(keyboardButtons, keyButton));
 
-        answerWordArray[currentAnswerIndex].SetChar(keyPressed[0]);
+        answerWordList[currentAnswerIndex].SetChar(keyPressed[0]);
         currentAnswerIndex++;
 
         // Check if the answer is complete
@@ -682,7 +716,7 @@ public class ClassicGameManager : MonoBehaviour
         if (selectedKeyIndex.Count > 0)
         {
             int index = selectedKeyIndex[selectedKeyIndex.Count - 1];
-            
+
             // Check if the letter being deleted is a hint
             if (hintedIndices.Contains(currentAnswerIndex - 1))
             {
@@ -690,19 +724,19 @@ public class ClassicGameManager : MonoBehaviour
                 currentAnswerIndex--;
                 return;
             }
-            
+
             selectedKeyIndex.RemoveAt(selectedKeyIndex.Count - 1);
             currentAnswerIndex--;
-            answerWordArray[currentAnswerIndex].SetChar('_');
+            answerWordList[currentAnswerIndex].SetChar('_');
         }
     }
 
     private void CheckAnswer()
     {
-        // Form the user input from the answerWordArray
+        // Form the user input from the answerWordList
         string userInput = string.Join(
                 "",
-                answerWordArray.Take(currentAnswer.Length).Select(a => a.charValue)
+                answerWordList.Take(currentAnswer.Length).Select(a => a.charValue)
             )
             .Trim()
             .ToUpper();
@@ -712,31 +746,25 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log($"User Input: {userInput}");
 
         totalAttempts++;
-        // Compare user input with the expected answer
         if (userInput.Equals(expectedAnswer, System.StringComparison.OrdinalIgnoreCase))
         {
             correctAnswers++;
             Debug.Log("Correct Answer!");
             gameStatus = GameStatus.Next;
 
-            // Mark the current question as correctly answered
             correctlyAnsweredQuestions.Add(currentQuestionIndex);
-
-            // Remove the question from the skipped list if it was skipped earlier
             skippedQuestions.Remove(currentQuestionIndex);
 
-            // Check if the game is complete
             if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
             {
-                CheckGameCompletion(); // Complete the game immediately
+                CheckGameCompletion();
             }
             else if (skippedQuestions.Count > 0)
             {
-                HandleSkippedQuestions(); // Revisit skipped questions
+                HandleSkippedQuestions();
             }
             else
             {
-                // Move to the next question if no skipped questions remain
                 currentQuestionIndex++;
                 if (currentQuestionIndex < questionData.questions.Count)
                 {
@@ -754,14 +782,12 @@ public class ClassicGameManager : MonoBehaviour
 
     private void ResetCurrentInput()
     {
-        // Reset only the user's input, preserving only the hinted letters
         for (int i = 0; i < currentAnswerIndex; i++)
         {
-            // Only reset if this position wasn't revealed by a hint
             if (!hintedIndices.Contains(i))
             {
-                answerWordArray[i].SetChar('_');
-                answerWordArray[i].SetHintStyle(false); // Reset hint style
+                answerWordList[i].SetChar('_');
+                answerWordList[i].SetHintStyle(false);
             }
         }
 
@@ -975,7 +1001,7 @@ public class ClassicGameManager : MonoBehaviour
         List<int> unrevealedIndices = new List<int>();
         for (int i = 0; i < currentAnswer.Length; i++)
         {
-            if (answerWordArray[i].charValue == '_')
+            if (answerWordList[i].charValue == '_')
             {
                 unrevealedIndices.Add(i);
             }
@@ -986,15 +1012,14 @@ public class ClassicGameManager : MonoBehaviour
             int randomIndex = unrevealedIndices[
                 UnityEngine.Random.Range(0, unrevealedIndices.Count)
             ];
-            answerWordArray[randomIndex].SetChar(currentAnswer[randomIndex]);
-            answerWordArray[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
-            hintedIndices.Add(randomIndex); // Track this index as a hinted letter
+            answerWordList[randomIndex].SetChar(currentAnswer[randomIndex]);
+            answerWordList[randomIndex].SetHintStyle(true);
+            hintedIndices.Add(randomIndex);
             hintCounter--;
             UpdateHintCounterUI();
             gameProgressHandler?.OnHintUsed(currentAnswer);
             Debug.Log($"Hint revealed at index {randomIndex}: {currentAnswer[randomIndex]}");
 
-            // Check if the answer is complete
             CheckIfAnswerComplete();
         }
         else
@@ -1013,10 +1038,7 @@ public class ClassicGameManager : MonoBehaviour
 
     private void CheckIfAnswerComplete()
     {
-        // Count the number of non-empty characters in the answerWordArray
-        int filledCount = answerWordArray.Count(a => a.charValue != '_');
-
-        // If the number of filled characters matches the answer length, check the answer
+        int filledCount = answerWordList.Count(a => a.charValue != '_');
         if (filledCount == currentAnswer.Length)
         {
             CheckAnswer();
