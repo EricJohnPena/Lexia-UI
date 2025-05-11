@@ -13,7 +13,7 @@ public class CrosswordGridManager : MonoBehaviour
     public Transform gridContainer;
     public Text cluesPanelText;
     public Text currentClueText;
-    public int gridSize = 10;
+    public int gridSize = 15;
     private GameProgressHandler gameProgressHandler; // Added declaration
 
     private GridCell[,] gridCells;
@@ -536,7 +536,14 @@ public class CrosswordGridManager : MonoBehaviour
         {
             int row = currentWord.startRow + (currentWord.horizontal ? 0 : i);
             int col = currentWord.startCol + (currentWord.horizontal ? i : 0);
-            cells.Add(gridCells[row, col]);
+            if (row >= 0 && row < gridSize && col >= 0 && col < gridSize)
+            {
+                cells.Add(gridCells[row, col]);
+            }
+            else
+            {
+                Debug.LogWarning($"Word '{currentWord.word}' cell ({row},{col}) is out of bounds.");
+            }
         }
         return cells;
     }
@@ -605,7 +612,12 @@ public class CrosswordGridManager : MonoBehaviour
     void CheckWord()
     {
         totalAttempts++;
-        string enteredWord = string.Join("", GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())).Trim().ToUpper();
+        string enteredWord = string.Join(
+                "",
+                GetCurrentWordCells().Select(cell => cell.GetCurrentLetter())
+            )
+            .Trim()
+            .ToUpper();
         string expectedWord = currentWord.word.Trim().ToUpper();
 
         Debug.Log($"Expected Word: {expectedWord}");
@@ -801,11 +813,25 @@ public class CrosswordGridManager : MonoBehaviour
 
         foreach (var placement in currentLevel.fixedLayout)
         {
-            if (!numberedCells[placement.startRow, placement.startCol])
+            if (
+                placement.startRow >= 0
+                && placement.startRow < gridSize
+                && placement.startCol >= 0
+                && placement.startCol < gridSize
+            )
             {
-                wordNumbers[placement] = currentNumber;
-                numberedCells[placement.startRow, placement.startCol] = true;
-                currentNumber++;
+                if (!numberedCells[placement.startRow, placement.startCol])
+                {
+                    wordNumbers[placement] = currentNumber;
+                    numberedCells[placement.startRow, placement.startCol] = true;
+                    currentNumber++;
+                }
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"Word '{placement.word}' start cell ({placement.startRow},{placement.startCol}) is out of bounds."
+                );
             }
         }
     }
@@ -823,7 +849,7 @@ public class CrosswordGridManager : MonoBehaviour
         ClearGrid(); // Ensure the grid is cleared before generating a new one
 
         gridCells = new GridCell[gridSize, gridSize];
-        float cellSize = 70f;
+        float cellSize = 60f;
 
         Vector2 gridStartPos = new Vector2(-gridSize * cellSize / 2, gridSize * cellSize / 2);
 
@@ -917,7 +943,14 @@ public class CrosswordGridManager : MonoBehaviour
 
                 if (checkRow == row && checkCol == col)
                 {
-                    return placement;
+                    // Only return if within bounds
+                    if (
+                        checkRow >= 0
+                        && checkRow < gridSize
+                        && checkCol >= 0
+                        && checkCol < gridSize
+                    )
+                        return placement;
                 }
             }
         }
@@ -947,9 +980,16 @@ public class CrosswordGridManager : MonoBehaviour
             int row = word.startRow + (word.horizontal ? 0 : i);
             int col = word.startCol + (word.horizontal ? i : 0);
 
-            GridCell cell = gridCells[row, col];
-            cell.Highlight();
-            highlightedCells.Add(cell);
+            if (row >= 0 && row < gridSize && col >= 0 && col < gridSize)
+            {
+                GridCell cell = gridCells[row, col];
+                cell.Highlight();
+                highlightedCells.Add(cell);
+            }
+            else
+            {
+                Debug.LogWarning($"Highlight out of bounds: {word.word} ({row},{col})");
+            }
         }
     }
 
@@ -973,15 +1013,23 @@ public class CrosswordGridManager : MonoBehaviour
             {
                 int row = placement.startRow + (placement.horizontal ? 0 : i);
                 int col = placement.startCol + (placement.horizontal ? i : 0);
-
-                GridCell cell = gridCells[row, col];
-                cell.SetCorrectLetter(placement.word[i]);
-                cell.SetActive(true);
-
-                // Set number for first cell of word
-                if (i == 0 && wordNumbers.ContainsKey(placement))
+                if (row >= 0 && row < gridSize && col >= 0 && col < gridSize)
                 {
-                    cell.SetNumber(wordNumbers[placement]);
+                    GridCell cell = gridCells[row, col];
+                    cell.SetCorrectLetter(placement.word[i]);
+                    cell.SetActive(true);
+
+                    // Set number for first cell of word
+                    if (i == 0 && wordNumbers.ContainsKey(placement))
+                    {
+                        cell.SetNumber(wordNumbers[placement]);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"Word '{placement.word}' cell ({row},{col}) is out of bounds."
+                    );
                 }
             }
         }
@@ -1096,14 +1144,18 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (unrevealedCells.Count > 0)
         {
-            GridCell randomCell = unrevealedCells[UnityEngine.Random.Range(0, unrevealedCells.Count)];
+            GridCell randomCell = unrevealedCells[
+                UnityEngine.Random.Range(0, unrevealedCells.Count)
+            ];
             int indexInWord = GetCellIndexInWord(randomCell);
             randomCell.SetInputLetter(currentWord.word[indexInWord], true); // Set isHint to true
             hintedCells.Add(randomCell); // Track this cell as a hinted cell
             hintCounter--;
             gameProgressHandler.OnHintUsed(currentWord.word);
             UpdateHintCounterUI();
-            Debug.Log($"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}");
+            Debug.Log(
+                $"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}"
+            );
         }
         else
         {
