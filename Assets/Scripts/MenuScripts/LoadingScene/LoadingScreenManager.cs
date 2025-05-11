@@ -1,12 +1,17 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using UnityEngine.UI;
 
 public class LoadingScreenManager : MonoBehaviour
 {
     public float loadingDelay = 2f; // Duration to show loading screen (2 seconds)
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
+
+    [Header("Loading UI")]
+    [SerializeField] private Image loadingBarFill; // Image with fill for loading bar
+    [SerializeField] private Text loadingText;      // Legacy UI Text for "Loading...100%"
 
     void OnEnable()
     {
@@ -16,6 +21,7 @@ public class LoadingScreenManager : MonoBehaviour
         {
             StopCoroutine(loadingCoroutine);
         }
+        ResetLoadingUI();
         StartLoading();
     }
 
@@ -39,20 +45,42 @@ public class LoadingScreenManager : MonoBehaviour
         }
     }
 
+    private void ResetLoadingUI()
+    {
+        if (loadingBarFill != null)
+            loadingBarFill.fillAmount = 0f;
+        if (loadingText != null)
+            loadingText.text = "Loading...0%";
+    }
+
     IEnumerator LoadNextSceneAfterDelay()
     {
-        yield return new WaitForSeconds(loadingDelay);
-        
+        float elapsed = 0f;
+        while (elapsed < loadingDelay)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / loadingDelay);
+            if (loadingBarFill != null)
+                loadingBarFill.fillAmount = progress;
+            if (loadingText != null)
+                loadingText.text = $"Loading...{Mathf.RoundToInt(progress * 100f)}%";
+            yield return null;
+        }
+
         // Ensure MenuManager exists before proceeding
         if (MenuManager.InstanceMenu != null)
         {
+            if (loadingBarFill != null)
+                loadingBarFill.fillAmount = 1f;
+            if (loadingText != null)
+                loadingText.text = "Loading...100%";
             MenuManager.InstanceMenu.LogintoPage();
         }
         else
         {
             Debug.LogError("MenuManager instance not found!");
         }
-        
+
         isLoading = false;
         loadingCoroutine = null;
     }
