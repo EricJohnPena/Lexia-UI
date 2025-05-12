@@ -242,35 +242,40 @@ public class ClassicGameManager : MonoBehaviour
             }
             yield break;
         }
-
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         string url =
             $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={moduleNumber}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
-
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-            Debug.Log("Checking lesson completion from URL: " + url);
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            Debug.Log($"Attempt {attempt} to check lesson completion.");
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
-                {
-                    string response = www.downloadHandler.text;
-                    Debug.Log("Lesson Completion Response: " + response);
+                yield return www.SendWebRequest();
 
-                    isLessonCompleted = response.Trim() == "true";
-                }
-                catch (System.Exception e)
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
-                    isLessonCompleted = false;
+                    try
+                    {
+                        string response = www.downloadHandler.text;
+                        Debug.Log("Lesson Completion Response: " + response);
+                        isLessonCompleted = response.Trim() == "true";
+                        break; // Exit loop on success
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                        isLessonCompleted = false;
+                    }
                 }
-            }
-            else
-            {
-                Debug.LogError("Failed to check lesson completion: " + www.error);
-                isLessonCompleted = false;
+                else
+                {
+                    Debug.LogError("Failed to check lesson completion: " + www.error);
+                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
+                }
             }
         }
 
@@ -303,6 +308,9 @@ public class ClassicGameManager : MonoBehaviour
         float solveTime
     )
     {
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
         WWWForm form = new WWWForm();
         form.AddField("student_id", studentId);
@@ -310,18 +318,24 @@ public class ClassicGameManager : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            attempt++;
+            Debug.Log($"Attempt {attempt} to update game completion status.");
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Game completion status updated successfully.");
-            }
-            else
-            {
-                Debug.LogError("Failed to update game completion status: " + www.error);
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Game completion status updated successfully.");
+                    break; // Exit loop on success
+                }
+                else
+                {
+                    Debug.LogError("Failed to update game completion status: " + www.error);
+                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
+                }
             }
         }
     }
@@ -498,46 +512,50 @@ public class ClassicGameManager : MonoBehaviour
         {
             GameLoadingManager.Instance.ShowLoadingScreen();
         }
-
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}";
         Debug.Log("Fetching questions from URL: " + url);
-
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            Debug.Log($"Attempt {attempt} to load questions.");
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
-                {
-                    string jsonText = www.downloadHandler.text;
-                    Debug.Log("Raw JSON Response: " + jsonText);
-                    questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
+                yield return www.SendWebRequest();
 
-                    if (
-                        questionData == null
-                        || questionData.questions == null
-                        || questionData.questions.Count == 0
-                    )
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    try
                     {
-                        Debug.LogWarning(
-                            "Loaded JSON is empty or invalid. Using default questions."
-                        );
-                        questionData = defaultQuestionData;
+                        string jsonText = www.downloadHandler.text;
+                        Debug.Log("Raw JSON Response: " + jsonText);
+                        questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
+
+                        if (
+                            questionData == null
+                            || questionData.questions == null
+                            || questionData.questions.Count == 0
+                        )
+                        {
+                            Debug.LogWarning(
+                                "Loaded JSON is empty or invalid. Using default questions."
+                            );
+                            questionData = defaultQuestionData;
+                        }
+                        break; // Exit loop on success
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing JSON: " + e.Message);
                     }
                 }
-                catch (System.Exception e)
+                else
                 {
-                    Debug.LogError("Error parsing JSON: " + e.Message);
-                    questionData = defaultQuestionData;
+                    Debug.LogError("Failed to load questions: " + www.error);
+                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
                 }
-            }
-            else
-            {
-                Debug.LogWarning(
-                    "Failed to fetch questions from the server. Using default questions."
-                );
-                questionData = defaultQuestionData;
             }
         }
 
@@ -593,29 +611,43 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator LoadQuestionImage(string imagePath)
     {
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         questionImage.gameObject.SetActive(false);
         string fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, imagePath);
 
-        using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(fullPath))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            Debug.Log($"Attempt {attempt} to load image: {fullPath}");
+            if (Application.platform == RuntimePlatform.Android)
             {
-                Texture2D texture = DownloadHandlerTexture.GetContent(www);
-                Sprite sprite = Sprite.Create(
-                    texture,
-                    new Rect(0, 0, texture.width, texture.height),
-                    new Vector2(0.5f, 0.5f)
-                );
-
-                questionImage.sprite = sprite;
-                questionImage.gameObject.SetActive(true);
+                fullPath = "jar:file://" + fullPath;
             }
-            else
+
+            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(fullPath))
             {
-                Debug.LogWarning($"Failed to load image: {imagePath}");
-                questionImage.gameObject.SetActive(false);
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Texture2D texture = DownloadHandlerTexture.GetContent(www);
+                    Sprite sprite = Sprite.Create(
+                        texture,
+                        new Rect(0, 0, texture.width, texture.height),
+                        new Vector2(0.5f, 0.5f)
+                    );
+
+                    questionImage.sprite = sprite;
+                    questionImage.gameObject.SetActive(true);
+                    break; // Exit loop on success
+                }
+                else
+                {
+                    Debug.LogError("Failed to load image: " + www.error);
+                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
+                }
             }
         }
     }
@@ -660,7 +692,8 @@ public class ClassicGameManager : MonoBehaviour
             float spacing = answerGridLayout.spacing.x;
             float minCellSize = 40f;
             float maxCellSize = 100f;
-            float cellSize = (containerWidth - (spacing * (currentAnswer.Length - 1))) / currentAnswer.Length;
+            float cellSize =
+                (containerWidth - (spacing * (currentAnswer.Length - 1))) / currentAnswer.Length;
             cellSize = Mathf.Clamp(cellSize, minCellSize, maxCellSize);
             answerGridLayout.cellSize = new Vector2(cellSize, cellSize);
         }

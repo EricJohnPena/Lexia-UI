@@ -14,12 +14,12 @@ if ($subject_id === 0 || $student_id === 0) {
 
 $query = "
     SELECT 
-        m.module_id, 
+        m.module_number, 
         m.module_number, 
         (
             SELECT COUNT(*) 
             FROM students_progress_tbl sp
-            WHERE sp.module_id = m.module_id 
+            WHERE sp.module_number = m.module_number 
               AND sp.student_id = ? 
               AND sp.fk_subject_id = ?
         ) >= 3 AS is_completed
@@ -36,7 +36,6 @@ $result = $stmt->get_result();
 $modules = [];
 while ($row = $result->fetch_assoc()) {
     $modules[] = [
-        "module_id" => $row["module_id"],
         "module_number" => $row["module_number"],
         "is_completed" => boolval($row["is_completed"])
     ];

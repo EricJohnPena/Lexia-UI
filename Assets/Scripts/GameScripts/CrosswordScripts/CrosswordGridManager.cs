@@ -213,30 +213,47 @@ public class CrosswordGridManager : MonoBehaviour
         string url =
             $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={module_number}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
 
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
-                {
-                    string response = www.downloadHandler.text;
-                    Debug.Log("Lesson Completion Response: " + response);
+                yield return www.SendWebRequest();
 
-                    isLessonCompleted = response.Trim() == "true";
-                }
-                catch (System.Exception e)
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
-                    isLessonCompleted = false;
+                    try
+                    {
+                        string response = www.downloadHandler.text;
+                        Debug.Log("Lesson Completion Response: " + response);
+
+                        isLessonCompleted = response.Trim() == "true";
+                        break; // Exit loop on success
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                        isLessonCompleted = false;
+                    }
                 }
-            }
-            else
-            {
-                Debug.LogError("Failed to check lesson completion: " + www.error);
-                isLessonCompleted = false;
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to check lesson completion: {www.error} (Attempt {attempt}/{maxRetries})"
+                    );
+                    if (attempt >= maxRetries)
+                    {
+                        isLessonCompleted = false;
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
 
@@ -265,9 +282,11 @@ public class CrosswordGridManager : MonoBehaviour
         if (isLessonCompleted)
         {
             Debug.Log("Lesson is already completed.");
+            timerManager?.StopTimer();
             currentClueText.text = "Lesson Completed!";
             gameOver.SetActive(true);
         }
+        timerManager?.StopTimer();
     }
 
     public void RefreshCrosswordData()
@@ -355,6 +374,7 @@ public class CrosswordGridManager : MonoBehaviour
                         Debug.LogWarning(
                             "No crossword data received from the server. Displaying an empty crossword."
                         );
+                        timerManager?.StopTimer();
                         ClearGrid();
                         DisplayEmptyMessage();
                         yield break;
@@ -385,6 +405,7 @@ public class CrosswordGridManager : MonoBehaviour
                 catch (System.Exception e)
                 {
                     Debug.LogError("Error parsing JSON: " + e.Message);
+                    timerManager?.StopTimer();
                     ClearGrid();
                     DisplayEmptyMessage();
                 }
@@ -392,6 +413,7 @@ public class CrosswordGridManager : MonoBehaviour
             else
             {
                 Debug.LogError("Failed to fetch crossword data: " + www.error);
+                timerManager?.StopTimer();
                 ClearGrid();
                 DisplayEmptyMessage();
             }
@@ -717,6 +739,7 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (isComplete)
         {
+            timerManager?.StopTimer();
             currentClueText.text = "Congratulations! Puzzle Complete!";
             gameOver.SetActive(true);
 
@@ -1156,6 +1179,12 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.Log(
                 $"Hint revealed at cell ({randomCell.Row}, {randomCell.Col}): {currentWord.word[indexInWord]}"
             );
+
+            // Check if the word is complete after revealing the hint
+            if (IsWordComplete())
+            {
+                CheckWord();
+            }
         }
         else
         {

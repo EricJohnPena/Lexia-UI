@@ -77,9 +77,9 @@ public class ModuleLoader : MonoBehaviour
                                 previousModuleCompleted
                             );
                             previousModuleCompleted = isCompleted; // Unlock the next module only if the current one is completed
-                            // If successful, break out of the retry loop
                         }
                     }
+                    break; // Exit the loop if successful
                 }
                 else
                 {

@@ -1,9 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using System;
-using System.Threading.Tasks;
 
 public class GameProgressHandler : MonoBehaviour
 {
@@ -52,13 +52,14 @@ public class GameProgressHandler : MonoBehaviour
             try
             {
                 bool success = await operation();
-                if (success) return true;
+                if (success)
+                    return true;
             }
             catch (Exception e)
             {
                 Debug.LogWarning($"Attempt {attempts + 1} failed: {e.Message}");
             }
-            
+
             attempts++;
             if (attempts < MaxRetries)
             {
@@ -142,7 +143,6 @@ public class GameProgressHandler : MonoBehaviour
                 hintOnRepeatingWordCount++;
             }
         }
-        
     }
 
     public void OnSkipUsed(string word)
@@ -185,7 +185,13 @@ public class GameProgressHandler : MonoBehaviour
         float solveTime
     )
     {
-        if (studentId <= 0 || module_number <= 0 || gameModeId <= 0 || subjectId <= 0 || solveTime <= 0)
+        if (
+            studentId <= 0
+            || module_number <= 0
+            || gameModeId <= 0
+            || subjectId <= 0
+            || solveTime <= 0
+        )
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateSpeed. Ensure all IDs and solveTime are valid. "
@@ -210,20 +216,33 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("speed", speed); // Send calculated speed
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
 
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Speed attribute updated successfully.");
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update speed attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Speed attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update speed attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update speed attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -266,20 +285,32 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("vocabulary_range_score", vocabularyRangeScore);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Vocabulary range attribute updated successfully.");
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update vocabulary range attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Vocabulary range attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update vocabulary range attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update vocabulary range attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -323,20 +354,32 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("accuracy", accuracy); // Use the rounded integer value
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Accuracy attribute updated successfully.");
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update accuracy attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Accuracy attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update accuracy attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update accuracy attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -378,22 +421,32 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("problem_solving", problemSolvingScore);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log(
-                    $"Problem-solving attribute updated successfully. Response: {www.downloadHandler.text}"
-                );
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update problem-solving attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Problem-solving attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update problem-solving attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update problem-solving attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -419,20 +472,32 @@ public class GameProgressHandler : MonoBehaviour
 
         form.AddField("student_id", studentId);
         form.AddField("current_score", currentScore);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Consistency attribute updated successfully.");
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update consistency attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Consistency attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update consistency attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update consistency attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -484,24 +549,35 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("retention", retentionScore);
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Retention attribute updated successfully.");
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Failed to update retention attribute: {www.error}. Response: {www.downloadHandler.text}"
-                );
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Retention attribute updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update retention attribute: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update retention attribute...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
-
 
     public IEnumerator UpdateGameCompletionStatus(
         int studentId,
@@ -518,18 +594,32 @@ public class GameProgressHandler : MonoBehaviour
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
         form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
-
-        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+        int maxRetries = 3; // Maximum number of retry attempts
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            using (UnityWebRequest www = UnityWebRequest.Post(url, form))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Game completion status updated successfully.");
-            }
-            else
-            {
-                Debug.LogError("Failed to update game completion status: " + www.error);
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    Debug.Log("Game completion status updated successfully.");
+                    yield break; // Exit the coroutine on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to update game completion status: {www.error}. Response: {www.downloadHandler.text}"
+                    );
+                    attempt++;
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to update game completion status...");
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
     }
@@ -564,7 +654,9 @@ public class GameProgressHandler : MonoBehaviour
 
         if (!success)
         {
-            Debug.LogError($"Failed to execute operation after {MaxRetries} attempts. Last error: {errorMessage}");
+            Debug.LogError(
+                $"Failed to execute operation after {MaxRetries} attempts. Last error: {errorMessage}"
+            );
         }
     }
 
@@ -600,22 +692,52 @@ public class GameProgressHandler : MonoBehaviour
         }
     }
 
-    private IEnumerator UpdateAttributes()
+    public IEnumerator UpdateAttributes()
     {
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
-        Debug.Log($"Updating attributes for studentId: {studentId}, module_number: {module_number}");
+        Debug.Log(
+            $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
+        );
 
         // Create a list of update operations
         var updateOperations = new List<IEnumerator>
         {
-            UpdateAccuracy(studentId, module_number, gameModeId, subjectId, correctAnswers, totalAttempts),
-            UpdateSpeed(studentId, module_number, gameModeId, subjectId, timerManager?.elapsedTime ?? 0),
-            UpdateProblemSolving(studentId, module_number, gameModeId, subjectId, 3 - hintCounter, totalSkipsUsed),
+            UpdateAccuracy(
+                studentId,
+                module_number,
+                gameModeId,
+                subjectId,
+                correctAnswers,
+                totalAttempts
+            ),
+            UpdateSpeed(
+                studentId,
+                module_number,
+                gameModeId,
+                subjectId,
+                timerManager?.elapsedTime ?? 0
+            ),
+            UpdateProblemSolving(
+                studentId,
+                module_number,
+                gameModeId,
+                subjectId,
+                3 - hintCounter,
+                totalSkipsUsed
+            ),
             UpdateConsistency(studentId, 10),
-            UpdateVocabularyRange(studentId, module_number, gameModeId, subjectId, SkipUsageCount, hintUsageCount, IncorrectAnswerCount)
+            UpdateVocabularyRange(
+                studentId,
+                module_number,
+                gameModeId,
+                subjectId,
+                SkipUsageCount,
+                hintUsageCount,
+                IncorrectAnswerCount
+            ),
         };
 
         // Execute all operations in parallel

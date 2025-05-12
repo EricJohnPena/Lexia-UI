@@ -274,30 +274,47 @@ public class JumbledLettersManager : MonoBehaviour
         string url =
             $"{Web.BaseApiUrl}checkLessonCompletion.php?student_id={studentId}&module_number={module_number}&game_mode_id={gameModeId}&subject_id={subjectId}";
         Debug.Log("Checking lesson completion from URL: " + url);
+        int maxRetries = 3;
+        int attempts = 0;
+        float retryDelay = 2f; // seconds
 
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempts < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempts++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
-                {
-                    string response = www.downloadHandler.text;
-                    Debug.Log("Lesson Completion Response: " + response);
+                yield return www.SendWebRequest();
 
-                    isLessonCompleted = response.Trim() == "true";
-                }
-                catch (System.Exception e)
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError("Error parsing lesson completion response: " + e.Message);
-                    isLessonCompleted = false;
+                    try
+                    {
+                        string response = www.downloadHandler.text;
+                        Debug.Log("Lesson Completion Response: " + response);
+
+                        isLessonCompleted = response.Trim() == "true";
+                        break; // Exit loop on success
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing lesson completion response: " + e.Message);
+                        isLessonCompleted = false;
+                    }
                 }
-            }
-            else
-            {
-                Debug.LogError("Failed to check lesson completion: " + www.error);
-                isLessonCompleted = false;
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to check lesson completion (Attempt {attempts}/{maxRetries}): {www.error}"
+                    );
+                    if (attempts >= maxRetries)
+                    {
+                        isLessonCompleted = false;
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(retryDelay);
+                    }
+                }
             }
         }
 
@@ -960,7 +977,8 @@ public class JumbledLettersManager : MonoBehaviour
             float spacing = answerGridLayout.spacing.x;
             float minCellSize = 40f;
             float maxCellSize = 100f;
-            float cellSize = (containerWidth - (spacing * (answerWord.Length - 1))) / answerWord.Length;
+            float cellSize =
+                (containerWidth - (spacing * (answerWord.Length - 1))) / answerWord.Length;
             cellSize = Mathf.Clamp(cellSize, minCellSize, maxCellSize);
             answerGridLayout.cellSize = new Vector2(cellSize, cellSize);
         }
