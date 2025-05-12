@@ -24,9 +24,49 @@ public class ComplexWordsHandler : MonoBehaviour
     }
 
     private IEnumerator LoadComplexWordsCoroutine()
-    {
+    {   
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         string url = $"{Web.BaseApiUrl}{ComplexWordsUrl}";
+        while (attempt < maxRetries)
+        {
+            attempt++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                yield return www.SendWebRequest();
 
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    try
+                    {
+                        string json = www.downloadHandler.text;
+                        List<string> words = JsonUtility
+                            .FromJson<ComplexWordsList>(WrapJson(json))
+                            .words;
+                        complexWordsSet = new HashSet<string>(words);
+                        IsLoaded = true;
+                        OnComplexWordsLoaded?.Invoke();
+                        Debug.Log($"Loaded {complexWordsSet.Count} complex words.");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"Failed to parse complex words JSON: {e.Message}");
+                    }
+                    yield break; // Success, exit coroutine
+                }
+                else
+                {
+                    Debug.LogError($"Failed to load complex words: {www.error} (Attempt {attempt}/{maxRetries})");
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to load complex words...");
+                        yield return new WaitForSeconds(retryDelay);
+                        continue;
+                    }
+                }
+            }
+        }
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();

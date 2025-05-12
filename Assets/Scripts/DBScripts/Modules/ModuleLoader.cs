@@ -28,58 +28,66 @@ public class ModuleLoader : MonoBehaviour
 
     private IEnumerator LoadModulesBySubject(int subjectId)
     {
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         WWWForm form = new WWWForm();
         form.AddField("fk_subject_id", subjectId);
         form.AddField("student_id", PlayerPrefs.GetString("User ID")); // Pass the student ID
 
-        using (
-            UnityWebRequest www = UnityWebRequest.Post(
-                Web.BaseApiUrl + "getModulesWithProgress.php",
-                form
-            )
-        )
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result != UnityWebRequest.Result.Success)
+            attempt++;
+            using (
+                UnityWebRequest www = UnityWebRequest.Post(
+                    Web.BaseApiUrl + "getModulesWithProgress.php",
+                    form
+                )
+            )
             {
-                Debug.LogError("Error fetching modules: " + www.error);
-            }
-            else
-            {
-                string jsonResponse = www.downloadHandler.text;
-                Debug.Log("Modules with progress received: " + jsonResponse);
-                modules.Clear();
-                modules = JsonConvert.DeserializeObject<List<ModuleData>>(jsonResponse);
+                yield return www.SendWebRequest();
 
-                string subjectName =
-                    subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
-
-                foreach (Transform child in parentTransform)
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Destroy(child.gameObject);
-                }
+                    string jsonResponse = www.downloadHandler.text;
+                    Debug.Log("Modules received: " + jsonResponse);
+                    modules.Clear();
+                    modules = JsonConvert.DeserializeObject<List<ModuleData>>(jsonResponse);
+                    string subjectName =
+                        subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
 
-                bool previousModuleCompleted = true; // Start with the first module unlocked
-
-                foreach (var module in modules)
-                {
-                    GameObject moduleInstance = Instantiate(modulePrefab, parentTransform);
-                    ModuleUI moduleUI = moduleInstance.GetComponent<ModuleUI>();
-
-                    if (moduleUI != null)
+                    foreach (Transform child in parentTransform)
                     {
-                        bool isCompleted = module.is_completed; // Check if the module is completed
-                        moduleUI.SetModuleData(
-                            module.module_number,
-                            subjectName,
-                            previousModuleCompleted
-                        );
-                        previousModuleCompleted = isCompleted; // Unlock the next module only if the current one is completed
+                        Destroy(child.gameObject);
                     }
-                    else
+
+                    bool previousModuleCompleted = true; // Start with the first module unlocked
+
+                    foreach (var module in modules)
                     {
-                        Debug.LogWarning("ModuleUI component is missing on the module prefab.");
+                        GameObject moduleInstance = Instantiate(modulePrefab, parentTransform);
+                        ModuleUI moduleUI = moduleInstance.GetComponent<ModuleUI>();
+
+                        if (moduleUI != null)
+                        {
+                            bool isCompleted = module.is_completed; // Check if the module is completed
+                            moduleUI.SetModuleData(
+                                module.module_number,
+                                subjectName,
+                                previousModuleCompleted
+                            );
+                            previousModuleCompleted = isCompleted; // Unlock the next module only if the current one is completed
+                            // If successful, break out of the retry loop
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogError("Error fetching modules: " + www.error);
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to fetch modules...");
+                        yield return new WaitForSeconds(retryDelay);
                     }
                 }
             }
@@ -95,4 +103,3 @@ public class ModuleData
     public string fk_subject_id;
     public bool is_completed; // Add completion status field
 }
-

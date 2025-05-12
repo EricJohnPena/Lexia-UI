@@ -19,34 +19,50 @@ public class RepeatingWordsHandler : MonoBehaviour
 
     private IEnumerator LoadRepeatingWordsCoroutine()
     {
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
         string url = $"{Web.BaseApiUrl}{RepeatingWordsUrl}";
 
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
+            attempt++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                yield return www.SendWebRequest();
 
-            if (www.result == UnityWebRequest.Result.Success)
-            {
-                try
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string json = www.downloadHandler.text;
-                    List<string> words = JsonUtility
-                        .FromJson<RepeatingWordsList>(WrapJson(json))
-                        .words;
-                    repeatingWordsSet = new HashSet<string>(words);
-                    IsLoaded = true;
-                    OnRepeatingWordsLoaded?.Invoke();
-                    Debug.Log($"Loaded {repeatingWordsSet.Count} repeating words.");
+                    try
+                    {
+                        string json = www.downloadHandler.text;
+                        List<string> words = JsonUtility
+                            .FromJson<RepeatingWordsList>(WrapJson(json))
+                            .words;
+                        repeatingWordsSet = new HashSet<string>(words);
+                        IsLoaded = true;
+                        OnRepeatingWordsLoaded?.Invoke();
+                        Debug.Log($"Loaded {repeatingWordsSet.Count} repeating words.");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"Failed to parse repeating words JSON: {e.Message}");
+                    }
+                    yield break; // Success, exit coroutine
                 }
-                catch (Exception e)
+                else
                 {
-                    Debug.LogError($"Failed to parse repeating words JSON: {e.Message}");
+                    Debug.LogError($"Failed to load repeating words: {www.error} (Attempt {attempt}/{maxRetries})");
+                    if (attempt < maxRetries)
+                    {
+                        Debug.LogWarning("Retrying to load repeating words...");
+                        yield return new WaitForSeconds(retryDelay);
+                        continue;
+                    }
                 }
             }
-            else
-            {
-                Debug.LogError($"Failed to load repeating words: {www.error}");
-            }
+            // If we reach here, all retries failed
+            yield break;
         }
     }
 

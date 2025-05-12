@@ -16,33 +16,6 @@ public class Web : MonoBehaviour
 
     public List<SectionResponse> sectionResponse = new List<SectionResponse>();
 
-    void Start()
-    {
-        StartCoroutine(GetDate(BaseApiUrl + "get_date.php"));
-    }
-
-    IEnumerator GetDate(string uri)
-    {
-        using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
-        {
-            yield return webRequest.SendWebRequest();
-
-            switch (webRequest.result)
-            {
-                case UnityWebRequest.Result.ConnectionError:
-                case UnityWebRequest.Result.DataProcessingError:
-                    Debug.LogError(": Error: " + webRequest.error);
-                    break;
-                case UnityWebRequest.Result.ProtocolError:
-                    Debug.LogError(": HTTP Error: " + webRequest.error);
-                    break;
-                case UnityWebRequest.Result.Success:
-                    Debug.Log(":\nReceived: " + webRequest.downloadHandler.text);
-                    break;
-            }
-        }
-    }
-
     public IEnumerator GetSectionId(string student_id)
     {
         WWWForm form = new WWWForm();

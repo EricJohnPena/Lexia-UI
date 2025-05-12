@@ -126,128 +126,153 @@ public class LeaderboardManager : MonoBehaviour
 
     private IEnumerator LoadLeaderboardData()
     {
-        WWWForm form = new WWWForm();
-        form.AddField("user_id", PlayerPrefs.GetString("User ID"));
-        form.AddField("subject_id", currentSubjectId);
-        Debug.Log($"Sending request with subject_id: {currentSubjectId}");
-
-        using (
-            UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getLeaderboard.php", form)
-        )
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError("Error fetching leaderboard: " + www.error);
-                yield break;
-            }
+            attempt++;
+            WWWForm form = new WWWForm();
+            form.AddField("user_id", PlayerPrefs.GetString("User ID"));
+            form.AddField("subject_id", currentSubjectId);
+            Debug.Log(
+                $"Sending request with subject_id: {currentSubjectId} (Attempt {attempt}/{maxRetries})"
+            );
 
-            string jsonResponse = www.downloadHandler.text;
-            Debug.Log($"Received response: {jsonResponse}");
-
-            leaderboardEntries = JsonUtilityHelper.FromJsonList<LeaderboardData>(jsonResponse);
-            if (leaderboardEntries.Count == 0)
+            using (
+                UnityWebRequest www = UnityWebRequest.Post(
+                    Web.BaseApiUrl + "getLeaderboard.php",
+                    form
+                )
+            )
             {
-                Debug.LogWarning(
-                    "No leaderboard entries received for subject_id: " + currentSubjectId
-                );
-                yield break;
-            }
-
-            // Display top 3 players on podium
-            for (int i = 0; i < Mathf.Min(3, leaderboardEntries.Count); i++)
-            {
-                var entry = leaderboardEntries[i];
-                GameObject podiumInstance = Instantiate(podiumEntryPrefab, podiumContainer);
-                Debug.Log($"Instantiated podium prefab for: {entry.first_name} {entry.last_name}");
-                var podiumUI = podiumInstance.GetComponent<LeaderboardPodiumUI>();
-                if (podiumUI != null)
+                yield return www.SendWebRequest();
+                if (www.result != UnityWebRequest.Result.Success)
                 {
-                    string fullName = $"{entry.first_name} {entry.last_name}";
-
-                    podiumUI.SetPodiumData(fullName, entry.score, i + 1);
-
-                    // Position the podiums
-                    RectTransform podiumTransform = podiumInstance.GetComponent<RectTransform>();
-                    if (podiumTransform != null)
+                    Debug.LogError(
+                        $"Error fetching leaderboard: {www.error} (Attempt {attempt}/{maxRetries})"
+                    );
+                    if (attempt < maxRetries)
                     {
-                        podiumTransform.SetParent(podiumContainer, false); // Ensure it's a child of the container
-
-                        // Calculate dynamic size and position
-                        float containerWidth = ((RectTransform)podiumContainer).rect.width;
-                        float spacing = containerWidth / 4; // Divide into 4 parts for even spacing
-                        float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
-
-                        // Adjust width and height based on rank
-                        float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
-                        podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
-
-                        // Set positions: 1st (center), 2nd (left), 3rd (right)
-                        float xPosition = 0; // Default to center
-                        switch (i)
-                        {
-                            case 0: // 1st place
-                                xPosition = 0; // Center
-                                break;
-                            case 1: // 2nd place
-                                xPosition = -spacing; // Left
-                                break;
-                            case 2: // 3rd place
-                                xPosition = spacing; // Right
-                                break;
-                        }
-
-                        // Align base at the bottom
-                        float yPosition = prefabHeight / 2; // Half the height to align the base
-                        podiumTransform.anchoredPosition = new Vector2(xPosition, yPosition);
+                        Debug.LogWarning("Retrying leaderboard fetch...");
+                        yield return new WaitForSeconds(retryDelay);
+                        continue;
                     }
+                    yield break;
                 }
-                else
-                {
-                    Debug.LogWarning("Podium UI component is missing.");
-                }
-            }
 
-            // Display remaining players in the list
-            for (int i = 3; i < leaderboardEntries.Count; i++)
-            {
-                var entry = leaderboardEntries[i];
-                GameObject entryInstance = Instantiate(leaderboardEntryPrefab, listContainer);
-                Debug.Log($"Instantiated leaderboard entry prefab for: {entry.username}");
-                var entryUI = entryInstance.GetComponent<LeaderboardEntryUI>();
+                string jsonResponse = www.downloadHandler.text;
+                Debug.Log($"Received response: {jsonResponse}");
 
-                if (entryUI != null)
-                {
-                    string fullName = $"{entry.first_name} {entry.last_name}";
-                    entryUI.SetEntryData(fullName, entry.score, i + 1);
-                }
-                else
+                leaderboardEntries = JsonUtilityHelper.FromJsonList<LeaderboardData>(jsonResponse);
+                if (leaderboardEntries.Count == 0)
                 {
                     Debug.LogWarning(
-                        "LeaderboardEntryUI component is missing on leaderboardEntryPrefab."
+                        "No leaderboard entries received for subject_id: " + currentSubjectId
+                    );
+                    yield break;
+                }
+
+                // Display top 3 players on podium
+                for (int i = 0; i < Mathf.Min(3, leaderboardEntries.Count); i++)
+                {
+                    var entry = leaderboardEntries[i];
+                    GameObject podiumInstance = Instantiate(podiumEntryPrefab, podiumContainer);
+                    Debug.Log(
+                        $"Instantiated podium prefab for: {entry.first_name} {entry.last_name}"
+                    );
+                    var podiumUI = podiumInstance.GetComponent<LeaderboardPodiumUI>();
+                    if (podiumUI != null)
+                    {
+                        string fullName = $"{entry.first_name} {entry.last_name}";
+                        podiumUI.SetPodiumData(fullName, entry.score, i + 1);
+                        // Position the podiums
+                        RectTransform podiumTransform = podiumInstance.GetComponent<RectTransform>();
+                        if (podiumTransform != null)
+                        {
+                            podiumTransform.SetParent(podiumContainer, false); // Ensure it's a child of the container
+                            // Calculate dynamic size and position
+                            float containerWidth = ((RectTransform)podiumContainer).rect.width;
+                            float spacing = containerWidth / 4; // Divide into 4 parts for even spacing
+                            float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
+                            // Adjust width and height based on rank
+                            float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
+                            podiumTransform.sizeDelta = new Vector2(
+                                prefabWidth,
+                                prefabHeight
+                            );
+                            // Set positions: 1st (center), 2nd (left), 3rd (right)
+                            float xPosition = 0; // Default to center
+                            switch (i)
+                            {
+                                case 0: // 1st place
+                                    xPosition = 0; // Center
+                                    break;
+                                case 1: // 2nd place
+                                    xPosition = -spacing; // Left
+                                    break;
+                                case 2: // 3rd place
+                                    xPosition = spacing; // Right
+                                    break;
+                            }
+                            // Align base at the bottom
+                            float yPosition = prefabHeight / 2; // Half the height to align the base
+                            podiumTransform.anchoredPosition = new Vector2(
+                                xPosition,
+                                yPosition
+                            );
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Podium UI component is missing.");
+                    }
+                }
+
+                // Display remaining players in the list
+                for (int i = 3; i < leaderboardEntries.Count; i++)
+                {
+                    var entry = leaderboardEntries[i];
+                    GameObject entryInstance = Instantiate(leaderboardEntryPrefab, listContainer);
+                    Debug.Log(
+                        $"Instantiated leaderboard entry prefab for: {entry.username}"
+                    );
+                    var entryUI = entryInstance.GetComponent<LeaderboardEntryUI>();
+                    if (entryUI != null)
+                    {
+                        string fullName = $"{entry.first_name} {entry.last_name}";
+                        entryUI.SetEntryData(fullName, entry.score, i + 1);
+                    }
+                    else
+                    {
+                        Debug.LogWarning(
+                            "LeaderboardEntryUI component is missing on leaderboardEntryPrefab."
+                        );
+                    }
+                }
+
+                // Adjust the size of the list container dynamically
+                RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
+                GridLayoutGroup gridLayout = listContainer.GetComponent<GridLayoutGroup>();
+                if (listContainerRect != null && gridLayout != null)
+                {
+                    float itemHeight = gridLayout.cellSize.y;
+                    float spacing = gridLayout.spacing.y;
+                    int columns = Mathf.Max(
+                        1,
+                        Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x)
+                    );
+                    int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
+                    // Calculate the new height based on the number of rows
+                    float newHeight = (itemHeight + spacing) * rows - spacing; // Subtract spacing for the last row
+                    listContainerRect.sizeDelta = new Vector2(
+                        listContainerRect.sizeDelta.x,
+                        newHeight
                     );
                 }
+                Debug.Log("Leaderboard UI updated successfully.");
+                break; // Success, exit retry loop
             }
-
-            // Adjust the size of the list container dynamically
-            RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
-            GridLayoutGroup gridLayout = listContainer.GetComponent<GridLayoutGroup>();
-            if (listContainerRect != null && gridLayout != null)
-            {
-                float itemHeight = gridLayout.cellSize.y;
-                float spacing = gridLayout.spacing.y;
-                int columns = Mathf.Max(
-                    1,
-                    Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x)
-                );
-                int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
-
-                // Calculate the new height based on the number of rows
-                float newHeight = (itemHeight + spacing) * rows - spacing; // Subtract spacing for the last row
-                listContainerRect.sizeDelta = new Vector2(listContainerRect.sizeDelta.x, newHeight);
-            }
-
-            Debug.Log("Leaderboard UI updated successfully.");
         }
     }
 
