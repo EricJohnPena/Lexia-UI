@@ -108,6 +108,11 @@ public class LeaderboardManager : MonoBehaviour
 
     public void LoadLeaderboard()
     {
+        // Show loading screen at the start of lesson completion check
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen(true);
+        }
         ResetLeaderboard();
         StartCoroutine(LoadLeaderboardData());
     }
@@ -155,6 +160,11 @@ public class LeaderboardManager : MonoBehaviour
                 yield return www.SendWebRequest();
                 if (www.result != UnityWebRequest.Result.Success)
                 {
+                    // Hide loading screen if there's an error
+                    if (GameLoadingManager.Instance != null)
+                    {
+                        GameLoadingManager.Instance.HideLoadingScreen();
+                    }
                     Debug.LogError(
                         $"Error fetching leaderboard: {www.error} (Attempt {attempt}/{maxRetries})"
                     );
@@ -173,6 +183,11 @@ public class LeaderboardManager : MonoBehaviour
                 leaderboardEntries = JsonUtilityHelper.FromJsonList<LeaderboardData>(jsonResponse);
                 if (leaderboardEntries.Count == 0)
                 {
+                    // Hide loading screen if there's an error
+                    if (GameLoadingManager.Instance != null)
+                    {
+                        GameLoadingManager.Instance.HideLoadingScreen();
+                    }
                     Debug.LogWarning(
                         "No leaderboard entries received for subject_id: " + currentSubjectId
                     );
@@ -193,7 +208,8 @@ public class LeaderboardManager : MonoBehaviour
                         string fullName = $"{entry.first_name} {entry.last_name}";
                         podiumUI.SetPodiumData(fullName, entry.score, i + 1);
                         // Position the podiums
-                        RectTransform podiumTransform = podiumInstance.GetComponent<RectTransform>();
+                        RectTransform podiumTransform =
+                            podiumInstance.GetComponent<RectTransform>();
                         if (podiumTransform != null)
                         {
                             podiumTransform.SetParent(podiumContainer, false); // Ensure it's a child of the container
@@ -203,10 +219,7 @@ public class LeaderboardManager : MonoBehaviour
                             float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
                             // Adjust width and height based on rank
                             float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
-                            podiumTransform.sizeDelta = new Vector2(
-                                prefabWidth,
-                                prefabHeight
-                            );
+                            podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
                             // Set positions: 1st (center), 2nd (left), 3rd (right)
                             float xPosition = 0; // Default to center
                             switch (i)
@@ -223,14 +236,16 @@ public class LeaderboardManager : MonoBehaviour
                             }
                             // Align base at the bottom
                             float yPosition = prefabHeight / 2; // Half the height to align the base
-                            podiumTransform.anchoredPosition = new Vector2(
-                                xPosition,
-                                yPosition
-                            );
+                            podiumTransform.anchoredPosition = new Vector2(xPosition, yPosition);
                         }
                     }
                     else
                     {
+                        // Hide loading screen if there's an error
+                        if (GameLoadingManager.Instance != null)
+                        {
+                            GameLoadingManager.Instance.HideLoadingScreen();
+                        }
                         Debug.LogWarning("Podium UI component is missing.");
                     }
                 }
@@ -240,9 +255,7 @@ public class LeaderboardManager : MonoBehaviour
                 {
                     var entry = leaderboardEntries[i];
                     GameObject entryInstance = Instantiate(leaderboardEntryPrefab, listContainer);
-                    Debug.Log(
-                        $"Instantiated leaderboard entry prefab for: {entry.username}"
-                    );
+                    Debug.Log($"Instantiated leaderboard entry prefab for: {entry.username}");
                     var entryUI = entryInstance.GetComponent<LeaderboardEntryUI>();
                     if (entryUI != null)
                     {
@@ -251,6 +264,11 @@ public class LeaderboardManager : MonoBehaviour
                     }
                     else
                     {
+                        // Hide loading screen if there's an error
+                        if (GameLoadingManager.Instance != null)
+                        {
+                            GameLoadingManager.Instance.HideLoadingScreen();
+                        }
                         Debug.LogWarning(
                             "LeaderboardEntryUI component is missing on leaderboardEntryPrefab."
                         );
@@ -275,6 +293,11 @@ public class LeaderboardManager : MonoBehaviour
                         listContainerRect.sizeDelta.x,
                         newHeight
                     );
+                }
+                // Hide loading screen if there's an error
+                if (GameLoadingManager.Instance != null)
+                {
+                    GameLoadingManager.Instance.HideLoadingScreen();
                 }
                 Debug.Log("Leaderboard UI updated successfully.");
                 break; // Success, exit retry loop

@@ -1,6 +1,6 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
 using UnityEngine.UI;
 
 public class LoadingScreenManager : MonoBehaviour
@@ -10,8 +10,11 @@ public class LoadingScreenManager : MonoBehaviour
     private Coroutine loadingCoroutine;
 
     [Header("Loading UI")]
-    [SerializeField] private Image loadingBarFill; // Image with fill for loading bar
-    [SerializeField] private Text loadingText;      // Legacy UI Text for "Loading...100%"
+    [SerializeField]
+    private Image loadingBarFill; // Image with fill for loading bar
+
+    [SerializeField]
+    private Text loadingText; // Legacy UI Text for "Loading...100%"
 
     void OnEnable()
     {

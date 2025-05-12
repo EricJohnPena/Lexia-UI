@@ -31,6 +31,5 @@ public class ProfileManager : MonoBehaviour
         // Update the UI elements with user information
         fullNameText.text = fullName;
         sectionText.text = "Grade 6 - " + section;
-
     }
 }

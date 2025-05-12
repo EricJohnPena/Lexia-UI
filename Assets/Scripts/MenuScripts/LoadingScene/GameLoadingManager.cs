@@ -1,11 +1,16 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 public class GameLoadingManager : MonoBehaviour
 {
     public static GameLoadingManager Instance { get; private set; }
-    
-    [SerializeField] private GameObject loadingScreenPrefab;
+
+    [SerializeField]
+    private GameObject loadingScreenPrefab;
+
+    [SerializeField]
+    private GameObject logoLoadingScreenPrefab;
+
     private GameObject currentLoadingScreen;
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
@@ -23,14 +28,20 @@ public class GameLoadingManager : MonoBehaviour
         }
     }
 
-    public void ShowLoadingScreen()
+    public void ShowLoadingScreen(bool useAlternate = false)
     {
         if (!isLoading)
         {
             isLoading = true;
-            if (currentLoadingScreen == null && loadingScreenPrefab != null)
+            if (currentLoadingScreen != null)
             {
-                currentLoadingScreen = Instantiate(loadingScreenPrefab);
+                Destroy(currentLoadingScreen);
+                currentLoadingScreen = null;
+            }
+            GameObject prefabToUse = useAlternate ? logoLoadingScreenPrefab : loadingScreenPrefab;
+            if (prefabToUse != null)
+            {
+                currentLoadingScreen = Instantiate(prefabToUse);
                 currentLoadingScreen.transform.SetParent(transform);
             }
             currentLoadingScreen?.SetActive(true);
@@ -61,4 +72,4 @@ public class GameLoadingManager : MonoBehaviour
         yield return new WaitForSeconds(delay);
         HideLoadingScreen();
     }
-} 
+}

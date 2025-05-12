@@ -30,6 +30,10 @@ public class LessonsLoader : MonoBehaviour
     //Load lessons for the selected modules based on module number and subject id
     public void LoadLessonsForSelectedModuleAndSubject()
     {
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen(true);
+        }
         // Reset the lessons and UI
         ResetLessons();
         //get the selected module_number and fk_subject_id from ButtonTracker
@@ -128,6 +132,12 @@ public class LessonsLoader : MonoBehaviour
                             Debug.LogWarning("LessonUI component is missing on the lesson prefab.");
                         }
                     }
+
+                    if (GameLoadingManager.Instance != null)
+                    {
+                        GameLoadingManager.Instance.HideLoadingScreen();
+                    }
+                    break; // Success, exit the loop
                 }
                 else
                 {
@@ -143,7 +153,6 @@ public class LessonsLoader : MonoBehaviour
                 }
             }
         }
-        
     }
 }
 

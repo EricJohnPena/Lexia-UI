@@ -19,6 +19,11 @@ public class ModuleLoader : MonoBehaviour
     // Load modules for the selected subject based on the button clicked
     public void LoadModulesForSelectedSubject()
     {
+        // Show loading screen at the start of lesson completion check
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen(true);
+        }
         // Get the selected fk_subject_id from ButtonTracker
         int subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
 
@@ -78,6 +83,11 @@ public class ModuleLoader : MonoBehaviour
                             );
                             previousModuleCompleted = isCompleted; // Unlock the next module only if the current one is completed
                         }
+                    }
+
+                    if (GameLoadingManager.Instance != null)
+                    {
+                        GameLoadingManager.Instance.HideLoadingScreen();
                     }
                     break; // Exit the loop if successful
                 }

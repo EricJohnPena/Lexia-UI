@@ -54,6 +54,11 @@ namespace RadarChart
             Debug.Log("User ID: " + currentUserId);
 
             Debug.Log($"Fetching radar items for user: {currentUserId}");
+            // Show loading screen at the start of lesson completion check
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.ShowLoadingScreen(true);
+            }
 
             // Clear existing radar items and force a redraw to clear the mesh
             ClearRadarItems();
@@ -109,6 +114,11 @@ namespace RadarChart
 
             if (string.IsNullOrEmpty(student_id))
             {
+                // Hide loading screen if there's an error
+                if (GameLoadingManager.Instance != null)
+                {
+                    GameLoadingManager.Instance.HideLoadingScreen();
+                }
                 Debug.LogWarning("User ID is null or empty. Cannot fetch radar items.");
                 yield break;
             }
@@ -116,120 +126,153 @@ namespace RadarChart
             // Force a fresh fetch from the server
             WWWForm form = new WWWForm();
             form.AddField("student_id", student_id);
-            using (
-                UnityWebRequest webRequest = UnityWebRequest.Post(
-                    Web.BaseApiUrl + "getRadarItems.php",
-                    form
-                )
-            )
+
+            int maxRetries = 3;
+            int attempt = 0;
+            float retryDelay = 2f; // seconds
+            while (attempt < maxRetries)
             {
-                yield return webRequest.SendWebRequest();
+                attempt++;
 
-                if (webRequest.result != UnityWebRequest.Result.Success)
+                using (
+                    UnityWebRequest webRequest = UnityWebRequest.Post(
+                        Web.BaseApiUrl + "getRadarItems.php",
+                        form
+                    )
+                )
                 {
-                    Debug.LogError("Error fetching radar items: " + webRequest.error);
-                }
-                else
-                {
-                    string jsonResponse = webRequest.downloadHandler.text;
-                    Debug.Log("Raw Radar Items Response: " + jsonResponse);
+                    yield return webRequest.SendWebRequest();
 
-                    // Parse the JSON response
-                    if (jsonResponse == null)
+                    if (webRequest.result != UnityWebRequest.Result.Success)
                     {
-                        yield break;
-                    }
-
-                    try
-                    {
-                        // Parse as array of dictionaries
-                        var radarArray = JsonConvert.DeserializeObject<
-                            List<Dictionary<string, int>>
-                        >(jsonResponse);
-                        if (radarArray != null && radarArray.Count > 0)
+                        // Hide loading screen if there's an error
+                        if (GameLoadingManager.Instance != null)
                         {
-                            Debug.Log($"Fetched {radarArray.Count} radar items from server.");
+                            GameLoadingManager.Instance.HideLoadingScreen();
+                        }
+                        Debug.LogError("Error fetching radar items: " + webRequest.error);
+                        yield return new WaitForSeconds(retryDelay); // Wait before retrying
+                    }
+                    else
+                    {
+                        string jsonResponse = webRequest.downloadHandler.text;
+                        Debug.Log("Raw Radar Items Response: " + jsonResponse);
 
-                            // Only use the first dictionary in the array
-                            var radarValues = radarArray[0];
-                            Debug.Log(
-                                $"Using first set of radar values: {JsonConvert.SerializeObject(radarValues)}"
-                            );
+                        // Parse the JSON response
+                        if (jsonResponse == null)
+                        {
+                            yield break;
+                        }
 
-                            // Define the expected radar items in order
-                            string[] expectedItems = new string[]
+                        try
+                        {
+                            // Parse as array of dictionaries
+                            var radarArray = JsonConvert.DeserializeObject<
+                                List<Dictionary<string, int>>
+                            >(jsonResponse);
+                            if (radarArray != null && radarArray.Count > 0)
                             {
-                                "accuracy",
-                                "speed",
-                                "problem_solving_skills",
-                                "vocabulary_range",
-                                "consistency",
-                                "retention",
-                            };
+                                Debug.Log($"Fetched {radarArray.Count} radar items from server.");
 
-                            // Create radar items in the correct order
-                            radarItems.Clear(); // Ensure the list is cleared before adding new items
-                            foreach (string itemName in expectedItems)
-                            {
-                                if (radarValues.ContainsKey(itemName))
+                                // Only use the first dictionary in the array
+                                var radarValues = radarArray[0];
+                                Debug.Log(
+                                    $"Using first set of radar values: {JsonConvert.SerializeObject(radarValues)}"
+                                );
+
+                                // Define the expected radar items in order
+                                string[] expectedItems = new string[]
                                 {
-                                    RadarItem radarItem = new RadarItem
+                                    "accuracy",
+                                    "speed",
+                                    "problem_solving_skills",
+                                    "vocabulary_range",
+                                    "consistency",
+                                    "retention",
+                                };
+
+                                // Create radar items in the correct order
+                                radarItems.Clear(); // Ensure the list is cleared before adding new items
+                                foreach (string itemName in expectedItems)
+                                {
+                                    if (radarValues.ContainsKey(itemName))
                                     {
-                                        Name = itemName,
-                                        Value = Mathf.Clamp(radarValues[itemName], 0, 10),
-                                    };
-                                    radarItems.Add(radarItem);
-                                    Debug.Log(
-                                        $"Added radar item: {itemName} = {radarValues[itemName]}"
+                                        RadarItem radarItem = new RadarItem
+                                        {
+                                            Name = itemName,
+                                            Value = Mathf.Clamp(radarValues[itemName], 0, 10),
+                                        };
+                                        radarItems.Add(radarItem);
+                                        Debug.Log(
+                                            $"Added radar item: {itemName} = {radarValues[itemName]}"
+                                        );
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning(
+                                            $"Missing expected radar item: {itemName}"
+                                        );
+                                        RadarItem radarItem = new RadarItem
+                                        {
+                                            Name = itemName,
+                                            Value = 0,
+                                        };
+                                        radarItems.Add(radarItem);
+                                        Debug.Log($"Added default radar item: {itemName} = 0");
+                                    }
+                                }
+
+                                // Ensure the radar items count does not exceed 6
+                                if (radarItems.Count > 6)
+                                {
+                                    radarItems = radarItems.GetRange(0, 6);
+                                    Debug.LogWarning(
+                                        "Radar items count exceeded 6. Truncated to 6 items."
                                     );
                                 }
-                                else
-                                {
-                                    Debug.LogWarning($"Missing expected radar item: {itemName}");
-                                    RadarItem radarItem = new RadarItem
-                                    {
-                                        Name = itemName,
-                                        Value = 0,
-                                    };
-                                    radarItems.Add(radarItem);
-                                    Debug.Log($"Added default radar item: {itemName} = 0");
-                                }
-                            }
 
-                            // Ensure the radar items count does not exceed 6
-                            if (radarItems.Count > 6)
-                            {
-                                radarItems = radarItems.GetRange(0, 6);
-                                Debug.LogWarning(
-                                    "Radar items count exceeded 6. Truncated to 6 items."
+                                // Save radar items to PlayerPrefs as JSON
+                                string json = JsonConvert.SerializeObject(radarValues);
+                                PlayerPrefs.SetString("RadarItems", json);
+                                PlayerPrefs.Save();
+                                UpdateRadarValuesText();
+                                Debug.Log($"Final radar items count: {radarItems.Count}");
+                                Debug.Log(
+                                    $"Using {radarItems.Count} radar items for student ID {student_id}."
                                 );
+                                ForceRedraw();
+                                // Hide loading screen if there's an error
+                                if (GameLoadingManager.Instance != null)
+                                {
+                                    GameLoadingManager.Instance.HideLoadingScreen();
+                                }
+                                break; // Exit loop on success
                             }
-
-                            // Save radar items to PlayerPrefs as JSON
-                            string json = JsonConvert.SerializeObject(radarValues);
-                            PlayerPrefs.SetString("RadarItems", json);
-                            PlayerPrefs.Save();
-                            UpdateRadarValuesText();
-                            Debug.Log($"Final radar items count: {radarItems.Count}");
-                            Debug.Log(
-                                $"Using {radarItems.Count} radar items for student ID {student_id}."
-                            );
-                            ForceRedraw();
+                            else
+                            {
+                                Debug.Log("No radar items found for user ID " + student_id);
+                                // Hide loading screen if there's an error
+                                if (GameLoadingManager.Instance != null)
+                                {
+                                    GameLoadingManager.Instance.HideLoadingScreen();
+                                }
+                                yield break;
+                            }
                         }
-                        else
+                        catch (Exception e)
                         {
-                            Debug.Log("No radar items found for user ID " + student_id);
+                            // Hide loading screen if there's an error
+                            if (GameLoadingManager.Instance != null)
+                            {
+                                GameLoadingManager.Instance.HideLoadingScreen();
+                            }
+                            Debug.LogError("Error parsing radar items: " + e.Message);
+                            Debug.LogError("Stack trace: " + e.StackTrace);
                             yield break;
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("Error parsing radar items: " + e.Message);
-                        Debug.LogError("Stack trace: " + e.StackTrace);
-                        yield break;
-                    }
                 }
-            }
+            } // End of while loop
         }
 
         private void UpdateRadarValuesText()
