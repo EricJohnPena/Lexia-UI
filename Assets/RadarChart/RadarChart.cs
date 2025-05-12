@@ -145,11 +145,6 @@ namespace RadarChart
 
                     if (webRequest.result != UnityWebRequest.Result.Success)
                     {
-                        // Hide loading screen if there's an error
-                        if (GameLoadingManager.Instance != null)
-                        {
-                            GameLoadingManager.Instance.HideLoadingScreen();
-                        }
                         Debug.LogError("Error fetching radar items: " + webRequest.error);
                         yield return new WaitForSeconds(retryDelay); // Wait before retrying
                     }
@@ -241,7 +236,7 @@ namespace RadarChart
                                     $"Using {radarItems.Count} radar items for student ID {student_id}."
                                 );
                                 ForceRedraw();
-                                // Hide loading screen if there's an error
+
                                 if (GameLoadingManager.Instance != null)
                                 {
                                     GameLoadingManager.Instance.HideLoadingScreen();
@@ -261,11 +256,6 @@ namespace RadarChart
                         }
                         catch (Exception e)
                         {
-                            // Hide loading screen if there's an error
-                            if (GameLoadingManager.Instance != null)
-                            {
-                                GameLoadingManager.Instance.HideLoadingScreen();
-                            }
                             Debug.LogError("Error parsing radar items: " + e.Message);
                             Debug.LogError("Stack trace: " + e.StackTrace);
                             yield break;
