@@ -155,8 +155,11 @@ public class MenuManager : MonoBehaviour
         canvas.gameObject.SetActive(true);
 
         // If the profile page is opened, fetch radar chart data
-        if (canvas == ProfilePage && radarChart != null)
+        if (canvas == ProfilePage)
         {
+            Debug.Log("Fetching items for current user in ProfilePage.");
+            ProfileManager profileManager = FindObjectOfType<ProfileManager>();
+            profileManager.UpdateProfileUI();
             radarChart.FetchItemsForCurrentUser();
         }
     }

@@ -32,7 +32,5 @@ public class ProfileManager : MonoBehaviour
         fullNameText.text = fullName;
         sectionText.text = "Grade 6 - " + section;
 
-        // Use the FetchItemsForCurrentUser method which has built-in duplicate prevention
-        radarChart.FetchItemsForCurrentUser();
     }
 }

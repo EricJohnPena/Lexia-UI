@@ -45,13 +45,6 @@ public class Login : MonoBehaviour
 
     public void OnLoginSuccess()
     {
-        // Update the profile UI after successful login
-        ProfileManager profileManager = FindObjectOfType<ProfileManager>();
-        if (profileManager != null)
-        {
-            profileManager.UpdateProfileUI();
-        }
-
         // Show loading screen last, after all other operations are complete
         if (MenuManager.InstanceMenu != null)
         {

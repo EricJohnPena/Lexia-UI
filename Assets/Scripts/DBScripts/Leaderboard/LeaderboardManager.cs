@@ -31,11 +31,15 @@ public class LeaderboardManager : MonoBehaviour
     {
         SetupSubjectButtons();
         ValidatePrefabs();
-        LoadLeaderboard();
+        // LoadLeaderboard(); // Commented out to prevent loading leaderboard data on start
     }
 
     private void SetupSubjectButtons()
     {
+        // Remove previous listeners to avoid duplicate calls
+        englishButton.onClick.RemoveAllListeners();
+        scienceButton.onClick.RemoveAllListeners();
+
         englishButton.onClick.AddListener(() =>
         {
             FilterBySubject(1);
@@ -48,8 +52,10 @@ public class LeaderboardManager : MonoBehaviour
             HighlightButton(scienceButton, englishButton);
         });
 
-        // Set default highlight
+        // Set default subject and highlight
+        currentSubjectId = 1;
         HighlightButton(englishButton, scienceButton);
+        LoadLeaderboard();
     }
 
     private void HighlightButton(Button selectedButton, Button otherButton)
