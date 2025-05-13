@@ -18,13 +18,10 @@ public class JumbledLettersManager : MonoBehaviour
     private GameObject gameOver;
 
     [SerializeField]
-    private WordData[] optionWordArray;
+    private WordData optionWordPrefab; // Assign in Inspector (prefab for option holder)
 
     [SerializeField]
-    private GridLayoutGroup optionGridLayout; // Reference to the GridLayoutGroup component
-
-    [SerializeField]
-    private RectTransform optionHolderRect; // Reference to the OptionHolder's RectTransform
+    private RectTransform optionHolderRect; // Assign in Inspector (parent container for options)
 
     public TimerManager timerManager; // Assign in the Inspector
 
@@ -59,6 +56,10 @@ public class JumbledLettersManager : MonoBehaviour
     private int totalAttempts = 0;
     private int totalSkipsUsed = 0; // Track the total number of skips used
 
+    private List<WordData> answerWordList = new List<WordData>();
+
+    private List<WordData> optionWordList = new List<WordData>(); // Dynamically created option holders
+
     [SerializeField]
     private WordData answerWordPrefab; // Assign in Inspector
 
@@ -67,8 +68,6 @@ public class JumbledLettersManager : MonoBehaviour
 
     [SerializeField]
     private GridLayoutGroup answerGridLayout; // Assign in Inspector
-
-    private List<WordData> answerWordList = new List<WordData>();
 
     private void Awake()
     {
@@ -102,92 +101,18 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void InitializeOptionGrid()
     {
-        if (optionGridLayout == null)
+        if (optionHolderRect == null)
         {
-            Debug.LogError("GridLayoutGroup component not assigned!");
+            Debug.LogError("OptionHolder RectTransform not assigned!");
             return;
         }
-
-        // Set initial grid properties
-        //optionGridLayout.childAlignment = TextAnchor.MiddleCenter;
-        optionGridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
-        optionGridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
-        optionGridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        optionGridLayout.constraintCount = 6; // Default to 6 columns
-        optionGridLayout.spacing = new Vector2(20f, 20f); // Add some spacing between cells
-    }
-
-    private void UpdateOptionGridLayout()
-    {
-        if (optionGridLayout == null || optionHolderRect == null)
-            return;
-
-        // Calculate the number of active options
-        int activeOptions = optionWordArray.Count(option => option.gameObject.activeSelf);
-        if (activeOptions == 0)
-            return;
-
-        // Set maximum columns to 6
-        int maxColumns = 6;
-        int columns = Mathf.Min(maxColumns, activeOptions);
-        int rows = Mathf.CeilToInt((float)activeOptions / columns);
-
-        // Update grid layout
-        optionGridLayout.constraintCount = columns;
-
-        // Calculate cell size based on container size and spacing
-        float containerWidth = optionHolderRect.rect.width;
-        float containerHeight = optionHolderRect.rect.height;
-        float spacingX = optionGridLayout.spacing.x;
-        float spacingY = optionGridLayout.spacing.y;
-
-        float cellWidth = (containerWidth - (spacingX * (columns - 1))) / columns;
-        float cellHeight = (containerHeight - (spacingY * (rows - 1))) / rows;
-
-        // Set cell size (use the smaller dimension to maintain square cells)
-        float cellSize = Mathf.Min(cellWidth, cellHeight);
-        // Limit the maximum cell size to 100x100
-        cellSize = Mathf.Min(cellSize, 100f);
-        optionGridLayout.cellSize = new Vector2(cellSize, cellSize);
-
-        // Calculate total width of all cells in a row
-        float totalRowWidth = (cellSize * columns) + (spacingX * (columns - 1));
-
-        // Calculate padding to center the grid
-        float paddingX = (containerWidth - totalRowWidth) / 2;
-        float paddingY = (containerHeight - (cellSize * rows + spacingY * (rows - 1))) / 2;
-
-        // If we have more than 6 characters, we need to center the last row
-        if (activeOptions > maxColumns)
+        // Destroy any existing option holders
+        foreach (var word in optionWordList)
         {
-            int lastRowItems = activeOptions % maxColumns;
-            if (lastRowItems == 0)
-                lastRowItems = maxColumns;
-
-            // Calculate the width of the last row
-            float lastRowWidth = (cellSize * lastRowItems) + (spacingX * (lastRowItems - 1));
-
-            // Calculate the padding needed to center the last row
-            float lastRowPadding = (containerWidth - lastRowWidth) / 2;
-
-            // Set the padding to center the last row
-            optionGridLayout.padding = new RectOffset(
-                Mathf.RoundToInt(lastRowPadding),
-                Mathf.RoundToInt(lastRowPadding),
-                Mathf.RoundToInt(paddingY),
-                Mathf.RoundToInt(paddingY)
-            );
+            if (word != null)
+                Destroy(word.gameObject);
         }
-        else
-        {
-            // For 6 or fewer characters, center the entire grid
-            optionGridLayout.padding = new RectOffset(
-                Mathf.RoundToInt(paddingX),
-                Mathf.RoundToInt(paddingX),
-                Mathf.RoundToInt(paddingY),
-                Mathf.RoundToInt(paddingY)
-            );
-        }
+        optionWordList.Clear();
     }
 
     void OnEnable()
@@ -398,28 +323,21 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("Resetting Jumbled Letters game state...");
         currentQuestionIndex = 0;
         currentAnswerIndex = 0;
-        hintCounter = 3; // Reset hint counter
+        hintCounter = 3;
         selectedWordIndex.Clear();
-        skippedQuestions.Clear(); // Clear skipped questions
-        correctlyAnsweredQuestions.Clear(); // Clear correctly answered questions
+        skippedQuestions.Clear();
+        correctlyAnsweredQuestions.Clear();
         gameStatus = GameStatus.Playing;
-
-        // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
-
-        // Reset question text
         if (questionText != null)
         {
             questionText.text = "";
         }
-
-        // Reset answer word array
         if (answerWordPrefab != null && answerHolderRect != null)
         {
-            // Destroy all dynamic answer slots
             foreach (var word in answerWordList)
             {
                 if (word != null)
@@ -427,26 +345,17 @@ public class JumbledLettersManager : MonoBehaviour
             }
             answerWordList.Clear();
         }
-
-        // Reset option word array
-        if (optionWordArray != null)
+        // Destroy all option holders
+        foreach (var word in optionWordList)
         {
-            foreach (var word in optionWordArray)
-            {
-                if (word != null)
-                {
-                    word.gameObject.SetActive(true);
-                }
-            }
+            if (word != null)
+                Destroy(word.gameObject);
         }
-
-        // Reset game over panel
+        optionWordList.Clear();
         if (gameOver != null)
         {
             gameOver.SetActive(false);
         }
-
-        // Update hint counter UI
         UpdateHintCounterUI();
     }
 
@@ -523,46 +432,71 @@ public class JumbledLettersManager : MonoBehaviour
     {
         if (currentQuestionIndex >= questionData.questions.Count)
         {
-            HandleSkippedQuestions(); // Handle skipped questions if all questions are traversed
+            HandleSkippedQuestions();
             return;
         }
-
         currentAnswerIndex = 0;
         selectedWordIndex.Clear();
-
         JLQuestion currentQuestion = questionData.questions[currentQuestionIndex];
         questionText.text = currentQuestion.questionText;
         answerWord = currentQuestion.answer.ToUpper();
-
         ResetQuestion();
-
         // Only use letters from the answer word
         charArray = new char[answerWord.Length];
         for (int i = 0; i < answerWord.Length; i++)
         {
             charArray[i] = answerWord[i];
         }
-
         // Shuffle the characters
         charArray = ShuffleList.ShuffleListItems(charArray.ToList()).ToArray();
-
-        // Only activate the number of option buttons needed for the answer
-        for (int i = 0; i < optionWordArray.Length; i++)
+        // Destroy any existing option holders
+        foreach (var word in optionWordList)
         {
-            if (i < charArray.Length)
+            if (word != null)
+                Destroy(word.gameObject);
+        }
+        optionWordList.Clear();
+        // Layout: max 8 per row, center both rows
+        int maxPerRow = 8;
+        int optionCount = charArray.Length;
+        int rowCount = (optionCount + maxPerRow - 1) / maxPerRow;
+        float cellSize = 100f;
+        float spacing = 15f;
+        float containerWidth = optionHolderRect.rect.width;
+        float containerHeight = optionHolderRect.rect.height;
+        for (int row = 0; row < rowCount; row++)
+        {
+            int startIdx = row * maxPerRow;
+            int countThisRow = Mathf.Min(maxPerRow, optionCount - startIdx);
+            float totalRowWidth = (cellSize * countThisRow) + (spacing * (countThisRow - 1));
+            float startX = (containerWidth - totalRowWidth) / 2f;
+            float y = 0f;
+            if (rowCount == 2)
             {
-                optionWordArray[i].SetChar(charArray[i]);
-                optionWordArray[i].gameObject.SetActive(true);
+                // Vertically center two rows
+                float totalHeight = cellSize + spacing;
+                y = (containerHeight - totalHeight) / 2f + row * (cellSize + spacing);
             }
             else
             {
-                optionWordArray[i].gameObject.SetActive(false);
+                // Single row, center vertically
+                y = (containerHeight - cellSize) / 2f;
+            }
+            for (int i = 0; i < countThisRow; i++)
+            {
+                int charIdx = startIdx + i;
+                WordData wordObj = Instantiate(optionWordPrefab, optionHolderRect);
+                wordObj.SetChar(charArray[charIdx]);
+                wordObj.gameObject.SetActive(true);
+                RectTransform rt = wordObj.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchoredPosition = new Vector2(startX + i * (cellSize + spacing), -y);
+                    rt.sizeDelta = new Vector2(cellSize, cellSize);
+                }
+                optionWordList.Add(wordObj);
             }
         }
-
-        // Update the grid layout after setting up the options
-        UpdateOptionGridLayout();
-
         currentQuestionIndex++;
         gameStatus = GameStatus.Playing;
     }
@@ -599,10 +533,11 @@ public class JumbledLettersManager : MonoBehaviour
         }
 
         // Insert the selectedWordIndex at the correct position
+        int optionIndex = optionWordList.IndexOf(wordData);
         if (inputIndex < selectedWordIndex.Count)
-            selectedWordIndex.Insert(inputIndex, wordData.transform.GetSiblingIndex());
+            selectedWordIndex.Insert(inputIndex, optionIndex);
         else
-            selectedWordIndex.Add(wordData.transform.GetSiblingIndex());
+            selectedWordIndex.Add(optionIndex);
 
         wordData.gameObject.SetActive(false);
         answerWordList[inputIndex].SetChar(wordData.charValue);
@@ -661,34 +596,31 @@ public class JumbledLettersManager : MonoBehaviour
     public void ShuffleOptions()
     {
         Debug.Log("Shuffling current options...");
-
         // Collect only the currently active option letters
         List<char> activeChars = new List<char>();
-        for (int i = 0; i < optionWordArray.Length; i++)
+        for (int i = 0; i < optionWordList.Count; i++)
         {
-            if (optionWordArray[i].gameObject.activeSelf)
+            if (optionWordList[i].gameObject.activeSelf)
             {
-                activeChars.Add(optionWordArray[i].charValue);
+                activeChars.Add(optionWordList[i].charValue);
             }
         }
-
         // Shuffle the active characters
         activeChars = ShuffleList.ShuffleListItems(activeChars);
-
         // Reassign the shuffled characters back to the active options
         int activeIndex = 0;
-        for (int i = 0; i < optionWordArray.Length; i++)
+        for (int i = 0; i < optionWordList.Count; i++)
         {
-            if (optionWordArray[i].gameObject.activeSelf)
+            if (optionWordList[i].gameObject.activeSelf)
             {
-                optionWordArray[i].SetChar(activeChars[activeIndex]);
+                optionWordList[i].SetChar(activeChars[activeIndex]);
                 activeIndex++;
             }
         }
-
         Debug.Log("Options shuffled successfully.");
     }
 
+    // Update ClearAnswerLetter and ClearAnswer to use optionWordList instead of optionWordArray
     public void ClearAnswerLetter(int answerIndex)
     {
         Debug.Log($"Clearing letter at answer index {answerIndex}...");
@@ -710,7 +642,8 @@ public class JumbledLettersManager : MonoBehaviour
         int originalIndex = selectedWordIndex[answerIndex];
 
         // Make the corresponding option visible again
-        optionWordArray[originalIndex].gameObject.SetActive(true);
+        if (originalIndex >= 0 && originalIndex < optionWordList.Count)
+            optionWordList[originalIndex].gameObject.SetActive(true);
 
         // Shift the remaining letters in the answer to the left
         for (int i = answerIndex; i < currentAnswerIndex - 1; i++)
@@ -750,9 +683,9 @@ public class JumbledLettersManager : MonoBehaviour
         }
 
         int originalIndex = selectedWordIndex[lastInputIndex];
-        if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+        if (originalIndex >= 0 && originalIndex < optionWordList.Count)
         {
-            optionWordArray[originalIndex].gameObject.SetActive(true);
+            optionWordList[originalIndex].gameObject.SetActive(true);
             answerWordList[lastInputIndex].SetChar('_');
         }
 
@@ -934,9 +867,9 @@ public class JumbledLettersManager : MonoBehaviour
         for (int i = 0; i < selectedWordIndex.Count; i++)
         {
             int originalIndex = selectedWordIndex[i];
-            if (originalIndex >= 0 && originalIndex < optionWordArray.Length)
+            if (originalIndex >= 0 && originalIndex < optionWordList.Count)
             {
-                optionWordArray[originalIndex].gameObject.SetActive(true);
+                optionWordList[originalIndex].gameObject.SetActive(true);
                 answerWordList[i].SetChar('_');
             }
         }
@@ -956,23 +889,18 @@ public class JumbledLettersManager : MonoBehaviour
 
     private void ResetQuestion()
     {
-        // Destroy any existing answerWord objects
         foreach (var word in answerWordList)
         {
             if (word != null)
                 Destroy(word.gameObject);
         }
         answerWordList.Clear();
-
-        // Configure grid layout for single row and dynamic cell size
         if (answerGridLayout != null && answerHolderRect != null)
         {
             answerGridLayout.constraint = GridLayoutGroup.Constraint.FixedRowCount;
             answerGridLayout.constraintCount = 1;
             answerGridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
             answerGridLayout.childAlignment = TextAnchor.MiddleCenter;
-
-            // Calculate cell size based on container width and answer length
             float containerWidth = answerHolderRect.rect.width;
             float spacing = answerGridLayout.spacing.x;
             float minCellSize = 40f;
@@ -982,8 +910,6 @@ public class JumbledLettersManager : MonoBehaviour
             cellSize = Mathf.Clamp(cellSize, minCellSize, maxCellSize);
             answerGridLayout.cellSize = new Vector2(cellSize, cellSize);
         }
-
-        // Dynamically instantiate answerWord objects based on answerWord length
         for (int i = 0; i < answerWord.Length; i++)
         {
             WordData wordObj = Instantiate(answerWordPrefab, answerHolderRect);
@@ -991,11 +917,6 @@ public class JumbledLettersManager : MonoBehaviour
             wordObj.SetHintStyle(false);
             wordObj.gameObject.SetActive(true);
             answerWordList.Add(wordObj);
-        }
-
-        foreach (var word in optionWordArray)
-        {
-            word.gameObject.SetActive(true);
         }
     }
 
@@ -1006,7 +927,6 @@ public class JumbledLettersManager : MonoBehaviour
             Debug.Log("No hints remaining.");
             return;
         }
-
         // Find all unrevealed indices
         List<int> unrevealedIndices = new List<int>();
         for (int i = 0; i < answerWord.Length; i++)
@@ -1016,40 +936,34 @@ public class JumbledLettersManager : MonoBehaviour
                 unrevealedIndices.Add(i);
             }
         }
-
         if (unrevealedIndices.Count > 0)
         {
             int randomIndex = unrevealedIndices[
                 UnityEngine.Random.Range(0, unrevealedIndices.Count)
             ];
-
             // Remove the character from the option buttons
-            for (int i = 0; i < optionWordArray.Length; i++)
+            for (int i = 0; i < optionWordList.Count; i++)
             {
                 if (
-                    optionWordArray[i].gameObject.activeSelf
-                    && optionWordArray[i].charValue == answerWord[randomIndex]
+                    optionWordList[i].gameObject.activeSelf
+                    && optionWordList[i].charValue == answerWord[randomIndex]
                 )
                 {
-                    optionWordArray[i].gameObject.SetActive(false);
+                    optionWordList[i].gameObject.SetActive(false);
                     break;
                 }
             }
-
             answerWordList[randomIndex].SetChar(answerWord[randomIndex]);
-            answerWordList[randomIndex].SetHintStyle(true); // Set hint style for the revealed letter
-            // Insert -1 at the correct position in selectedWordIndex
+            answerWordList[randomIndex].SetHintStyle(true);
             if (randomIndex < selectedWordIndex.Count)
                 selectedWordIndex.Insert(randomIndex, -1);
             else
                 selectedWordIndex.Add(-1);
             currentAnswerIndex = selectedWordIndex.Count;
             hintCounter--;
-            gameProgressHandler.OnHintUsed(answerWord); // Call the hint used method
+            gameProgressHandler.OnHintUsed(answerWord);
             UpdateHintCounterUI();
             Debug.Log($"Hint revealed at index {randomIndex}: {answerWord[randomIndex]}");
-
-            // Check if the answer is complete
             CheckIfAnswerComplete();
         }
         else
