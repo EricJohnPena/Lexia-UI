@@ -10,6 +10,8 @@ public class ClassicGameManager : MonoBehaviour
     private Trie wordTrie;
     public static ClassicGameManager instance;
 
+    private Texture2D currentTexture; // Added to hold the current texture
+
     [SerializeField]
     private Text questionText;
 
@@ -63,13 +65,13 @@ public class ClassicGameManager : MonoBehaviour
             {
                 questionText = "No Questions Loaded",
                 answer = "ANSWER1",
-                imagePath = "DefaultImages/default_image1",
+                imageData = "DefaultImages/default_image1",
             },
             new KeyboardQuestion
             {
                 questionText = "No Questions Loaded",
                 answer = "ANSWER2",
-                imagePath = "DefaultImages/default_image2",
+                imageData = "DefaultImages/default_image2",
             },
         },
     };
@@ -128,6 +130,40 @@ public class ClassicGameManager : MonoBehaviour
         if (gameProgressHandler == null)
         {
             Debug.LogError("GameProgressHandler not found in the scene.");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (passButton != null)
+        {
+            passButton.onClick.RemoveListener(PassQuestion);
+        }
+
+        if (hintButton != null)
+        {
+            hintButton.onClick.RemoveListener(RevealHint);
+        }
+
+        if (keyboardButtons != null)
+        {
+            for (int i = 0; i < keyboardButtons.Length; i++)
+            {
+                int index = i;
+                keyboardButtons[i].onClick.RemoveListener(() => OnKeyPressed(keyboardButtons[index]));
+            }
+        }
+
+        if (backspaceButton != null)
+        {
+            backspaceButton.onClick.RemoveListener(ResetLastWord);
+        }
+
+        // Destroy the current texture to prevent memory leaks
+        if (currentTexture != null)
+        {
+            Destroy(currentTexture);
+            currentTexture = null;
         }
     }
 
@@ -599,7 +635,7 @@ public class ClassicGameManager : MonoBehaviour
         KeyboardQuestion currentQuestion = questionData.questions[currentQuestionIndex];
         questionText.text = currentQuestion.questionText;
         currentAnswer = currentQuestion.answer.ToUpper().Trim(); // Ensure answer is uppercase and trimmed
-        StartCoroutine(LoadQuestionImage(currentQuestion.imagePath));
+        StartCoroutine(LoadQuestionImage(currentQuestion.imageData));
 
         Debug.Log($"Current Question Index: {currentQuestionIndex}");
         Debug.Log($"Total Questions: {questionData.questions.Count}");
@@ -609,47 +645,63 @@ public class ClassicGameManager : MonoBehaviour
         gameStatus = GameStatus.Playing;
     }
 
-    private IEnumerator LoadQuestionImage(string imagePath)
+    private IEnumerator LoadQuestionImage(string imageData)
     {
-        int maxRetries = 3;
-        int attempt = 0;
-        float retryDelay = 2f; // seconds
         questionImage.gameObject.SetActive(false);
-        string fullPath = System.IO.Path.Combine(Application.streamingAssetsPath, imagePath);
 
-        while (attempt < maxRetries)
+        if (string.IsNullOrEmpty(imageData))
         {
-            attempt++;
-            Debug.Log($"Attempt {attempt} to load image: {fullPath}");
-            if (Application.platform == RuntimePlatform.Android)
-            {
-                fullPath = "jar:file://" + fullPath;
-            }
-
-            using (UnityWebRequest www = UnityWebRequestTexture.GetTexture(fullPath))
-            {
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    Texture2D texture = DownloadHandlerTexture.GetContent(www);
-                    Sprite sprite = Sprite.Create(
-                        texture,
-                        new Rect(0, 0, texture.width, texture.height),
-                        new Vector2(0.5f, 0.5f)
-                    );
-
-                    questionImage.sprite = sprite;
-                    questionImage.gameObject.SetActive(true);
-                    break; // Exit loop on success
-                }
-                else
-                {
-                    Debug.LogError("Failed to load image: " + www.error);
-                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
-                }
-            }
+            Debug.LogWarning("Image data is null or empty.");
+            yield break;
         }
+
+        // Destroy old sprite and texture to prevent memory leaks
+        if (questionImage.sprite != null)
+        {
+            if (questionImage.sprite.texture != null)
+            {
+                Destroy(questionImage.sprite.texture);
+            }
+            Destroy(questionImage.sprite);
+            questionImage.sprite = null;
+        }
+
+        // Destroy previously created texture to prevent memory leaks
+        if (currentTexture != null)
+        {
+            Destroy(currentTexture);
+            currentTexture = null;
+        }
+
+        // Remove the data URI scheme prefix if present
+        string base64Data = imageData;
+        int commaIndex = imageData.IndexOf(',');
+        if (commaIndex >= 0)
+        {
+            base64Data = imageData.Substring(commaIndex + 1);
+        }
+
+        byte[] imageBytes = System.Convert.FromBase64String(base64Data);
+        Texture2D texture = new Texture2D(2, 2);
+        if (texture.LoadImage(imageBytes))
+        {
+            currentTexture = texture; // Store reference to destroy later
+
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0, 0, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f)
+            );
+
+            questionImage.sprite = sprite;
+            questionImage.gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("Failed to load texture from image data.");
+        }
+
+        yield return null;
     }
 
     private void SetupKeyboardListeners()
@@ -1096,7 +1148,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         public string questionText;
         public string answer;
-        public string imagePath;
+        public string imageData;
     }
 
     [System.Serializable]

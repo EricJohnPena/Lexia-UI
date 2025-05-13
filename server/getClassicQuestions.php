@@ -24,7 +24,7 @@ try {
     }
 
     // Build the query to get questions by module_id
-    $query = "SELECT question_text, answer, image_path FROM classic_questions_tbl WHERE fk_subject_id = ? AND fk_module_id = ?";
+    $query = "SELECT question_text, answer, image_blob, image_type FROM classic_questions_tbl WHERE fk_subject_id = ? AND fk_module_id = ?";
     $params = [$subject_id, $module_id];
     $types = "ii";
 
@@ -48,13 +48,15 @@ try {
     }
 
     $results = [];
-    $stmt->bind_result($question_text, $answer, $image_path);
+    $stmt->bind_result($question_text, $answer, $image_blob, $image_type);
 
     while ($stmt->fetch()) {
+        $base64Image = base64_encode($image_blob);
+        $imageData = "data:" . $image_type . ";base64," . $base64Image;
         $results[] = [
             'questionText' => $question_text,
             'answer' => $answer,
-            'imagePath' => $image_path
+            'imageData' => $imageData
         ];
     }
 
