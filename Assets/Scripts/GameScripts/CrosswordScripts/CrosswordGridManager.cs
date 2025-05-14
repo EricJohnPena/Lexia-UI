@@ -610,25 +610,48 @@ public class CrosswordGridManager : MonoBehaviour
 
     void RemoveLastLetter()
     {
-        if (selectedCell != null)
+        if (selectedCell != null && currentWord != null)
         {
-            // Only remove the letter if it's not a hinted cell
-            if (!hintedCells.Contains(selectedCell))
+            // Only remove the letter if it's not a hinted cell and not already locked (correct)
+            if (!hintedCells.Contains(selectedCell) && !selectedCell.IsLocked)
             {
                 selectedCell.SetInputLetter(' ');
-
                 // Only move to the previous cell if the current cell is empty
                 if (selectedCell.GetCurrentLetter() == ' ')
                 {
-                    MoveCursorToPreviousCell();
+                    MoveCursorToPreviousEditableCell();
                 }
             }
             else
             {
-                // If the current cell is a hinted cell, move to the previous cell
-                MoveCursorToPreviousCell();
+                // If the current cell is a hinted or locked cell, skip to previous editable cell
+                MoveCursorToPreviousEditableCell();
             }
         }
+    }
+
+    // Move to the previous cell in the word that is not locked or hinted
+    void MoveCursorToPreviousEditableCell()
+    {
+        if (currentWord == null || selectedCell == null)
+            return;
+
+        int currentIndex = GetCellIndexInWord(selectedCell);
+        for (int i = currentIndex - 1; i >= 0; i--)
+        {
+            int row = currentWord.startRow + (currentWord.horizontal ? 0 : i);
+            int col = currentWord.startCol + (currentWord.horizontal ? i : 0);
+            if (row >= 0 && row < gridSize && col >= 0 && col < gridSize)
+            {
+                GridCell cell = gridCells[row, col];
+                if (!cell.IsLocked && !hintedCells.Contains(cell))
+                {
+                    SelectCell(cell);
+                    return;
+                }
+            }
+        }
+        // If no editable cell found, stay on current cell
     }
 
     void CheckWord()
@@ -739,28 +762,79 @@ public class CrosswordGridManager : MonoBehaviour
 
         if (isComplete)
         {
+            Debug.Log("Crossword puzzle completed. Game over.");
             timerManager?.StopTimer();
-            currentClueText.text = "Congratulations! Puzzle Complete!";
-            gameOver.SetActive(true);
+            if (gameOver != null)
+                gameOver.SetActive(true);
 
-            // Ensure all attributes are updated
-            StartCoroutine(UpdateAttributes());
+            int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
+            int gameModeId = 3; // Crossword mode ID (adjust as needed)
+            int subjectId = LessonsLoader.subjectId;
+            float solveTime = timerManager?.elapsedTime ?? 0;
+            int module_number = int.Parse(LessonsLoader.moduleNumber);
+
+            if (GameLoadingManager.Instance != null)
+            {
+                GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
+                    0.5f,
+                    false,
+                    () =>
+                    {
+                        StartCoroutine(
+                            UpdateGameCompletionAndAttributes(
+                                studentId,
+                                module_number,
+                                gameModeId,
+                                subjectId,
+                                solveTime
+                            )
+                        );
+                    }
+                );
+            }
+            else
+            {
+                StartCoroutine(
+                    UpdateGameCompletionAndAttributes(
+                        studentId,
+                        module_number,
+                        gameModeId,
+                        subjectId,
+                        solveTime
+                    )
+                );
+            }
+        }
+    }
+
+    private IEnumerator UpdateGameCompletionAndAttributes(
+        int studentId,
+        int module_number,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
+    {
+        yield return StartCoroutine(
+            UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
+        );
+        yield return StartCoroutine(UpdateAttributes());
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 
     private IEnumerator UpdateAttributes()
     {
-        // Show loading screen before updating attributes
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.ShowLoadingScreen();
-        }
-
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
-        int gameModeId = 3; // Crossword mode ID
+        int gameModeId = 3; // Crossword mode ID (adjust as needed)
         int subjectId = LessonsLoader.subjectId;
-        float solveTime = timerManager?.elapsedTime ?? 0;
+        Debug.Log(
+            $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
+        );
+
         if (gameProgressHandler != null)
         {
             yield return gameProgressHandler.UpdateAccuracy(
@@ -786,14 +860,10 @@ public class CrosswordGridManager : MonoBehaviour
                 gameModeId,
                 subjectId,
                 3 - hintCounter,
-                0 // Assuming no skips in crossword
+                0 // No skip logic for crossword, adjust if needed
             );
+            yield return gameProgressHandler.UpdateConsistency(studentId, 10);
 
-            yield return gameProgressHandler.UpdateConsistency(
-                studentId,
-                10 // Use as the current score default value
-            );
-            // Update vocabulary range score
             yield return gameProgressHandler.UpdateVocabularyRange(
                 studentId,
                 module_number,
@@ -813,19 +883,37 @@ public class CrosswordGridManager : MonoBehaviour
                 gameProgressHandler.HintOnRepeatingWordCount,
                 gameProgressHandler.IncorrectRepeatingAnswerCount
             );
-            yield return gameProgressHandler.UpdateGameCompletionStatus(
-                studentId,
-                module_number,
-                gameModeId,
-                subjectId,
-                solveTime
-            );
         }
+    }
 
-        // Hide loading screen after all updates are complete
-        if (GameLoadingManager.Instance != null)
+    private IEnumerator UpdateGameCompletionStatus(
+        int studentId,
+        int module_number,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
+    {
+        string url = $"{Web.BaseApiUrl}updateGameCompletion.php";
+        WWWForm form = new WWWForm();
+        form.AddField("student_id", studentId);
+        form.AddField("module_number", module_number);
+        form.AddField("game_mode_id", gameModeId);
+        form.AddField("subject_id", subjectId);
+        form.AddField("solve_time", Mathf.FloorToInt(solveTime)); // Save solve time in seconds
+
+        using (UnityWebRequest www = UnityWebRequest.Post(url, form))
         {
-            GameLoadingManager.Instance.HideLoadingScreen();
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Game completion status updated successfully.");
+            }
+            else
+            {
+                Debug.LogError("Failed to update game completion status: " + www.error);
+            }
         }
     }
 

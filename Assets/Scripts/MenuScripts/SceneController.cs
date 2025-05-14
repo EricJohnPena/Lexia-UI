@@ -24,6 +24,7 @@ public class SceneController : MonoBehaviour
 
     public void GoToStartingScene(string canvasName)
     {
+        Debug.Log($"GoToStartingScene called with canvasName: {canvasName}");
         SceneManager.sceneLoaded += (scene, mode) => OnSceneLoaded(scene, mode, canvasName);
         SceneManager.LoadScene(Scene.StartingScene.ToString());
     }
@@ -36,6 +37,7 @@ public class SceneController : MonoBehaviour
         string canvasName
     )
     {
+        Debug.Log($"OnSceneLoaded called for scene: {scene.name}, canvasName: {canvasName}");
         if (scene.name == Scene.StartingScene.ToString())
         {
             if (canvasName == "StudentDashboardCanvas")

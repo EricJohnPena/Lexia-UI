@@ -45,14 +45,35 @@ public class Login : MonoBehaviour
 
     public void OnLoginSuccess()
     {
-        // Show loading screen last, after all other operations are complete
-        if (MenuManager.InstanceMenu != null)
+        // Show loading screen first, then transition to dashboard after a short delay
+        if (GameLoadingManager.Instance != null)
         {
-            MenuManager.InstanceMenu.ToLoadingScene();
+            GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
+                0.5f,
+                false,
+                () =>
+                {
+                    if (MenuManager.InstanceMenu != null)
+                    {
+                        MenuManager.InstanceMenu.LogintoPage();
+                    }
+                    else
+                    {
+                        Debug.LogError("MenuManager instance not found!");
+                    }
+                }
+            );
         }
         else
         {
-            Debug.LogError("MenuManager instance not found!");
+            if (MenuManager.InstanceMenu != null)
+            {
+                MenuManager.InstanceMenu.LogintoPage();
+            }
+            else
+            {
+                Debug.LogError("MenuManager instance not found!");
+            }
         }
     }
 }

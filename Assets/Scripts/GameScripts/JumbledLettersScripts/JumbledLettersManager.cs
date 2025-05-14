@@ -56,6 +56,9 @@ public class JumbledLettersManager : MonoBehaviour
     private int totalAttempts = 0;
     private int totalSkipsUsed = 0; // Track the total number of skips used
 
+    // New dictionary to store hinted indices per question index
+    private Dictionary<int, List<int>> questionHintedIndices = new Dictionary<int, List<int>>();
+
     private List<WordData> answerWordList = new List<WordData>();
 
     private List<WordData> optionWordList = new List<WordData>(); // Dynamically created option holders
@@ -327,6 +330,7 @@ public class JumbledLettersManager : MonoBehaviour
         selectedWordIndex.Clear();
         skippedQuestions.Clear();
         correctlyAnsweredQuestions.Clear();
+        questionHintedIndices.Clear(); // Clear hinted indices dictionary
         gameStatus = GameStatus.Playing;
         if (gameProgressHandler != null)
         {
@@ -441,6 +445,37 @@ public class JumbledLettersManager : MonoBehaviour
         questionText.text = currentQuestion.questionText;
         answerWord = currentQuestion.answer.ToUpper();
         ResetQuestion();
+
+        // Restore hints if any for this question
+        if (questionHintedIndices.ContainsKey(currentQuestionIndex))
+        {
+            List<int> hintedIndices = questionHintedIndices[currentQuestionIndex];
+            foreach (int index in hintedIndices)
+            {
+                // Remove the character from the option buttons
+                for (int i = 0; i < optionWordList.Count; i++)
+                {
+                    if (
+                        optionWordList[i].gameObject.activeSelf
+                        && optionWordList[i].charValue == answerWord[index]
+                    )
+                    {
+                        optionWordList[i].gameObject.SetActive(false);
+                        break;
+                    }
+                }
+                answerWordList[index].SetChar(answerWord[index]);
+                answerWordList[index].SetHintStyle(true);
+                if (index < selectedWordIndex.Count)
+                    selectedWordIndex.Insert(index, -1);
+                else
+                    selectedWordIndex.Add(-1);
+            }
+            // Adjust hintCounter accordingly
+            hintCounter -= hintedIndices.Count;
+            UpdateHintCounterUI();
+        }
+
         // Only use letters from the answer word
         charArray = new char[answerWord.Length];
         for (int i = 0; i < answerWord.Length; i++)
@@ -778,31 +813,71 @@ public class JumbledLettersManager : MonoBehaviour
         gameOver.SetActive(true);
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-        int module_number = int.Parse(LessonsLoader.moduleNumber);
-        int gameModeId = 2; // Jumbled Letters mode ID
+        int gameModeId = 2; // Jumbled Letters mode ID (adjust as needed)
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
+        int module_number = int.Parse(LessonsLoader.moduleNumber);
 
-        StartCoroutine(
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
+                0.5f,
+                false,
+                () =>
+                {
+                    StartCoroutine(
+                        UpdateGameCompletionAndAttributes(
+                            studentId,
+                            module_number,
+                            gameModeId,
+                            subjectId,
+                            solveTime
+                        )
+                    );
+                }
+            );
+        }
+        else
+        {
+            StartCoroutine(
+                UpdateGameCompletionAndAttributes(
+                    studentId,
+                    module_number,
+                    gameModeId,
+                    subjectId,
+                    solveTime
+                )
+            );
+        }
+    }
+
+    private IEnumerator UpdateGameCompletionAndAttributes(
+        int studentId,
+        int module_number,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
+    {
+        yield return StartCoroutine(
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
-
-        // Ensure all attributes are updated
-        StartCoroutine(UpdateAttributes());
+        yield return StartCoroutine(UpdateAttributes());
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
+        }
     }
 
     private IEnumerator UpdateAttributes()
     {
-        // Show loading screen before updating attributes
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.ShowLoadingScreen();
-        }
-
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
-        int gameModeId = 2; // Jumbled Letters mode ID
+        int gameModeId = 2; // Jumbled Letters mode ID (adjust as needed)
         int subjectId = LessonsLoader.subjectId;
+        Debug.Log(
+            $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
+        );
 
         if (gameProgressHandler != null)
         {
@@ -828,8 +903,8 @@ public class JumbledLettersManager : MonoBehaviour
                 module_number,
                 gameModeId,
                 subjectId,
-                3 - hintCounter, // Calculate total hints used
-                totalSkipsUsed // Pass the total skips used
+                3 - hintCounter,
+                totalSkipsUsed
             );
             yield return gameProgressHandler.UpdateConsistency(studentId, 10);
 
@@ -852,12 +927,6 @@ public class JumbledLettersManager : MonoBehaviour
                 gameProgressHandler.HintOnRepeatingWordCount,
                 gameProgressHandler.IncorrectRepeatingAnswerCount
             );
-        }
-
-        // Hide loading screen after all updates are complete
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 
@@ -960,6 +1029,17 @@ public class JumbledLettersManager : MonoBehaviour
             else
                 selectedWordIndex.Add(-1);
             currentAnswerIndex = selectedWordIndex.Count;
+
+            // Store the hinted index for the current question
+            if (!questionHintedIndices.ContainsKey(currentQuestionIndex))
+            {
+                questionHintedIndices[currentQuestionIndex] = new List<int>();
+            }
+            if (!questionHintedIndices[currentQuestionIndex].Contains(randomIndex))
+            {
+                questionHintedIndices[currentQuestionIndex].Add(randomIndex);
+            }
+
             hintCounter--;
             gameProgressHandler.OnHintUsed(answerWord);
             UpdateHintCounterUI();

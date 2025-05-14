@@ -14,6 +14,8 @@ public class GameLoadingManager : MonoBehaviour
     private GameObject currentLoadingScreen;
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
+    private bool isSceneTransitioning = false;
+    public event System.Action OnLoadingComplete;
 
     private void Awake()
     {
@@ -57,19 +59,47 @@ public class GameLoadingManager : MonoBehaviour
         }
     }
 
-    public void ShowLoadingScreenWithDelay(float delay)
+    public void ShowLoadingScreenWithDelay(
+        float delay,
+        bool useAlternate = false,
+        System.Action onComplete = null
+    )
     {
         if (loadingCoroutine != null)
         {
             StopCoroutine(loadingCoroutine);
         }
-        loadingCoroutine = StartCoroutine(ShowLoadingScreenCoroutine(delay));
+        loadingCoroutine = StartCoroutine(
+            ShowLoadingScreenCoroutine(delay, useAlternate, onComplete)
+        );
     }
 
-    private IEnumerator ShowLoadingScreenCoroutine(float delay)
+    private IEnumerator ShowLoadingScreenCoroutine(
+        float delay,
+        bool useAlternate,
+        System.Action onComplete
+    )
     {
-        ShowLoadingScreen();
+        ShowLoadingScreen(useAlternate);
         yield return new WaitForSeconds(delay);
         HideLoadingScreen();
+        onComplete?.Invoke();
+        OnLoadingComplete?.Invoke();
+        if (useAlternate && !isSceneTransitioning)
+        {
+            isSceneTransitioning = true;
+            GoToLoginPage();
+        }
+    }
+
+    private void GoToLoginPage()
+    {
+        // TODO: Implement navigation to login page here
+        Debug.Log("Navigating to Login Page...");
+    }
+
+    public void ResetSceneTransitionFlag()
+    {
+        isSceneTransitioning = false;
     }
 }

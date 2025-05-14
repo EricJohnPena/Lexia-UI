@@ -92,6 +92,10 @@ public class ClassicGameManager : MonoBehaviour
     private int correctAnswers = 0;
     private int totalAttempts = 0;
 
+    // New dictionary to store hinted indices per question index
+    private Dictionary<int, HashSet<int>> questionHintedIndices =
+        new Dictionary<int, HashSet<int>>();
+
     private HashSet<int> hintedIndices = new HashSet<int>(); // Add this field to track hinted letters
 
     private void Awake()
@@ -150,7 +154,8 @@ public class ClassicGameManager : MonoBehaviour
             for (int i = 0; i < keyboardButtons.Length; i++)
             {
                 int index = i;
-                keyboardButtons[i].onClick.RemoveListener(() => OnKeyPressed(keyboardButtons[index]));
+                keyboardButtons[i]
+                    .onClick.RemoveListener(() => OnKeyPressed(keyboardButtons[index]));
             }
         }
 
@@ -271,11 +276,7 @@ public class ClassicGameManager : MonoBehaviour
                 $"Invalid parameters: studentId={studentId}, moduleNumber={moduleNumber}, gameModeId={gameModeId}, subjectId={subjectId}"
             );
             isRefreshing = false; // Reset flag
-            // Hide loading screen if there's an error
-            if (GameLoadingManager.Instance != null)
-            {
-                GameLoadingManager.Instance.HideLoadingScreen();
-            }
+
             yield break;
         }
         int maxRetries = 3;
@@ -299,6 +300,10 @@ public class ClassicGameManager : MonoBehaviour
                         string response = www.downloadHandler.text;
                         Debug.Log("Lesson Completion Response: " + response);
                         isLessonCompleted = response.Trim() == "true";
+                        if (GameLoadingManager.Instance != null)
+                        {
+                            GameLoadingManager.Instance.HideLoadingScreen();
+                        }
                         break; // Exit loop on success
                     }
                     catch (System.Exception e)
@@ -423,6 +428,12 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("Refreshing classic game data...");
         isRefreshing = true; // Mark as refreshing
 
+        // Show loading screen before reloading questions
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
+
         // Reset game state
         ResetGameState();
 
@@ -449,6 +460,8 @@ public class ClassicGameManager : MonoBehaviour
         selectedKeyIndex.Clear();
         skippedQuestions.Clear();
         correctlyAnsweredQuestions.Clear();
+        questionHintedIndices.Clear(); // Clear hinted indices dictionary
+        hintedIndices.Clear(); // Clear hinted indices set
         gameStatus = GameStatus.Playing;
 
         // Reset GameProgressHandler counters
@@ -543,11 +556,6 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
 
-        // Show loading screen
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.ShowLoadingScreen();
-        }
         int maxRetries = 3;
         int attempt = 0;
         float retryDelay = 2f; // seconds
@@ -642,6 +650,22 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log($"Current Answer: {currentAnswer}");
 
         ResetQuestion();
+
+        // Restore hints if any for this question
+        if (questionHintedIndices.ContainsKey(currentQuestionIndex))
+        {
+            HashSet<int> hintedIndicesForQuestion = questionHintedIndices[currentQuestionIndex];
+            foreach (int index in hintedIndicesForQuestion)
+            {
+                answerWordList[index].SetChar(currentAnswer[index]);
+                answerWordList[index].SetHintStyle(true);
+                hintedIndices.Add(index);
+            }
+            // Adjust hintCounter accordingly
+            hintCounter -= hintedIndicesForQuestion.Count;
+            UpdateHintCounterUI();
+        }
+
         gameStatus = GameStatus.Playing;
     }
 
@@ -965,28 +989,65 @@ public class ClassicGameManager : MonoBehaviour
         gameOver.SetActive(true);
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
-
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
         float solveTime = timerManager?.elapsedTime ?? 0;
         int module_number = int.Parse(LessonsLoader.moduleNumber);
 
-        StartCoroutine(
+        // Show loading screen and update status/attributes, then hide loading screen when done
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
+                0.5f,
+                false,
+                () =>
+                {
+                    StartCoroutine(
+                        UpdateGameCompletionAndAttributes(
+                            studentId,
+                            module_number,
+                            gameModeId,
+                            subjectId,
+                            solveTime
+                        )
+                    );
+                }
+            );
+        }
+        else
+        {
+            StartCoroutine(
+                UpdateGameCompletionAndAttributes(
+                    studentId,
+                    module_number,
+                    gameModeId,
+                    subjectId,
+                    solveTime
+                )
+            );
+        }
+    }
+
+    private IEnumerator UpdateGameCompletionAndAttributes(
+        int studentId,
+        int module_number,
+        int gameModeId,
+        int subjectId,
+        float solveTime
+    )
+    {
+        yield return StartCoroutine(
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
-
-        // Ensure all attributes are updated
-        StartCoroutine(UpdateAttributes());
+        yield return StartCoroutine(UpdateAttributes());
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
+        }
     }
 
     private IEnumerator UpdateAttributes()
     {
-        // Show loading screen before updating attributes
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.ShowLoadingScreen();
-        }
-
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 1; // Classic mode ID
@@ -1048,12 +1109,6 @@ public class ClassicGameManager : MonoBehaviour
                 gameProgressHandler.IncorrectRepeatingAnswerCount
             );
         }
-
-        // Hide loading screen after all updates are complete
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.HideLoadingScreen();
-        }
     }
 
     public void LoadQuestionsOnButtonClick()
@@ -1099,6 +1154,14 @@ public class ClassicGameManager : MonoBehaviour
             ];
             answerWordList[randomIndex].SetChar(currentAnswer[randomIndex]);
             answerWordList[randomIndex].SetHintStyle(true);
+
+            // Store the hinted index for the current question
+            if (!questionHintedIndices.ContainsKey(currentQuestionIndex))
+            {
+                questionHintedIndices[currentQuestionIndex] = new HashSet<int>();
+            }
+            questionHintedIndices[currentQuestionIndex].Add(randomIndex);
+
             hintedIndices.Add(randomIndex);
             hintCounter--;
             UpdateHintCounterUI();

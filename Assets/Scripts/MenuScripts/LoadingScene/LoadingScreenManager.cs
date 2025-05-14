@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class LoadingScreenManager : MonoBehaviour
 {
+    public static LoadingScreenManager Instance { get; private set; }
+
     public float loadingDelay = 2f; // Duration to show loading screen (2 seconds)
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
@@ -16,9 +18,26 @@ public class LoadingScreenManager : MonoBehaviour
     [SerializeField]
     private Text loadingText; // Legacy UI Text for "Loading...100%"
 
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
     void OnEnable()
     {
         // Reset state when the loading screen is enabled
+        if (Instance != this)
+        {
+            return; // Prevent multiple instances from running loading coroutine
+        }
         isLoading = false;
         if (loadingCoroutine != null)
         {
@@ -30,6 +49,10 @@ public class LoadingScreenManager : MonoBehaviour
 
     void OnDisable()
     {
+        if (Instance != this)
+        {
+            return;
+        }
         // Clean up when the loading screen is disabled
         if (loadingCoroutine != null)
         {
@@ -77,7 +100,8 @@ public class LoadingScreenManager : MonoBehaviour
                 loadingBarFill.fillAmount = 1f;
             if (loadingText != null)
                 loadingText.text = "Loading...100%";
-            MenuManager.InstanceMenu.LogintoPage();
+            Debug.Log("Loading complete. Proceeding to next scene.");
+            //LogintoPage();
         }
         else
         {
@@ -86,5 +110,10 @@ public class LoadingScreenManager : MonoBehaviour
 
         isLoading = false;
         loadingCoroutine = null;
+    }
+
+    public void LogintoPage()
+    {
+        MenuManager.InstanceMenu.LogintoPage();
     }
 }
