@@ -428,12 +428,6 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("Refreshing classic game data...");
         isRefreshing = true; // Mark as refreshing
 
-        // Show loading screen before reloading questions
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.ShowLoadingScreen();
-        }
-
         // Reset game state
         ResetGameState();
 
@@ -553,6 +547,10 @@ public class ClassicGameManager : MonoBehaviour
 
     private IEnumerator LoadQuestionData(int subjectId, int moduleId)
     {
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.ShowLoadingScreen();
+        }
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
 
@@ -613,18 +611,18 @@ public class ClassicGameManager : MonoBehaviour
             questionData = defaultQuestionData;
         }
 
-        // Hide loading screen
-        if (GameLoadingManager.Instance != null)
-        {
-            GameLoadingManager.Instance.HideLoadingScreen();
-        }
-
         if (questionData != null && questionData.questions.Count > 0)
         {
             timerManager?.StartTimer(); // Start the timer when questions are loaded
             SetQuestion();
         }
         isRefreshing = false; // Mark refresh as complete
+
+        // Hide loading screen
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
+        }
     }
 
     private void SetQuestion()
