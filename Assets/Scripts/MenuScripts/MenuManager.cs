@@ -190,6 +190,12 @@ public class MenuManager : MonoBehaviour
         LessonsPage.gameObject.SetActive(false);
         StudentDashboardPage.gameObject.SetActive(true);
         LessonsLoader.Instance.ResetLessons();
+        // Refresh modules so unlocked modules are updated
+        var moduleLoader = FindObjectOfType<ModuleLoader>();
+        if (moduleLoader != null)
+        {
+            moduleLoader.LoadModulesForSelectedSubject();
+        }
     }
 
     public void ToLoginPage()

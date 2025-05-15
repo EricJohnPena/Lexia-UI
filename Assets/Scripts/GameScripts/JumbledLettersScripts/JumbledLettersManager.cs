@@ -56,8 +56,8 @@ public class JumbledLettersManager : MonoBehaviour
     private int totalAttempts = 0;
     private int totalSkipsUsed = 0; // Track the total number of skips used
 
-    // New dictionary to store hinted indices per question index
-    private Dictionary<int, List<int>> questionHintedIndices = new Dictionary<int, List<int>>();
+    // Modify dictionary to track hinted indices per word
+    private Dictionary<string, HashSet<int>> wordHintedIndices = new Dictionary<string, HashSet<int>>();
 
     private List<WordData> answerWordList = new List<WordData>();
 
@@ -330,7 +330,7 @@ public class JumbledLettersManager : MonoBehaviour
         selectedWordIndex.Clear();
         skippedQuestions.Clear();
         correctlyAnsweredQuestions.Clear();
-        questionHintedIndices.Clear(); // Clear hinted indices dictionary
+        wordHintedIndices.Clear(); // Clear hinted indices dictionary
         gameStatus = GameStatus.Playing;
         if (gameProgressHandler != null)
         {
@@ -445,37 +445,6 @@ public class JumbledLettersManager : MonoBehaviour
         questionText.text = currentQuestion.questionText;
         answerWord = currentQuestion.answer.ToUpper();
         ResetQuestion();
-
-        // Restore hints if any for this question
-        if (questionHintedIndices.ContainsKey(currentQuestionIndex))
-        {
-            List<int> hintedIndices = questionHintedIndices[currentQuestionIndex];
-            foreach (int index in hintedIndices)
-            {
-                // Remove the character from the option buttons
-                for (int i = 0; i < optionWordList.Count; i++)
-                {
-                    if (
-                        optionWordList[i].gameObject.activeSelf
-                        && optionWordList[i].charValue == answerWord[index]
-                    )
-                    {
-                        optionWordList[i].gameObject.SetActive(false);
-                        break;
-                    }
-                }
-                answerWordList[index].SetChar(answerWord[index]);
-                answerWordList[index].SetHintStyle(true);
-                if (index < selectedWordIndex.Count)
-                    selectedWordIndex.Insert(index, -1);
-                else
-                    selectedWordIndex.Add(-1);
-            }
-            // Adjust hintCounter accordingly
-            hintCounter -= hintedIndices.Count;
-            UpdateHintCounterUI();
-        }
-
         // Only use letters from the answer word
         charArray = new char[answerWord.Length];
         for (int i = 0; i < answerWord.Length; i++)
@@ -532,6 +501,34 @@ public class JumbledLettersManager : MonoBehaviour
                 optionWordList.Add(wordObj);
             }
         }
+
+        // Restore hints if any for this word
+        if (wordHintedIndices.ContainsKey(answerWord))
+        {
+            HashSet<int> hintedIndicesForWord = wordHintedIndices[answerWord];
+            foreach (int index in hintedIndicesForWord)
+            {
+                // Remove the character from the option buttons
+                for (int i = 0; i < optionWordList.Count; i++)
+                {
+                    if (optionWordList[i].gameObject.activeSelf && optionWordList[i].charValue == answerWord[index])
+                    {
+                        optionWordList[i].gameObject.SetActive(false);
+                        break;
+                    }
+                }
+                answerWordList[index].SetChar(answerWord[index]);
+                answerWordList[index].SetHintStyle(true);
+                if (index < selectedWordIndex.Count)
+                    selectedWordIndex.Insert(index, -1);
+                else
+                    selectedWordIndex.Add(-1);
+            }
+            currentAnswerIndex = selectedWordIndex.Count;
+            hintCounter -= hintedIndicesForWord.Count;
+            UpdateHintCounterUI();
+        }
+
         currentQuestionIndex++;
         gameStatus = GameStatus.Playing;
     }
@@ -825,7 +822,7 @@ public class JumbledLettersManager : MonoBehaviour
                 false,
                 () =>
                 {
-                    StartCoroutine(
+        StartCoroutine(
                         UpdateGameCompletionAndAttributes(
                             studentId,
                             module_number,
@@ -833,7 +830,7 @@ public class JumbledLettersManager : MonoBehaviour
                             subjectId,
                             solveTime
                         )
-                    );
+        );
                 }
             );
         }
@@ -867,7 +864,7 @@ public class JumbledLettersManager : MonoBehaviour
         {
             GameLoadingManager.Instance.HideLoadingScreen();
         }
-    }
+        }
 
     private IEnumerator UpdateAttributes()
     {
@@ -903,8 +900,8 @@ public class JumbledLettersManager : MonoBehaviour
                 module_number,
                 gameModeId,
                 subjectId,
-                3 - hintCounter,
-                totalSkipsUsed
+                3 - hintCounter, // Calculate total hints used
+                totalSkipsUsed // Pass the total skips used
             );
             yield return gameProgressHandler.UpdateConsistency(studentId, 10);
 
@@ -927,6 +924,12 @@ public class JumbledLettersManager : MonoBehaviour
                 gameProgressHandler.HintOnRepeatingWordCount,
                 gameProgressHandler.IncorrectRepeatingAnswerCount
             );
+        }
+
+        // Hide loading screen after all updates are complete
+        if (GameLoadingManager.Instance != null)
+        {
+            GameLoadingManager.Instance.HideLoadingScreen();
         }
     }
 
@@ -1029,21 +1032,18 @@ public class JumbledLettersManager : MonoBehaviour
             else
                 selectedWordIndex.Add(-1);
             currentAnswerIndex = selectedWordIndex.Count;
-
-            // Store the hinted index for the current question
-            if (!questionHintedIndices.ContainsKey(currentQuestionIndex))
-            {
-                questionHintedIndices[currentQuestionIndex] = new List<int>();
-            }
-            if (!questionHintedIndices[currentQuestionIndex].Contains(randomIndex))
-            {
-                questionHintedIndices[currentQuestionIndex].Add(randomIndex);
-            }
-
             hintCounter--;
             gameProgressHandler.OnHintUsed(answerWord);
             UpdateHintCounterUI();
             Debug.Log($"Hint revealed at index {randomIndex}: {answerWord[randomIndex]}");
+
+            // Store the hinted index for the current word
+            if (!wordHintedIndices.ContainsKey(answerWord))
+            {
+                wordHintedIndices[answerWord] = new HashSet<int>();
+            }
+            wordHintedIndices[answerWord].Add(randomIndex);
+
             CheckIfAnswerComplete();
         }
         else

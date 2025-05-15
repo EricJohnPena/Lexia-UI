@@ -649,6 +649,13 @@ public class ClassicGameManager : MonoBehaviour
 
         ResetQuestion();
 
+        // --- FIX: Always clear all hint visuals and only apply hints for this question ---
+        for (int i = 0; i < answerWordList.Count; i++)
+        {
+            answerWordList[i].SetHintStyle(false);
+        }
+        // Remove any previous hint indices
+        hintedIndices.Clear();
         // Restore hints if any for this question
         if (questionHintedIndices.ContainsKey(currentQuestionIndex))
         {
@@ -662,6 +669,14 @@ public class ClassicGameManager : MonoBehaviour
             // Adjust hintCounter accordingly
             hintCounter -= hintedIndicesForQuestion.Count;
             UpdateHintCounterUI();
+        }
+        else
+        {
+            // No hints for this question, ensure hint visuals are off
+            for (int i = 0; i < answerWordList.Count; i++)
+            {
+                answerWordList[i].SetHintStyle(false);
+            }
         }
 
         gameStatus = GameStatus.Playing;
@@ -1147,25 +1162,20 @@ public class ClassicGameManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[
-                UnityEngine.Random.Range(0, unrevealedIndices.Count)
-            ];
+            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
             answerWordList[randomIndex].SetChar(currentAnswer[randomIndex]);
             answerWordList[randomIndex].SetHintStyle(true);
-
-            // Store the hinted index for the current question
+            hintedIndices.Add(randomIndex);
+            // Store the hinted index for the current question only
             if (!questionHintedIndices.ContainsKey(currentQuestionIndex))
             {
                 questionHintedIndices[currentQuestionIndex] = new HashSet<int>();
             }
             questionHintedIndices[currentQuestionIndex].Add(randomIndex);
-
-            hintedIndices.Add(randomIndex);
             hintCounter--;
             UpdateHintCounterUI();
             gameProgressHandler?.OnHintUsed(currentAnswer);
             Debug.Log($"Hint revealed at index {randomIndex}: {currentAnswer[randomIndex]}");
-
             CheckIfAnswerComplete();
         }
         else
