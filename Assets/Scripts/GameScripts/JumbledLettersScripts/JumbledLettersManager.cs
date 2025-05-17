@@ -57,7 +57,8 @@ public class JumbledLettersManager : MonoBehaviour
     private int totalSkipsUsed = 0; // Track the total number of skips used
 
     // Modify dictionary to track hinted indices per word
-    private Dictionary<string, HashSet<int>> wordHintedIndices = new Dictionary<string, HashSet<int>>();
+    private Dictionary<string, HashSet<int>> wordHintedIndices =
+        new Dictionary<string, HashSet<int>>();
 
     private List<WordData> answerWordList = new List<WordData>();
 
@@ -511,7 +512,10 @@ public class JumbledLettersManager : MonoBehaviour
                 // Remove the character from the option buttons
                 for (int i = 0; i < optionWordList.Count; i++)
                 {
-                    if (optionWordList[i].gameObject.activeSelf && optionWordList[i].charValue == answerWord[index])
+                    if (
+                        optionWordList[i].gameObject.activeSelf
+                        && optionWordList[i].charValue == answerWord[index]
+                    )
                     {
                         optionWordList[i].gameObject.SetActive(false);
                         break;
@@ -822,7 +826,7 @@ public class JumbledLettersManager : MonoBehaviour
                 false,
                 () =>
                 {
-        StartCoroutine(
+                    StartCoroutine(
                         UpdateGameCompletionAndAttributes(
                             studentId,
                             module_number,
@@ -830,7 +834,7 @@ public class JumbledLettersManager : MonoBehaviour
                             subjectId,
                             solveTime
                         )
-        );
+                    );
                 }
             );
         }
@@ -864,7 +868,7 @@ public class JumbledLettersManager : MonoBehaviour
         {
             GameLoadingManager.Instance.HideLoadingScreen();
         }
-        }
+    }
 
     private IEnumerator UpdateAttributes()
     {
@@ -910,7 +914,7 @@ public class JumbledLettersManager : MonoBehaviour
                 module_number,
                 gameModeId,
                 subjectId,
-                gameProgressHandler.SkipUsageCount,
+                gameProgressHandler.ComplexWordAttemptCount,
                 gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );

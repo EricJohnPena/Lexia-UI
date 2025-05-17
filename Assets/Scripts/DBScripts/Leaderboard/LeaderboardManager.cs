@@ -15,7 +15,9 @@ public class LeaderboardManager : MonoBehaviour
 
     [Header("Top 3 Players")]
     public Transform podiumContainer;
-    public GameObject podiumEntryPrefab;
+    public GameObject podiumEntryPrefab; // Default/fallback
+    public GameObject podiumEntryEnglishPrefab;
+    public GameObject podiumEntrySciencePrefab;
 
     [Header("Other Players")]
     public GameObject leaderboardEntryPrefab;
@@ -198,7 +200,12 @@ public class LeaderboardManager : MonoBehaviour
                 for (int i = 0; i < Mathf.Min(3, leaderboardEntries.Count); i++)
                 {
                     var entry = leaderboardEntries[i];
-                    GameObject podiumInstance = Instantiate(podiumEntryPrefab, podiumContainer);
+                    GameObject prefabToUse = podiumEntryPrefab;
+                    if (currentSubjectId == 1 && podiumEntryEnglishPrefab != null)
+                        prefabToUse = podiumEntryEnglishPrefab;
+                    else if (currentSubjectId == 2 && podiumEntrySciencePrefab != null)
+                        prefabToUse = podiumEntrySciencePrefab;
+                    GameObject podiumInstance = Instantiate(prefabToUse, podiumContainer);
                     Debug.Log(
                         $"Instantiated podium prefab for: {entry.first_name} {entry.last_name}"
                     );

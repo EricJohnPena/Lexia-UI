@@ -1107,7 +1107,7 @@ public class ClassicGameManager : MonoBehaviour
                 module_number,
                 gameModeId,
                 subjectId,
-                gameProgressHandler.SkipUsageCount,
+                gameProgressHandler.ComplexWordAttemptCount,
                 gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );
@@ -1162,7 +1162,9 @@ public class ClassicGameManager : MonoBehaviour
 
         if (unrevealedIndices.Count > 0)
         {
-            int randomIndex = unrevealedIndices[UnityEngine.Random.Range(0, unrevealedIndices.Count)];
+            int randomIndex = unrevealedIndices[
+                UnityEngine.Random.Range(0, unrevealedIndices.Count)
+            ];
             answerWordList[randomIndex].SetChar(currentAnswer[randomIndex]);
             answerWordList[randomIndex].SetHintStyle(true);
             hintedIndices.Add(randomIndex);

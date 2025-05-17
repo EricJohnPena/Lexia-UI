@@ -869,7 +869,7 @@ public class CrosswordGridManager : MonoBehaviour
                 module_number,
                 gameModeId,
                 subjectId,
-                0, // Assuming no skips in crossword
+                gameProgressHandler.ComplexWordAttemptCount,
                 gameProgressHandler.hintUsageCount,
                 gameProgressHandler.IncorrectAnswerCount
             );

@@ -91,22 +91,24 @@ public class ButtonTracker : MonoBehaviour
     // Update button styles based on selection state
     private void SetButtonStyles(Button button, bool isSelected)
     {
-        ColorBlock colorBlock = button.colors;
-        Text buttonText = button.GetComponentInChildren<Text>();
-
-        if (isSelected)
+        Image buttonImage = button.GetComponent<Image>();
+        if (buttonImage != null)
         {
-            colorBlock.normalColor = Color.gray;
-            colorBlock.highlightedColor = Color.gray;
-            buttonText.color = Color.black;
+            if (isSelected)
+            {
+                if (button == button1)
+                {
+                    buttonImage.color = new Color32(0, 31, 195, 255);
+                }
+                else if (button == button2)
+                {
+                    buttonImage.color = new Color32(8, 24, 13, 255);
+                }
+            }
+            else
+            {
+                buttonImage.color = Color.white;
+            }
         }
-        else
-        {
-            colorBlock.normalColor = Color.black;
-            colorBlock.highlightedColor = Color.black;
-            buttonText.color = Color.white;
-        }
-
-        button.colors = colorBlock;
     }
 }

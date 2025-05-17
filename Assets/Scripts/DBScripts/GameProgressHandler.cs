@@ -19,7 +19,7 @@ public class GameProgressHandler : MonoBehaviour
     private int rareWordCount = 0;
     public int hintUsageCount = 0;
     private int hintOnRepeatingWordCount = 0;
-    private int wordDifficultyScore = 0;
+
     private int incorrectAnswerCount = 0;
     private int incorrectRepeatingAnswerCount = 0;
     private int skipUsageCount = 0;
@@ -35,8 +35,6 @@ public class GameProgressHandler : MonoBehaviour
     private int hintCounter;
     private int totalSkipsUsed;
 
-    public int WordDifficultyScore => wordDifficultyScore;
-    public int RareWordCount => rareWordCount;
     public int HintOnRepeatingWordCount => hintOnRepeatingWordCount;
     public int IncorrectRepeatingAnswerCount => incorrectRepeatingAnswerCount;
     public int SkipRepeatingUsageCount => skipRepeatingUsageCount;
@@ -88,17 +86,21 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnWordSolved(string word, int difficulty)
     {
-        wordDifficultyScore += difficulty;
-
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
         {
-            rareWordCount++;
+            Debug.Log("Complex word solved!");
+            complexWordAttemptCount++;
+        }
+        else
+        {
+            Debug.Log("Non-complex word solved!");
+            Debug.Log($"Word: {word}");
         }
     }
 
     public void OnIncorrectAnswer(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
         {
             Debug.Log("Incorrect answer on complex word!");
             incorrectAnswerCount++;
@@ -108,7 +110,7 @@ public class GameProgressHandler : MonoBehaviour
             Debug.Log("Incorrect answer on non-complex word!");
             Debug.Log($"Word: {word}");
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
         {
             if (!encounteredRepeatingWords.Contains(word.ToUpper()))
             {
@@ -125,12 +127,12 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnHintUsed(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
         {
             Debug.Log("Hint used on complex word!");
             hintUsageCount++;
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
         {
             if (!encounteredRepeatingWords.Contains(word.ToUpper()))
             {
@@ -147,12 +149,12 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnSkipUsed(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word))
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
         {
             Debug.Log("Skip used on complex word!");
             skipUsageCount++;
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word))
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
         {
             if (!encounteredRepeatingWords.Contains(word.ToUpper()))
             {
@@ -171,7 +173,6 @@ public class GameProgressHandler : MonoBehaviour
     {
         rareWordCount = 0;
         hintUsageCount = 0;
-        wordDifficultyScore = 0;
         incorrectAnswerCount = 0;
         skipUsageCount = 0;
         encounteredRepeatingWords.Clear(); // Reset encountered repeating words
@@ -252,7 +253,7 @@ public class GameProgressHandler : MonoBehaviour
         int module_number,
         int gameModeId,
         int subjectId,
-        int skipUsageCount,
+        int complexWordAttemptCount,
         int hintUsageCount,
         int incorrectAnswerCount
     )
@@ -261,7 +262,7 @@ public class GameProgressHandler : MonoBehaviour
         {
             Debug.LogError(
                 $"Invalid parameters for UpdateVocabularyRange. Ensure all IDs are valid. "
-                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, wordDifficultyScore={wordDifficultyScore}, rareWordCount={rareWordCount}, hintUsageCount={hintUsageCount}"
+                    + $"studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, complexWordAttemptCount={complexWordAttemptCount}, hintUsageCount={hintUsageCount}, incorrectAnswerCount={incorrectAnswerCount}"
             );
             yield break;
         }
@@ -269,22 +270,23 @@ public class GameProgressHandler : MonoBehaviour
         string url = $"{Web.BaseApiUrl}{UpdateVocabularyRangeUrl}";
         WWWForm form = new WWWForm();
 
-        // Calculate vocabulary range score with default 10, decrease by incorrect answers, hints, and skips
-        int vocabularyRangeScore = Mathf.Clamp(
-            10 - ((incorrectAnswerCount / 2) + (hintUsageCount / 2) + (skipUsageCount / 2)),
-            0,
-            10
-        );
+        // Calculate vocabulary range score using only the provided parameters
+        // Start from 10, penalize for rareWordCount, hintUsageCount, and incorrectAnswerCount
+        // (Assume rareWordCount is a positive metric, so it should increase the score)
+        int baseScore = 10; // Start from a base, can be adjusted
+        int score =
+            baseScore - (rareWordCount / 2) - (hintUsageCount / 2) - (incorrectAnswerCount / 2);
+        int vocabularyRangeScore = Mathf.Clamp(score, 0, 10);
 
         Debug.Log(
-            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}"
+            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}, complexWordAttemptCount={complexWordAttemptCount}, hintUsageCount={hintUsageCount}, incorrectAnswerCount={incorrectAnswerCount}"
         );
 
         form.AddField("student_id", studentId);
         form.AddField("module_number", module_number);
         form.AddField("game_mode_id", gameModeId);
         form.AddField("subject_id", subjectId);
-        form.AddField("vocabulary_range_score", vocabularyRangeScore);
+        form.AddField("vocabulary_range_score", (int)vocabularyRangeScore);
         int maxRetries = 3; // Maximum number of retry attempts
         int attempt = 0;
         float retryDelay = 2f; // seconds

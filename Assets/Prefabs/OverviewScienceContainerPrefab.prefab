@@ -326,7 +326,7 @@ GameObject:
   - component: {fileID: 1135684069876120521}
   - component: {fileID: 727810992935067243}
   m_Layer: 5
-  m_Name: OverviewContainerPrefab
+  m_Name: OverviewScienceContainerPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -374,14 +374,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.028301895, g: 0.028301895, b: 0.028301895, a: 0.4392157}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 3aa46ecb85309f14e9b2b3e876984783, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6c5d7b04e6a3f5d488cefd7ca5dff8fd, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -406,6 +406,7 @@ MonoBehaviour:
   moduleNameText: {fileID: 2826427999389602515}
   moduleNumberText: {fileID: 3702202930443621944}
   actionButton: {fileID: 634232602486889812}
+  moduleNumber: 
 --- !u!1 &8603090940232835135
 GameObject:
   m_ObjectHideFlags: 0
@@ -474,7 +475,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b635e6e75fd70c64aac44646230e4c5f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5a411dacf4ecd294ab74b9698047874a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

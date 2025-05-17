@@ -35,7 +35,7 @@ public class RepeatingWordsHandler : MonoBehaviour
                 {
                     try
                     {
-                        string json = www.downloadHandler.text;
+                        string json = www.downloadHandler.text.ToUpper();
                         List<string> words = JsonUtility
                             .FromJson<RepeatingWordsList>(WrapJson(json))
                             .words;
@@ -52,7 +52,9 @@ public class RepeatingWordsHandler : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError($"Failed to load repeating words: {www.error} (Attempt {attempt}/{maxRetries})");
+                    Debug.LogError(
+                        $"Failed to load repeating words: {www.error} (Attempt {attempt}/{maxRetries})"
+                    );
                     if (attempt < maxRetries)
                     {
                         Debug.LogWarning("Retrying to load repeating words...");

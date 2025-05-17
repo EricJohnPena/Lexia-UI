@@ -30,9 +30,14 @@ public class LeaderboardPodiumUI : MonoBehaviour
         if (rank >= 1 && rank <= 3)
         {
             float[] podiumHeights = { 200f, 150f, 100f }; // Heights for 1st, 2nd, and 3rd place
+            float[] podiumAlphas = { 1.0f, 0.7f, 0.4f }; // Alpha for 1st, 2nd, 3rd
             Vector2 sizeDelta = podiumBar.sizeDelta;
             sizeDelta.y = podiumHeights[rank - 1];
             podiumBar.sizeDelta = sizeDelta;
+            // Set transparency
+            Color c = podiumBar.GetComponent<Image>().color;
+            c.a = podiumAlphas[rank - 1];
+            podiumBar.GetComponent<Image>().color = c;
         }
 
         // You can add profile image loading here if you have a profile picture system

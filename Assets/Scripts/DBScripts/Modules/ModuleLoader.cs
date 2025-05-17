@@ -7,6 +7,8 @@ using UnityEngine.Networking;
 public class ModuleLoader : MonoBehaviour
 {
     public GameObject modulePrefab; // Prefab for modules
+    public GameObject englishModulePrefab; // Prefab for English modules
+    public GameObject scienceModulePrefab; // Prefab for Science modules
     public Transform parentTransform; // Parent transform for module instantiation
     public List<ModuleData> modules = new List<ModuleData>();
 
@@ -70,9 +72,17 @@ public class ModuleLoader : MonoBehaviour
 
                     foreach (var module in modules)
                     {
-                        GameObject moduleInstance = Instantiate(modulePrefab, parentTransform);
+                        GameObject prefabToUse = modulePrefab;
+                        if (subjectId == 1 && englishModulePrefab != null)
+                        {
+                            prefabToUse = englishModulePrefab;
+                        }
+                        else if (subjectId == 2 && scienceModulePrefab != null)
+                        {
+                            prefabToUse = scienceModulePrefab;
+                        }
+                        GameObject moduleInstance = Instantiate(prefabToUse, parentTransform);
                         ModuleUI moduleUI = moduleInstance.GetComponent<ModuleUI>();
-
                         if (moduleUI != null)
                         {
                             bool isCompleted = module.is_completed; // Check if the module is completed
