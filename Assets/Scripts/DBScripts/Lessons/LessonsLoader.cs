@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class LessonsLoader : MonoBehaviour
 {
@@ -13,10 +15,14 @@ public class LessonsLoader : MonoBehaviour
     }
 
     public GameObject lessonPrefab;
+    public GameObject englishLessonPrefab;
+    public GameObject scienceLessonPrefab;
     public Transform parentTransform;
     public List<LessonData> lessons = new List<LessonData>();
     public static string moduleNumber = "1"; // Default to "1" to avoid null issues
     public static int subjectId;
+    public UnityEngine.UI.Image subjectImage;
+    public UnityEngine.UI.Image arrowImage;
 
     //    public Transform parentTransform;
 
@@ -93,6 +99,29 @@ public class LessonsLoader : MonoBehaviour
                     string subjectName =
                         subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
 
+                    string spriteName =
+                        subjectId == 1
+                            ? "EnglishLessonCard"
+                            : (subjectId == 2 ? "ScienceLessonCard" : "LessonDefault");
+                    Sprite subjectSprite = Resources.Load<Sprite>(spriteName);
+                    string arrowName = 
+                        subjectId == 1
+                            ? "EnglishArrow"
+                            : (subjectId == 2 ? "ScienceArrow" : "LessonDefault");
+                    Sprite arrowSprite = Resources.Load<Sprite>(arrowName);
+                    if (subjectSprite != null && subjectImage != null && arrowImage != null)
+                    {
+                        subjectImage.sprite = subjectSprite;
+                        arrowImage.sprite = arrowSprite;
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to load sprite: " + spriteName);
+                    }
+                    {
+                        subjectImage.sprite = subjectSprite;
+                        arrowImage.sprite = arrowSprite;
+                    }
                     foreach (Transform child in parentTransform)
                     {
                         Destroy(child.gameObject);
@@ -104,7 +133,17 @@ public class LessonsLoader : MonoBehaviour
                         string lessonName = lesson.lesson_name;
                         string lessonNumber = lesson.lesson_number; // Use lesson_number from the fetched data
                         string lessonLink = lesson.lesson_link;
-                        GameObject lessonInstance = Instantiate(lessonPrefab, parentTransform);
+                        GameObject prefabToUse = lessonPrefab;
+                        if (subjectId == 1 && englishLessonPrefab != null)
+                        {
+                            prefabToUse = englishLessonPrefab;
+                        }
+                        else if (subjectId == 2 && scienceLessonPrefab != null)
+                        {
+                            prefabToUse = scienceLessonPrefab;
+                        }
+
+                        GameObject lessonInstance = Instantiate(prefabToUse, parentTransform);
                         LessonUI lessonUI = lessonInstance.GetComponent<LessonUI>();
 
                         if (lessonUI != null)
