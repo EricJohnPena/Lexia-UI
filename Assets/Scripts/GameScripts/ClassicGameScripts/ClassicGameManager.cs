@@ -56,6 +56,8 @@ public class ClassicGameManager : MonoBehaviour
     public TimerManager timerManager; // Assign in the Inspector
 
     private GameProgressHandler gameProgressHandler; // Added declaration
+    public GameObject englishAnswerWordPrefab; // Assign in Inspector
+    public GameObject scienceAnswerWordPrefab; // Assign in Inspector
 
     private KeyboardQuestionList defaultQuestionData = new KeyboardQuestionList
     {
@@ -124,6 +126,21 @@ public class ClassicGameManager : MonoBehaviour
 
         if (hintButton != null)
         {
+            // Set outline color based on subject id
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
             hintButton.onClick.AddListener(RevealHint);
         }
 
@@ -752,6 +769,21 @@ public class ClassicGameManager : MonoBehaviour
         if (backspaceButton != null)
         {
             backspaceButton.onClick.AddListener(ResetLastWord);
+            // Set outline color based on subject id
+            var outline = backspaceButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
         }
     }
 
@@ -788,18 +820,65 @@ public class ClassicGameManager : MonoBehaviour
         }
 
         // Dynamically instantiate answerWord objects based on currentAnswer length
+        WordData prefabToUse = answerWordPrefab;
+        if (LessonsLoader.subjectId == 1 && englishAnswerWordPrefab != null)
+        {
+            prefabToUse = englishAnswerWordPrefab.GetComponent<WordData>();
+        }
+        else if (LessonsLoader.subjectId == 2 && scienceAnswerWordPrefab != null)
+        {
+            prefabToUse = scienceAnswerWordPrefab.GetComponent<WordData>();
+        }
         for (int i = 0; i < currentAnswer.Length; i++)
         {
-            WordData wordObj = Instantiate(answerWordPrefab, answerHolderRect);
+            WordData wordObj = Instantiate(prefabToUse, answerHolderRect);
             wordObj.SetChar('_');
             wordObj.SetHintStyle(false);
             wordObj.gameObject.SetActive(true);
             answerWordList.Add(wordObj);
         }
 
-        foreach (Button button in keyboardButtons)
+        // Set outline color of every button based on subject id
+        Color outlineColor = Color.white;
+        if (LessonsLoader.subjectId == 1) // English
         {
+            outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+        }
+        else if (LessonsLoader.subjectId == 2) // Science
+        {
+            outlineColor = new Color32(0, 153, 0, 255); // Example: green
+        }
+        foreach (var button in keyboardButtons)
+        {
+            var outline = button.GetComponent<UnityEngine.UI.Outline>();
+            var textColor = button.GetComponentInChildren<Text>();
+            if (textColor != null)
+            {
+                textColor.color = outlineColor;
+            }
+            if (outline != null)
+            {
+                outline.effectColor = outlineColor;
+            }
             button.gameObject.SetActive(true);
+        }
+        // Update hint button outline and image
+        if (hintButton != null)
+        {
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = outlineColor;
+            }
+        }
+        // Update backspace button outline and image
+        if (backspaceButton != null)
+        {
+            var outline = backspaceButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = outlineColor;
+            }
         }
     }
 
