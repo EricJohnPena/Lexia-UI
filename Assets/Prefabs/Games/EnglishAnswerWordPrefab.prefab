@@ -148,6 +148,7 @@ GameObject:
   - component: {fileID: 3662436903015444560}
   - component: {fileID: 3662436903015444561}
   - component: {fileID: 1047619407054512934}
+  - component: {fileID: 2354013300025926495}
   m_Layer: 5
   m_Name: EnglishAnswerWordPrefab
   m_TagString: Untagged
@@ -203,7 +204,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c1ace3b2405db724089a7b274c75026f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: b5f7360df6cde714899275a43962fd4c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -227,3 +228,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   charText: {fileID: 3662436902458634687}
   charValue: 0
+--- !u!114 &2354013300025926495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3662436903015444563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 5, y: -5}
+  m_UseGraphicAlpha: 1

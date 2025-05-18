@@ -27,6 +27,9 @@ public class CrosswordKeyboard : MonoBehaviour
         }
 
         SetupKeyboardButtons();
+
+        // Update button colors based on subject
+        UpdateButtonColorsBySubject();
     }
 
     void SetupKeyboardButtons()
@@ -50,6 +53,47 @@ public class CrosswordKeyboard : MonoBehaviour
             {
                 gridManager.HandleBackspace();
             });
+        }
+    }
+
+    public void UpdateButtonColorsBySubject()
+    {
+        Color outlineColor = Color.white;
+        if (LessonsLoader.subjectId == 1) // English
+        {
+            outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+        }
+        else if (LessonsLoader.subjectId == 2) // Science
+        {
+            outlineColor = new Color32(0, 153, 0, 255); // Example: green
+        }
+
+        foreach (var button in letterButtons)
+        {
+            var outline = button.GetComponent<UnityEngine.UI.Outline>();
+            var textComponent = button.GetComponentInChildren<Text>();
+            if (textComponent != null)
+            {
+                textComponent.color = outlineColor;
+            }
+            if (outline != null)
+            {
+                outline.effectColor = outlineColor;
+            }
+        }
+
+        if (backspaceButton != null)
+        {
+            var outline = backspaceButton.GetComponent<UnityEngine.UI.Outline>();
+            var textComponent = backspaceButton.GetComponentInChildren<Text>();
+            if (textComponent != null)
+            {
+                textComponent.color = outlineColor;
+            }
+            if (outline != null)
+            {
+                outline.effectColor = outlineColor;
+            }
         }
     }
 }

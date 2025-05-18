@@ -499,6 +499,29 @@ public class JumbledLettersManager : MonoBehaviour
                     rt.anchoredPosition = new Vector2(startX + i * (cellSize + spacing), -y);
                     rt.sizeDelta = new Vector2(cellSize, cellSize);
                 }
+                // Set outline color based on subject
+                var outline = wordObj.GetComponent<UnityEngine.UI.Outline>();
+                var text = wordObj.GetComponentInChildren<UnityEngine.UI.Text>();
+                if (outline != null)
+                {
+                    Color outlineColor = Color.white;
+                    Color textColor = Color.black;
+                    if (LessonsLoader.subjectId == 1) // English
+                    {
+                        outlineColor = new Color32(0, 102, 204, 255); // Blue
+                        textColor = new Color32(0, 51, 102, 255); // Darker Blue
+                    }
+                    else if (LessonsLoader.subjectId == 2) // Science
+                    {
+                        outlineColor = new Color32(0, 153, 0, 255); // Green
+                        textColor = new Color32(0, 102, 0, 255); // Darker Green
+                    }
+                    outline.effectColor = outlineColor;
+                    if (text != null)
+                    {
+                        text.color = textColor;
+                    }
+                }
                 optionWordList.Add(wordObj);
             }
         }
@@ -992,6 +1015,29 @@ public class JumbledLettersManager : MonoBehaviour
             wordObj.SetChar('_');
             wordObj.SetHintStyle(false);
             wordObj.gameObject.SetActive(true);
+            // Set outline color based on subject
+            var outline = wordObj.GetComponent<UnityEngine.UI.Outline>();
+            var text = wordObj.GetComponentInChildren<UnityEngine.UI.Text>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                Color textColor = Color.black;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Blue
+                    textColor = new Color32(0, 51, 102, 255); // Darker Blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Green
+                    textColor = new Color32(0, 102, 0, 255); // Darker Green
+                }
+                outline.effectColor = outlineColor;
+                if (text != null)
+                {
+                    text.color = textColor;
+                }
+            }
             answerWordList.Add(wordObj);
         }
     }

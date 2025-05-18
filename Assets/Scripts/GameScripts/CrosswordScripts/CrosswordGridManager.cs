@@ -99,9 +99,28 @@ public class CrosswordGridManager : MonoBehaviour
         {
             Debug.LogWarning("CrosswordKeyboard not found in the scene!");
         }
+        else
+        {
+            crosswordKeyboard.UpdateButtonColorsBySubject();
+        }
 
         if (hintButton != null)
         {
+            // Set outline color based on subject id
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
             hintButton.onClick.AddListener(RevealHint);
         }
 
@@ -298,6 +317,29 @@ public class CrosswordGridManager : MonoBehaviour
         ResetCrosswordGameState();
         DisplayEmptyMessage();
 
+        // Update button colors based on subject
+        if (crosswordKeyboard != null)
+        {
+            crosswordKeyboard.UpdateButtonColorsBySubject();
+        }
+        if (hintButton != null)
+        {
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
+        }
+
         // Reload crossword data
         StartCoroutine(
             LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
@@ -351,71 +393,85 @@ public class CrosswordGridManager : MonoBehaviour
 
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching Crossword questions from URL: " + url);
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
 
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string jsonText = www.downloadHandler.text;
-                    Debug.Log("Raw JSON Response: " + jsonText);
-
-                    currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
-
-                    if (
-                        currentLevel == null
-                        || currentLevel.fixedLayout == null
-                        || currentLevel.fixedLayout.Count == 0
-                    )
+                    try
                     {
-                        Debug.LogWarning(
-                            "No crossword data received from the server. Displaying an empty crossword."
-                        );
+                        string jsonText = www.downloadHandler.text;
+                        Debug.Log("Raw JSON Response: " + jsonText);
+
+                        currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
+
+                        if (
+                            currentLevel == null
+                            || currentLevel.fixedLayout == null
+                            || currentLevel.fixedLayout.Count == 0
+                        )
+                        {
+                            Debug.LogWarning(
+                                "No crossword data received from the server. Displaying an empty crossword."
+                            );
+                            timerManager?.StopTimer();
+                            ClearGrid();
+                            DisplayEmptyMessage();
+                            yield break;
+                        }
+
+                        Debug.Log("Successfully loaded crossword data.");
+                        wordTrie = new Trie();
+                        foreach (var placement in currentLevel.fixedLayout)
+                        {
+                            wordTrie.Insert(placement.word.ToUpper());
+                        }
+
+                        if (currentLevel.fixedLayout.Count > 0)
+                        {
+                            timerManager?.StartTimer(); // Start the timer
+                        }
+
+                        GenerateGrid();
+                        AssignWordNumbers();
+                        PlaceWords(currentLevel.fixedLayout);
+                        DisplayClues(currentLevel.wordClues);
+
+                        if (currentClueText != null)
+                        {
+                            currentClueText.text = "Tap a cell to begin";
+                        }
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing JSON: " + e.Message);
+                    }
+                    break; // Exit loop on success
+                }
+                else
+                {
+                    Debug.LogError(
+                        $"Failed to fetch crossword data: {www.error} (Attempt {attempt}/{maxRetries})"
+                    );
+                    if (attempt >= maxRetries)
+                    {
                         timerManager?.StopTimer();
                         ClearGrid();
                         DisplayEmptyMessage();
-                        yield break;
                     }
-
-                    Debug.Log("Successfully loaded crossword data.");
-                    wordTrie = new Trie();
-                    foreach (var placement in currentLevel.fixedLayout)
+                    else
                     {
-                        wordTrie.Insert(placement.word.ToUpper());
-                    }
-
-                    if (currentLevel.fixedLayout.Count > 0)
-                    {
-                        timerManager?.StartTimer(); // Start the timer
-                    }
-
-                    GenerateGrid();
-                    AssignWordNumbers();
-                    PlaceWords(currentLevel.fixedLayout);
-                    DisplayClues(currentLevel.wordClues);
-
-                    if (currentClueText != null)
-                    {
-                        currentClueText.text = "Tap a cell to begin";
+                        yield return new WaitForSeconds(retryDelay);
                     }
                 }
-                catch (System.Exception e)
-                {
-                    Debug.LogError("Error parsing JSON: " + e.Message);
-                    timerManager?.StopTimer();
-                    ClearGrid();
-                    DisplayEmptyMessage();
-                }
-            }
-            else
-            {
-                Debug.LogError("Failed to fetch crossword data: " + www.error);
-                timerManager?.StopTimer();
-                ClearGrid();
-                DisplayEmptyMessage();
             }
         }
 
@@ -1294,6 +1350,29 @@ public class CrosswordGridManager : MonoBehaviour
         ClearGrid();
         ResetGameState();
 
+        // Update button colors based on subject
+        if (crosswordKeyboard != null)
+        {
+            crosswordKeyboard.UpdateButtonColorsBySubject();
+        }
+        if (hintButton != null)
+        {
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
+        }
+
         // Always load crossword data, regardless of lesson completion status
         StartCoroutine(
             LoadCrosswordData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
@@ -1306,6 +1385,29 @@ public class CrosswordGridManager : MonoBehaviour
 
         // Reset game state
         ResetGameState();
+
+        // Update button colors based on subject
+        if (crosswordKeyboard != null)
+        {
+            crosswordKeyboard.UpdateButtonColorsBySubject();
+        }
+        if (hintButton != null)
+        {
+            var outline = hintButton.GetComponent<UnityEngine.UI.Outline>();
+            if (outline != null)
+            {
+                Color outlineColor = Color.white;
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    outlineColor = new Color32(0, 102, 204, 255); // Example: blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    outlineColor = new Color32(0, 153, 0, 255); // Example: green
+                }
+                outline.effectColor = outlineColor;
+            }
+        }
 
         // Reload crossword data
         StartCoroutine(
