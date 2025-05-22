@@ -35,18 +35,37 @@ public class RepeatingWordsHandler : MonoBehaviour
                 {
                     try
                     {
-                        string json = www.downloadHandler.text.ToUpper();
-                        List<string> words = JsonUtility
-                            .FromJson<RepeatingWordsList>(WrapJson(json))
-                            .words;
-                        repeatingWordsSet = new HashSet<string>(words);
-                        IsLoaded = true;
-                        OnRepeatingWordsLoaded?.Invoke();
-                        Debug.Log($"Loaded {repeatingWordsSet.Count} repeating words.");
+                        string json = www.downloadHandler.text;
+                        Debug.Log($"Received JSON: {json}");
+                        
+                        // Wrap the JSON array in an object
+                        string wrappedJson = $"{{\"words\":{json}}}";
+                        RepeatingWordsList wordList = JsonUtility.FromJson<RepeatingWordsList>(wrappedJson);
+                        
+                        if (wordList != null && wordList.words != null)
+                        {
+                            repeatingWordsSet = new HashSet<string>(wordList.words, StringComparer.OrdinalIgnoreCase);
+                            IsLoaded = true;
+                            OnRepeatingWordsLoaded?.Invoke();
+                            
+                            // Log each repeating word
+                            Debug.Log("=== Repeating Words Loaded ===");
+                            foreach (string word in repeatingWordsSet)
+                            {
+                                Debug.Log($"Repeating Word: {word}");
+                            }
+                            Debug.Log($"=== Total Repeating Words: {repeatingWordsSet.Count} ===");
+                        }
+                        else
+                        {
+                            Debug.LogWarning("No repeating words found or invalid response format.");
+                            repeatingWordsSet.Clear();
+                        }
                     }
                     catch (Exception e)
                     {
                         Debug.LogError($"Failed to parse repeating words JSON: {e.Message}");
+                        repeatingWordsSet.Clear();
                     }
                     yield break; // Success, exit coroutine
                 }
@@ -63,8 +82,6 @@ public class RepeatingWordsHandler : MonoBehaviour
                     }
                 }
             }
-            // If we reach here, all retries failed
-            yield break;
         }
     }
 

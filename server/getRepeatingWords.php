@@ -9,20 +9,24 @@ include 'db_connection.php';
 $repeatingWords = array();
 
 $sql = "
-    SELECT CAST(word AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value 
-    FROM crossword_data 
-    GROUP BY word 
-    HAVING COUNT(*) > 1
-    UNION
-    SELECT CAST(answer AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value 
-    FROM jumbled_letters_questions 
-    GROUP BY answer 
-    HAVING COUNT(*) > 1
-    UNION
-    SELECT CAST(answer AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) AS value 
-    FROM classic_questions_tbl 
-    GROUP BY answer 
-    HAVING COUNT(*) > 1
+    SELECT value, COUNT(*) as occurrences
+FROM (
+    SELECT UPPER(CAST(word AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci) AS value
+    FROM crossword_data
+
+    UNION ALL
+
+    SELECT UPPER(CAST(answer AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci) AS value
+    FROM classic_questions_tbl
+
+    UNION ALL
+
+    SELECT UPPER(CAST(answer AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci) AS value
+    FROM jumbled_letters_questions
+) AS all_words
+GROUP BY value
+HAVING COUNT(*) > 1
+ORDER BY occurrences DESC, value
 ";
 
 $result = $conn->query($sql);

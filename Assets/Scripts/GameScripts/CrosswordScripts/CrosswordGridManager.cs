@@ -391,6 +391,9 @@ public class CrosswordGridManager : MonoBehaviour
             GameLoadingManager.Instance.ShowLoadingScreen();
         }
 
+        // Reset game state before loading new data
+        ResetGameState();
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching Crossword questions from URL: " + url);
         int maxRetries = 3;
@@ -413,22 +416,18 @@ public class CrosswordGridManager : MonoBehaviour
 
                         currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
 
-                        if (
-                            currentLevel == null
-                            || currentLevel.fixedLayout == null
-                            || currentLevel.fixedLayout.Count == 0
-                        )
+                        if (currentLevel == null || currentLevel.fixedLayout == null || currentLevel.fixedLayout.Count == 0)
                         {
-                            Debug.LogWarning(
-                                "No crossword data received from the server. Displaying an empty crossword."
-                            );
+                            Debug.LogWarning("No crossword data received from the server. Displaying an empty crossword.");
                             timerManager?.StopTimer();
                             ClearGrid();
                             DisplayEmptyMessage();
-                            yield break;
+                            break;
                         }
 
                         Debug.Log("Successfully loaded crossword data.");
+                        
+                        // Clear and rebuild word trie
                         wordTrie = new Trie();
                         foreach (var placement in currentLevel.fixedLayout)
                         {
@@ -449,18 +448,22 @@ public class CrosswordGridManager : MonoBehaviour
                         {
                             currentClueText.text = "Tap a cell to begin";
                         }
+                        break; // Exit loop on success
                     }
                     catch (System.Exception e)
                     {
                         Debug.LogError("Error parsing JSON: " + e.Message);
+                        if (attempt >= maxRetries)
+                        {
+                            timerManager?.StopTimer();
+                            ClearGrid();
+                            DisplayEmptyMessage();
+                        }
                     }
-                    break; // Exit loop on success
                 }
                 else
                 {
-                    Debug.LogError(
-                        $"Failed to fetch crossword data: {www.error} (Attempt {attempt}/{maxRetries})"
-                    );
+                    Debug.LogError($"Failed to fetch crossword data: {www.error} (Attempt {attempt}/{maxRetries})");
                     if (attempt >= maxRetries)
                     {
                         timerManager?.StopTimer();
@@ -871,10 +874,19 @@ public class CrosswordGridManager : MonoBehaviour
         float solveTime
     )
     {
-        yield return StartCoroutine(
+        // Update game completion status
+        var completionCoroutine = StartCoroutine(
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
-        yield return StartCoroutine(UpdateAttributes());
+        yield return completionCoroutine;
+        
+        if (completionCoroutine != null)
+        {
+            // Update attributes
+            var attributesCoroutine = StartCoroutine(UpdateAttributes());
+            yield return attributesCoroutine;
+        }
+
         if (GameLoadingManager.Instance != null)
         {
             GameLoadingManager.Instance.HideLoadingScreen();
@@ -1059,15 +1071,26 @@ public class CrosswordGridManager : MonoBehaviour
         Debug.Log($"Horizontal Word: {(horizontalWord != null ? horizontalWord.word : "None")}");
         Debug.Log($"Vertical Word: {(verticalWord != null ? verticalWord.word : "None")}");
 
+        // Improved word selection logic
         if (horizontalWord != null && verticalWord != null)
         {
-            if (currentWord != null && currentWord.horizontal && verticalWord != null)
+            // If we're already in a word, switch to the other orientation
+            if (currentWord != null)
             {
-                currentWord = verticalWord;
-                isHorizontalInput = false;
+                if (currentWord.horizontal && verticalWord != null)
+                {
+                    currentWord = verticalWord;
+                    isHorizontalInput = false;
+                }
+                else if (!currentWord.horizontal && horizontalWord != null)
+                {
+                    currentWord = horizontalWord;
+                    isHorizontalInput = true;
+                }
             }
             else
             {
+                // Default to horizontal if no current word
                 currentWord = horizontalWord;
                 isHorizontalInput = true;
             }
@@ -1424,18 +1447,37 @@ public class CrosswordGridManager : MonoBehaviour
         totalAttempts = 0;
         hintCounter = 3;
         hintedCells.Clear(); // Clear the hinted cells when resetting the game
+        
         // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
+        
+        // Clear grid and reset UI
         ClearGrid();
-
+        
+        if (cluesPanelText != null)
+        {
+            cluesPanelText.text = "";
+        }
+        
+        if (currentClueText != null)
+        {
+            currentClueText.text = "";
+        }
+        
         if (gameOver != null)
         {
             gameOver.SetActive(false);
         }
-
+        
+        // Reset word tracking
+        selectedCell = null;
+        highlightedCells.Clear();
+        currentWord = null;
+        wordNumbers.Clear();
+        
         UpdateHintCounterUI();
     }
 }

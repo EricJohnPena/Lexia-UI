@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using Microsoft.Unity.VisualStudio.Editor;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UI;
 
 public class LessonsLoader : MonoBehaviour
 {
@@ -104,7 +102,7 @@ public class LessonsLoader : MonoBehaviour
                             ? "EnglishLessonCard"
                             : (subjectId == 2 ? "ScienceLessonCard" : "LessonDefault");
                     Sprite subjectSprite = Resources.Load<Sprite>(spriteName);
-                    string arrowName = 
+                    string arrowName =
                         subjectId == 1
                             ? "EnglishArrow"
                             : (subjectId == 2 ? "ScienceArrow" : "LessonDefault");

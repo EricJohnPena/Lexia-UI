@@ -26,7 +26,7 @@ public class GameProgressHandler : MonoBehaviour
     private int skipRepeatingUsageCount = 0;
     private int complexWordAttemptCount = 0;
 
-    private HashSet<string> encounteredRepeatingWords = new HashSet<string>(); // Track encountered repeating words
+    private HashSet<string> encounteredRepeatingWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase); // Track encountered repeating words
 
     // Field declarations
     private int correctAnswers;
@@ -86,7 +86,8 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnWordSolved(string word, int difficulty)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
+        string upperWord = word.ToUpper();
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
             Debug.Log("Complex word solved!");
             complexWordAttemptCount++;
@@ -96,11 +97,18 @@ public class GameProgressHandler : MonoBehaviour
             Debug.Log("Non-complex word solved!");
             Debug.Log($"Word: {word}");
         }
+
+        // Track repeating word encounter
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
+        {
+            encounteredRepeatingWords.Add(upperWord);
+        }
     }
 
     public void OnIncorrectAnswer(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
+        string upperWord = word.ToUpper();
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
             Debug.Log("Incorrect answer on complex word!");
             incorrectAnswerCount++;
@@ -110,12 +118,13 @@ public class GameProgressHandler : MonoBehaviour
             Debug.Log("Incorrect answer on non-complex word!");
             Debug.Log($"Word: {word}");
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
+
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
         {
-            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            if (!encounteredRepeatingWords.Contains(upperWord))
             {
                 Debug.Log("First incorrect answer on repeating word. No retention penalty.");
-                encounteredRepeatingWords.Add(word.ToUpper());
+                encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
@@ -127,17 +136,19 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnHintUsed(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
+        string upperWord = word.ToUpper();
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
             Debug.Log("Hint used on complex word!");
             hintUsageCount++;
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
+
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
         {
-            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            if (!encounteredRepeatingWords.Contains(upperWord))
             {
                 Debug.Log("First hint used on repeating word. No retention penalty.");
-                encounteredRepeatingWords.Add(word.ToUpper());
+                encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
@@ -149,17 +160,19 @@ public class GameProgressHandler : MonoBehaviour
 
     public void OnSkipUsed(string word)
     {
-        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(word.ToUpper()))
+        string upperWord = word.ToUpper();
+        if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
             Debug.Log("Skip used on complex word!");
             skipUsageCount++;
         }
-        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(word.ToUpper()))
+
+        if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
         {
-            if (!encounteredRepeatingWords.Contains(word.ToUpper()))
+            if (!encounteredRepeatingWords.Contains(upperWord))
             {
                 Debug.Log("First skip used on repeating word. No retention penalty.");
-                encounteredRepeatingWords.Add(word.ToUpper());
+                encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
@@ -175,7 +188,11 @@ public class GameProgressHandler : MonoBehaviour
         hintUsageCount = 0;
         incorrectAnswerCount = 0;
         skipUsageCount = 0;
-        encounteredRepeatingWords.Clear(); // Reset encountered repeating words
+        complexWordAttemptCount = 0;
+        hintOnRepeatingWordCount = 0;
+        incorrectRepeatingAnswerCount = 0;
+        skipRepeatingUsageCount = 0;
+        encounteredRepeatingWords.Clear();
     }
 
     public IEnumerator UpdateSpeed(

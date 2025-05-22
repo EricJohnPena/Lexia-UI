@@ -465,7 +465,7 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("Resetting Classic Game state...");
         isRefreshing = false;
         isLessonCompleted = false;
-        currentQuestionIndex = 0;
+        currentQuestionIndex = 0; // Ensure we start from the first question
         currentAnswerIndex = 0;
         hintCounter = 3; // Reset hint counter
         selectedKeyIndex.Clear();
@@ -487,9 +487,7 @@ public class ClassicGameManager : MonoBehaviour
             questionText.text = "";
         }
 
-        // Remove old array logic
-        // foreach (var word in answerWordArray) { ... }
-        // Instead, destroy all dynamic answer slots
+        // Clear answer slots
         foreach (var word in answerWordList)
         {
             if (word != null)
@@ -497,9 +495,13 @@ public class ClassicGameManager : MonoBehaviour
         }
         answerWordList.Clear();
 
+        // Reset keyboard buttons
         foreach (var button in keyboardButtons)
         {
-            button.gameObject.SetActive(true);
+            if (button != null)
+            {
+                button.gameObject.SetActive(true);
+            }
         }
 
         if (gameOver != null)
@@ -568,14 +570,19 @@ public class ClassicGameManager : MonoBehaviour
         {
             GameLoadingManager.Instance.ShowLoadingScreen();
         }
+        
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
+
+        // Reset game state before loading new questions
+        ResetGameState();
 
         int maxRetries = 3;
         int attempt = 0;
         float retryDelay = 2f; // seconds
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}";
         Debug.Log("Fetching questions from URL: " + url);
+        
         while (attempt < maxRetries)
         {
             attempt++;
@@ -592,47 +599,50 @@ public class ClassicGameManager : MonoBehaviour
                         Debug.Log("Raw JSON Response: " + jsonText);
                         questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
 
-                        if (
-                            questionData == null
-                            || questionData.questions == null
-                            || questionData.questions.Count == 0
-                        )
+                        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
                         {
-                            Debug.LogWarning(
-                                "Loaded JSON is empty or invalid. Using default questions."
-                            );
+                            Debug.LogWarning("Loaded JSON is empty or invalid. Using default questions.");
                             questionData = defaultQuestionData;
+                        }
+                        
+                        // Ensure we start from the first question
+                        currentQuestionIndex = 0;
+                        
+                        if (questionData != null && questionData.questions.Count > 0)
+                        {
+                            timerManager?.StartTimer(); // Start the timer when questions are loaded
+                            SetQuestion();
                         }
                         break; // Exit loop on success
                     }
                     catch (System.Exception e)
                     {
                         Debug.LogError("Error parsing JSON: " + e.Message);
+                        if (attempt >= maxRetries)
+                        {
+                            questionData = defaultQuestionData;
+                            currentQuestionIndex = 0;
+                            SetQuestion();
+                        }
                     }
                 }
                 else
                 {
                     Debug.LogError("Failed to load questions: " + www.error);
-                    yield return new WaitForSeconds(retryDelay); // Wait before retrying
+                    if (attempt >= maxRetries)
+                    {
+                        questionData = defaultQuestionData;
+                        currentQuestionIndex = 0;
+                        SetQuestion();
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(retryDelay);
+                    }
                 }
             }
         }
 
-        if (
-            questionData == null
-            || questionData.questions == null
-            || questionData.questions.Count == 0
-        )
-        {
-            Debug.LogWarning("No questions available. Using default questions.");
-            questionData = defaultQuestionData;
-        }
-
-        if (questionData != null && questionData.questions.Count > 0)
-        {
-            timerManager?.StartTimer(); // Start the timer when questions are loaded
-            SetQuestion();
-        }
         isRefreshing = false; // Mark refresh as complete
 
         // Hide loading screen
@@ -975,7 +985,7 @@ public class ClassicGameManager : MonoBehaviour
         }
         else
         {
-            gameProgressHandler?.OnIncorrectAnswer(currentAnswer);
+            gameProgressHandler?.OnIncorrectAnswer(expectedAnswer);
             Debug.Log("Incorrect Answer!" + currentAnswer);
             ResetCurrentInput();
         }
@@ -1128,10 +1138,19 @@ public class ClassicGameManager : MonoBehaviour
         float solveTime
     )
     {
-        yield return StartCoroutine(
+        // Update game completion status
+        var completionCoroutine = StartCoroutine(
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
-        yield return StartCoroutine(UpdateAttributes());
+        yield return completionCoroutine;
+        
+        if (completionCoroutine != null)
+        {
+            // Update attributes
+            var attributesCoroutine = StartCoroutine(UpdateAttributes());
+            yield return attributesCoroutine;
+        }
+
         if (GameLoadingManager.Instance != null)
         {
             GameLoadingManager.Instance.HideLoadingScreen();

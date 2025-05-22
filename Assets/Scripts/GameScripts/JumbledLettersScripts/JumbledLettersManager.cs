@@ -327,40 +327,46 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("Resetting Jumbled Letters game state...");
         currentQuestionIndex = 0;
         currentAnswerIndex = 0;
-        hintCounter = 3;
+        hintCounter = 3; // Reset hint counter
         selectedWordIndex.Clear();
         skippedQuestions.Clear();
         correctlyAnsweredQuestions.Clear();
         wordHintedIndices.Clear(); // Clear hinted indices dictionary
         gameStatus = GameStatus.Playing;
+        
+        // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
+        
         if (questionText != null)
         {
             questionText.text = "";
         }
-        if (answerWordPrefab != null && answerHolderRect != null)
+        
+        // Clear answer slots
+        foreach (var word in answerWordList)
         {
-            foreach (var word in answerWordList)
-            {
-                if (word != null)
-                    Destroy(word.gameObject);
-            }
-            answerWordList.Clear();
+            if (word != null)
+                Destroy(word.gameObject);
         }
-        // Destroy all option holders
+        answerWordList.Clear();
+        
+        // Clear option slots
         foreach (var word in optionWordList)
         {
             if (word != null)
                 Destroy(word.gameObject);
         }
         optionWordList.Clear();
+        
         if (gameOver != null)
         {
             gameOver.SetActive(false);
         }
+        
+        // Update hint counter UI after reset
         UpdateHintCounterUI();
     }
 
@@ -372,57 +378,80 @@ public class JumbledLettersManager : MonoBehaviour
             GameLoadingManager.Instance.ShowLoadingScreen();
         }
 
+        // Reset game state before loading new questions
+        ResetGameState();
+
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={module_number}";
         Debug.Log("Fetching Jumbled Letters questions from URL: " + url);
 
-        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        int maxRetries = 3;
+        int attempt = 0;
+        float retryDelay = 2f; // seconds
+
+        while (attempt < maxRetries)
         {
-            yield return www.SendWebRequest();
-
-            if (www.result == UnityWebRequest.Result.Success)
+            attempt++;
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                try
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string jsonText = www.downloadHandler.text;
-                    Debug.Log("Raw JSON Response: " + jsonText);
-
-                    questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
-
-                    if (
-                        questionData == null
-                        || questionData.questions == null
-                        || questionData.questions.Count == 0
-                    )
+                    try
                     {
-                        Debug.LogWarning("No Jumbled Letters data received from the server.");
+                        string jsonText = www.downloadHandler.text;
+                        Debug.Log("Raw JSON Response: " + jsonText);
+
+                        questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
+
+                        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+                        {
+                            Debug.LogWarning("No Jumbled Letters data received from the server.");
+                            timerManager?.StopTimer();
+                            gameOver.SetActive(true);
+                            break;
+                        }
+
+                        // Clear and rebuild word trie
+                        wordTrie = new Trie();
+                        foreach (var question in questionData.questions)
+                        {
+                            wordTrie.Insert(question.answer.ToUpper());
+                        }
+
+                        // Ensure we start from the first question
+                        currentQuestionIndex = 0;
+                        
+                        if (questionData != null && questionData.questions.Count > 0)
+                        {
+                            timerManager?.StartTimer(); // Start the timer when questions are loaded
+                            SetQuestion();
+                        }
+                        break; // Exit loop on success
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError("Error parsing JSON: " + e.Message);
+                        if (attempt >= maxRetries)
+                        {
+                            timerManager?.StopTimer();
+                            gameOver.SetActive(true);
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogError("Failed to fetch questions: " + www.error);
+                    if (attempt >= maxRetries)
+                    {
                         timerManager?.StopTimer();
                         gameOver.SetActive(true);
-                        yield break;
                     }
-
-                    foreach (var question in questionData.questions)
+                    else
                     {
-                        wordTrie.Insert(question.answer.ToUpper());
-                    }
-
-                    if (questionData != null && questionData.questions.Count > 0)
-                    {
-                        timerManager?.StartTimer(); // Start the timer when questions are loaded
-                        SetQuestion();
+                        yield return new WaitForSeconds(retryDelay);
                     }
                 }
-                catch (System.Exception e)
-                {
-                    Debug.LogError("Error parsing JSON: " + e.Message);
-                    timerManager?.StopTimer();
-                    gameOver.SetActive(true);
-                }
-            }
-            else
-            {
-                Debug.LogError("Failed to fetch questions: " + www.error);
-                timerManager?.StopTimer();
-                gameOver.SetActive(true);
             }
         }
 
@@ -883,10 +912,19 @@ public class JumbledLettersManager : MonoBehaviour
         float solveTime
     )
     {
-        yield return StartCoroutine(
+        // Update game completion status
+        var completionCoroutine = StartCoroutine(
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
-        yield return StartCoroutine(UpdateAttributes());
+        yield return completionCoroutine;
+        
+        if (completionCoroutine != null)
+        {
+            // Update attributes
+            var attributesCoroutine = StartCoroutine(UpdateAttributes());
+            yield return attributesCoroutine;
+        }
+
         if (GameLoadingManager.Instance != null)
         {
             GameLoadingManager.Instance.HideLoadingScreen();
