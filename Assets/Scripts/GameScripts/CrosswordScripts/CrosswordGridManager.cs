@@ -824,7 +824,22 @@ public class CrosswordGridManager : MonoBehaviour
             Debug.Log("Crossword puzzle completed. Game over.");
             timerManager?.StopTimer();
             if (gameOver != null)
+            {
                 gameOver.SetActive(true);
+                // Set game over panel color based on subject
+                var image = gameOver.GetComponent<Image>();
+                if (image != null)
+                {
+                    if (LessonsLoader.subjectId == 1) // English
+                    {
+                        image.color = new Color32(0, 102, 204, 255); // Blue
+                    }
+                    else if (LessonsLoader.subjectId == 2) // Science
+                    {
+                        image.color = new Color32(0, 153, 0, 255); // Green
+                    }
+                }
+            }
 
             int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
             int gameModeId = 3; // Crossword mode ID (adjust as needed)

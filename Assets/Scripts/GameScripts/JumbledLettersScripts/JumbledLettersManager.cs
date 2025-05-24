@@ -304,6 +304,7 @@ public class JumbledLettersManager : MonoBehaviour
             questionText.text = "Lesson Completed!";
             timerManager?.StopTimer();
             gameOver.SetActive(true);
+            UpdateGameOverPanelColor();
         }
         else
         {
@@ -864,6 +865,7 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("All questions answered correctly. Game over.");
         timerManager?.StopTimer();
         gameOver.SetActive(true);
+        UpdateGameOverPanelColor();
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int gameModeId = 2; // Jumbled Letters mode ID (adjust as needed)
@@ -1178,6 +1180,25 @@ public class JumbledLettersManager : MonoBehaviour
         else
         {
             Debug.LogError("LessonsLoader.moduleNumber is null. Cannot reload questions.");
+        }
+    }
+
+    private void UpdateGameOverPanelColor()
+    {
+        if (gameOver != null)
+        {
+            var image = gameOver.GetComponent<Image>();
+            if (image != null)
+            {
+                if (LessonsLoader.subjectId == 1) // English
+                {
+                    image.color = new Color32(0, 102, 204, 255); // Blue
+                }
+                else if (LessonsLoader.subjectId == 2) // Science
+                {
+                    image.color = new Color32(0, 153, 0, 255); // Green
+                }
+            }
         }
     }
 }
