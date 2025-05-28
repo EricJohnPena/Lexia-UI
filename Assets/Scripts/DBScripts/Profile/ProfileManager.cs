@@ -27,6 +27,11 @@ public class ProfileManager : MonoBehaviour
         });
     }
 
+    public void ShowEditProfileModal()
+    {
+        editModal.SetActive(true);
+    }
+
     public void UpdateProfileUI()
     {
         // Check if radarChart is assigned

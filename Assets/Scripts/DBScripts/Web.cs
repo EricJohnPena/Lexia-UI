@@ -37,6 +37,47 @@ public class Web : MonoBehaviour
         }
     }
 
+    public IEnumerator CheckProfilePictureStatus(string studentId)
+    {
+        string url = BaseApiUrl + "checkProfilePictureStatus.php?student_id=" + studentId;
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    var response = JsonConvert.DeserializeObject<ProfilePictureStatusResponse>(www.downloadHandler.text);
+                    if (response.success)
+                    {
+                        if (!response.has_profile_picture)
+                        {
+                            // Show profile picture selection modal
+                            var profileManager = FindObjectOfType<ProfileManager>();
+                            if (profileManager != null)
+                            {
+                                profileManager.ShowEditProfileModal();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Error checking profile picture status: " + response.error);
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing profile picture status response: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("Error checking profile picture status: " + www.error);
+            }
+        }
+    }
+
     public IEnumerator Login(string username, string password)
     {
         WWWForm form = new WWWForm();
@@ -49,78 +90,61 @@ public class Web : MonoBehaviour
 
             if (www.result != UnityWebRequest.Result.Success)
             {
-                string errorMessage = $"Login Error: {www.error}";
-                Debug.LogError($"Login Error: {www.error}");
-                // Display the error message in a Text component
-                GameObject errorTextObject = GameObject.Find("ErrorText");
-                if (errorTextObject != null)
-                {
-                    Text errorText = errorTextObject.GetComponent<Text>();
-                    if (errorText != null)
-                    {
-                        errorText.text = errorMessage;
-                    }
-                }
-                yield break;
+                Debug.LogError(www.error);
             }
-
-            string response = www.downloadHandler.text.Trim();
-            Debug.Log("Raw Response: " + response);
-
-            // Check if response is an error message (not JSON)
-            if (!response.StartsWith("{") && !response.StartsWith("["))
+            else
             {
-                // Display server error message in ErrorText UI
-                GameObject errorTextObject = GameObject.Find("ErrorText");
-                if (errorTextObject != null)
+                string response = www.downloadHandler.text;
+                Debug.Log("Login response: " + response);
+
+                if (response.Contains("error"))
                 {
-                    Text errorText = errorTextObject.GetComponent<Text>();
-                    if (errorText != null)
+                    // Handle error response
+                    LoginErrorResponse errorResponse = JsonConvert.DeserializeObject<LoginErrorResponse>(response);
+                    Debug.LogError("Login error: " + errorResponse.error);
+                }
+                else
+                {
+                    // Parse the JSON response safely
+                    LoginResponse loginData = null;
+                    try
                     {
-                        errorText.text = response;
+                        loginData = JsonConvert.DeserializeObject<LoginResponse>(response);
                     }
-                }
-                yield break;
-            }
+                    catch (JsonException ex)
+                    {
+                        Debug.LogError("JSON Parsing Error: " + ex.Message);
+                        yield break; // Exit if parsing fails
+                    }
 
-            if (response.StartsWith("{") || response.StartsWith("["))
-            {
-                // Parse the JSON response safely
-                LoginResponse loginData = null;
-                try
-                {
-                    loginData = JsonConvert.DeserializeObject<LoginResponse>(response);
-                }
-                catch (JsonException ex)
-                {
-                    Debug.LogError("JSON Parsing Error: " + ex.Message);
-                    yield break; // Exit if parsing fails
-                }
+                    // Use the parsed data
+                    if (loginData != null)
+                    {
+                        // Store user information in PlayerPrefs
+                        PlayerPrefs.SetString("User ID", loginData.student_id);
+                        PlayerPrefs.SetString("Username", loginData.first_name);
+                        PlayerPrefs.SetString(
+                            "Fullname",
+                            loginData.first_name + " " + loginData.last_name
+                        );
+                        PlayerPrefs.SetString("Section ID", loginData.fk_section_id);
+                        PlayerPrefs.Save();
+                        string User = PlayerPrefs.GetString("Username", "Guest User");
 
-                // Use the parsed data
-                if (loginData != null)
-                {
-                    // Store user information in PlayerPrefs
-                    PlayerPrefs.SetString("User ID", loginData.student_id);
-                    PlayerPrefs.SetString("Username", loginData.first_name);
-                    PlayerPrefs.SetString(
-                        "Fullname",
-                        loginData.first_name + " " + loginData.last_name
-                    );
-                    PlayerPrefs.SetString("Section ID", loginData.fk_section_id);
-                    PlayerPrefs.Save();
-                    string User = PlayerPrefs.GetString("Username", "Guest User");
+                        UserInfo.Instance.SetId(loginData.student_id);
+                        StartCoroutine(GetSectionName(loginData.fk_section_id));
 
-                    UserInfo.Instance.SetId(loginData.student_id);
-                    StartCoroutine(GetSectionName(loginData.fk_section_id));
+                        // Check profile picture status
+                        yield return StartCoroutine(CheckProfilePictureStatus(loginData.student_id));
 
-                    // Proceed to the next menu/page
-                    MenuManager.InstanceMenu.LogintoPage();
-                    MenuManager.InstanceMenu.usernameText.text = "Hi " + User + ",";
+                        // Proceed to the next menu/page
+                        MenuManager.InstanceMenu.LogintoPage();
+                        MenuManager.InstanceMenu.usernameText.text = "Hi " + User + ",";
 
-                    // Call the OnLoginSuccess method
-                    Login loginComponent = FindObjectOfType<Login>();
-                    loginComponent?.OnLoginSuccess();
+                        // Call the OnLoginSuccess method
+                        Login loginComponent = FindObjectOfType<Login>();
+                        loginComponent?.OnLoginSuccess();
+                    }
                 }
             }
         }
@@ -269,4 +293,20 @@ public class LoginResponse
 public class SectionResponse
 {
     public string section_name;
+}
+
+// Add new response class for profile picture status
+[System.Serializable]
+public class ProfilePictureStatusResponse
+{
+    public bool success;
+    public bool has_profile_picture;
+    public string profile_picture_id;
+    public string error;
+}
+
+[System.Serializable]
+public class LoginErrorResponse
+{
+    public string error;
 }
