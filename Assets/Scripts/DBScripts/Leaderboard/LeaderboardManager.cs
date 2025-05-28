@@ -213,7 +213,7 @@ public class LeaderboardManager : MonoBehaviour
                     if (podiumUI != null)
                     {
                         string fullName = $"{entry.first_name} {entry.last_name}";
-                        podiumUI.SetPodiumData(fullName, entry.score, i + 1);
+                        podiumUI.SetPodiumData(fullName, entry.score, i + 1, entry.student_id);
                         // Position the podiums
                         RectTransform podiumTransform =
                             podiumInstance.GetComponent<RectTransform>();
@@ -227,23 +227,29 @@ public class LeaderboardManager : MonoBehaviour
                             // Adjust width and height based on rank
                             float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
                             podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
+                            
                             // Set positions: 1st (center), 2nd (left), 3rd (right)
                             float xPosition = 0; // Default to center
                             switch (i)
                             {
                                 case 0: // 1st place
-                                    xPosition = 0; // Center
+                                    xPosition = 0;
                                     break;
                                 case 1: // 2nd place
-                                    xPosition = -spacing; // Left
+                                    xPosition = -spacing;
                                     break;
                                 case 2: // 3rd place
-                                    xPosition = spacing; // Right
+                                    xPosition = spacing;
                                     break;
                             }
-                            // Align base at the bottom
-                            float yPosition = prefabHeight / 2; // Half the height to align the base
-                            podiumTransform.anchoredPosition = new Vector2(xPosition, yPosition);
+
+                            // Set the anchor to bottom center
+                            podiumTransform.anchorMin = new Vector2(0.5f, 0f);
+                            podiumTransform.anchorMax = new Vector2(0.5f, 0f);
+                            podiumTransform.pivot = new Vector2(0.5f, 0f);
+                            
+                            // Position the podium at the bottom with the calculated x offset
+                            podiumTransform.anchoredPosition = new Vector2(xPosition, 0);
                         }
                     }
                     else
@@ -267,7 +273,7 @@ public class LeaderboardManager : MonoBehaviour
                     if (entryUI != null)
                     {
                         string fullName = $"{entry.first_name} {entry.last_name}";
-                        entryUI.SetEntryData(fullName, entry.score, i + 1);
+                        entryUI.SetEntryData(fullName, entry.score, i + 1, entry.student_id);
                     }
                     else
                     {
@@ -331,4 +337,5 @@ public class LeaderboardData
     public int rank;
     public string first_name;
     public string last_name;
+    public string student_id;
 }

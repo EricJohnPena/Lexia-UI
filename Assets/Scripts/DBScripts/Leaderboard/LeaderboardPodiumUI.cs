@@ -9,22 +9,30 @@ public class LeaderboardPodiumUI : MonoBehaviour
     public Text rankText;
     public RectTransform podiumBar; // The bar/platform the player stands on
 
-    // Position configurations for 1st, 2nd, and 3rd place
-    private readonly Vector2[] podiumHeights = new Vector2[]
+    private void Awake()
     {
-        new Vector2(0, 200), // 1st place height
-        new Vector2(0, 150), // 2nd place height
-        new Vector2(0, 100), // 3rd place height
-    };
+        // Make profile image circular using a mask
+        if (profileImage != null)
+        {
+            profileImage.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            profileImage.sprite = Resources.Load<Sprite>("DefaultProfilePic");
+        }
+    }
 
-    public void SetPodiumData(string username, int score, int rank)
+    public void SetPodiumData(string username, int score, int rank, string studentId)
     {
-        Debug.Log($"Setting podium data: Username={username}, Score={score}, Rank={rank}");
+        Debug.Log($"Setting podium data: Username={username}, Score={score}, Rank={rank}, StudentId={studentId}");
 
         // Set text values
         usernameText.text = username;
         scoreText.text = score.ToString();
         rankText.text = rank.ToString();
+
+        // Load the student's profile picture
+        if (profileImage != null && ProfilePictureManager.Instance != null)
+        {
+            ProfilePictureManager.Instance.LoadProfilePicture(studentId, profileImage);
+        }
 
         // Adjust podium height based on rank (1, 2, or 3)
         if (rank >= 1 && rank <= 3)
@@ -39,8 +47,5 @@ public class LeaderboardPodiumUI : MonoBehaviour
             c.a = podiumAlphas[rank - 1];
             podiumBar.GetComponent<Image>().color = c;
         }
-
-        // You can add profile image loading here if you have a profile picture system
-        // For now, we'll just use a default image
     }
 }

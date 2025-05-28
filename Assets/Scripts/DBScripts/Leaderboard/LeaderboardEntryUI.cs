@@ -18,14 +18,17 @@ public class LeaderboardEntryUI : MonoBehaviour
         }
     }
 
-    public void SetEntryData(string username, int score, int rank)
+    public void SetEntryData(string username, int score, int rank, string studentId)
     {
-        Debug.Log($"Setting entry data: Username={username}, Score={score}, Rank={rank}");
+        Debug.Log($"Setting entry data: Username={username}, Score={score}, Rank={rank}, StudentId={studentId}");
         rankText.text = rank.ToString("00");
         usernameText.text = username;
         scoreText.text = score.ToString();
 
-        // You can load user's profile picture here if available
-        // For now, we'll use the default profile picture set in Awake
+        // Load the student's profile picture
+        if (profileImage != null && ProfilePictureManager.Instance != null)
+        {
+            ProfilePictureManager.Instance.LoadProfilePicture(studentId, profileImage);
+        }
     }
 }
