@@ -4982,10 +4982,8 @@ MonoBehaviour:
   profilePictureButtonPrefab: {fileID: 8709806806209623516, guid: 71ae93e975da9834590158dd697b91e0, type: 3}
   buttonContainer: {fileID: 1887130487}
   selectButton: {fileID: 1057644619}
-  backButton: {fileID: 462825884}
-  loadingIndicator: {fileID: 388076977}
-  selectedButton: {fileID: 0}
-  profileButtons: []
+  closeButton: {fileID: 462825884}
+  modalPanel: {fileID: 510529469}
 --- !u!1 &513372076
 GameObject:
   m_ObjectHideFlags: 0
@@ -6742,6 +6740,7 @@ RectTransform:
   - {fileID: 1433705471}
   - {fileID: 793700511}
   - {fileID: 1532432160}
+  - {fileID: 1631399497}
   m_Father: {fileID: 709794194}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
@@ -15348,8 +15347,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1631399497}
+  m_Children: []
   m_Father: {fileID: 609308568}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -16859,7 +16857,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150, y: -100}
+  m_AnchoredPosition: {x: 200, y: -100}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1532432161
@@ -17964,17 +17962,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1631399496}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1862890006}
-  m_Father: {fileID: 1433705471}
+  m_Father: {fileID: 609308568}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -302.73895}
+  m_AnchoredPosition: {x: 0, y: -224.73895}
   m_SizeDelta: {x: 550, y: 55.4776}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1631399498
@@ -19336,6 +19334,8 @@ MonoBehaviour:
   fullNameText: {fileID: 1631399498}
   sectionText: {fileID: 1862890007}
   profileImage: {fileID: 1433705472}
+  editProfilePicButton: {fileID: 1532432162}
+  editModal: {fileID: 510529469}
 --- !u!114 &1740677742
 MonoBehaviour:
   m_ObjectHideFlags: 0

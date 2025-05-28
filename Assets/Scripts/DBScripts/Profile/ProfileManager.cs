@@ -9,9 +9,22 @@ public class ProfileManager : MonoBehaviour
     public Text sectionText;
     public Image profileImage; // Reference to the profile image UI element
 
+    [SerializeField]
+    public Button editProfilePicButton;
+    [SerializeField]
+    public GameObject editModal;
+
     private void Start()
     {
         UpdateProfileUI();
+    }
+    private void Update()
+    {
+       editProfilePicButton.onClick.AddListener(() =>
+        {
+            // Show the LogoutPanel when the logout button is clicked
+            editModal.SetActive(true);
+        });
     }
 
     public void UpdateProfileUI()
