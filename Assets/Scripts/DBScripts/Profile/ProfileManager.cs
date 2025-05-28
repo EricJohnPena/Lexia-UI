@@ -5,9 +5,9 @@ using UnityEngine.UI;
 public class ProfileManager : MonoBehaviour
 {
     public RadarChart.RadarChart radarChart; // Reference to the RadarChart component
-
     public Text fullNameText;
     public Text sectionText;
+    public Image profileImage; // Reference to the profile image UI element
 
     private void Start()
     {
@@ -31,5 +31,11 @@ public class ProfileManager : MonoBehaviour
         // Update the UI elements with user information
         fullNameText.text = fullName;
         sectionText.text = "Grade 6 - " + section;
+
+        // Load profile picture if the image component is assigned
+        if (profileImage != null && ProfilePictureManager.Instance != null)
+        {
+            ProfilePictureManager.Instance.LoadProfilePicture(userId, profileImage);
+        }
     }
 }
