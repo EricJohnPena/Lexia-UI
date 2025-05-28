@@ -20,7 +20,6 @@ public class LessonsLoader : MonoBehaviour
     public static string moduleNumber = "1"; // Default to "1" to avoid null issues
     public static int subjectId;
     public UnityEngine.UI.Image subjectImage;
-    public UnityEngine.UI.Image arrowImage;
 
     //    public Transform parentTransform;
 
@@ -106,11 +105,10 @@ public class LessonsLoader : MonoBehaviour
                         subjectId == 1
                             ? "EnglishArrow"
                             : (subjectId == 2 ? "ScienceArrow" : "LessonDefault");
-                    Sprite arrowSprite = Resources.Load<Sprite>(arrowName);
-                    if (subjectSprite != null && subjectImage != null && arrowImage != null)
+
+                    if (subjectSprite != null && subjectImage != null)
                     {
                         subjectImage.sprite = subjectSprite;
-                        arrowImage.sprite = arrowSprite;
                     }
                     else
                     {
@@ -118,7 +116,6 @@ public class LessonsLoader : MonoBehaviour
                     }
                     {
                         subjectImage.sprite = subjectSprite;
-                        arrowImage.sprite = arrowSprite;
                     }
                     foreach (Transform child in parentTransform)
                     {

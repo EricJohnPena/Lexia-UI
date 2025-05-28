@@ -607,6 +607,9 @@ public class ClassicGameManager : MonoBehaviour
                             questionData = defaultQuestionData;
                         }
                         
+                        // Shuffle the questions
+                        questionData.questions = ShuffleList.ShuffleListItems(questionData.questions);
+                        
                         // Ensure we start from the first question
                         currentQuestionIndex = 0;
                         
@@ -695,8 +698,7 @@ public class ClassicGameManager : MonoBehaviour
                 answerWordList[index].SetHintStyle(true);
                 hintedIndices.Add(index);
             }
-            // Adjust hintCounter accordingly
-            hintCounter -= hintedIndicesForQuestion.Count;
+            // Don't decrement hint counter here since these hints were already used
             UpdateHintCounterUI();
         }
         else

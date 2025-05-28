@@ -413,6 +413,9 @@ public class JumbledLettersManager : MonoBehaviour
                             break;
                         }
 
+                        // Shuffle the questions
+                        questionData.questions = ShuffleList.ShuffleListItems(questionData.questions);
+
                         // Clear and rebuild word trie
                         wordTrie = new Trie();
                         foreach (var question in questionData.questions)
@@ -582,7 +585,7 @@ public class JumbledLettersManager : MonoBehaviour
                     selectedWordIndex.Add(-1);
             }
             currentAnswerIndex = selectedWordIndex.Count;
-            hintCounter -= hintedIndicesForWord.Count;
+            // Don't decrement hint counter here since these hints were already used
             UpdateHintCounterUI();
         }
 
