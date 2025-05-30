@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using RadarChart;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
+using Newtonsoft.Json;
 
 public class MenuManager : MonoBehaviour
 {
@@ -75,6 +77,17 @@ public class MenuManager : MonoBehaviour
 
     public Button replayButton; // Assign this in the Unity Editor
 
+    [SerializeField]
+    private GameObject subjectProgressModalObject; // Reference to the GameObject
+
+    [SerializeField]
+    private SubjectProgressModal subjectProgressModal; // Reference to the component
+
+    [SerializeField]
+    private Button englishProgressButton;
+    [SerializeField]
+    private Button scienceProgressButton;
+
     void Start()
     {
         // Check if user is already logged in
@@ -127,6 +140,12 @@ public class MenuManager : MonoBehaviour
                 }
             });
         }
+
+        // Add listeners for subject progress buttons
+        if (englishProgressButton != null)
+            englishProgressButton.onClick.AddListener(() => SubjectProgressManager.Instance.ShowSubjectProgress(1));
+        if (scienceProgressButton != null)
+            scienceProgressButton.onClick.AddListener(() => SubjectProgressManager.Instance.ShowSubjectProgress(2));
     }
 
     public void OpenPage(Canvas canvas)
@@ -154,13 +173,20 @@ public class MenuManager : MonoBehaviour
         // Activate the selected canvas
         canvas.gameObject.SetActive(true);
 
-        // If the profile page is opened, fetch radar chart data
+        // If the profile page is opened, fetch radar chart data and subject progress
         if (canvas == ProfilePage)
         {
             Debug.Log("Fetching items for current user in ProfilePage.");
             ProfileManager profileManager = FindObjectOfType<ProfileManager>();
             profileManager.UpdateProfileUI();
             radarChart.FetchItemsForCurrentUser();
+            
+            // Load subject progress
+            if (SubjectProgressManager.Instance != null)
+            {
+                StartCoroutine(SubjectProgressManager.Instance.LoadSubjectProgress(1)); // English
+                StartCoroutine(SubjectProgressManager.Instance.LoadSubjectProgress(2)); // Science
+            }
         }
     }
 
@@ -247,6 +273,97 @@ public class MenuManager : MonoBehaviour
         {
             Debug.Log($"Game Mode: {mode}");
             // Add logic to display game modes in the UI
+        }
+    }
+
+    public void OpenSubjectProgress(int subjectId)
+    {
+        SubjectProgressManager.Instance.ShowSubjectProgress(subjectId);
+    }
+
+    public void CloseSubjectProgress()
+    {
+        // This is now handled by the SubjectProgressManager
+    }
+}
+
+[System.Serializable]
+public class ModuleProgressData
+{
+    public string module_number;
+    public int completed_count;
+}
+
+public class SubjectProgressModal : MonoBehaviour
+{
+    public GameObject moduleProgressPrefab;
+    public Transform contentParent;
+    public Text subjectNameText;
+    public Button closeButton;
+
+    private int currentSubjectId;
+    private List<ModuleProgressData> moduleProgressList = new List<ModuleProgressData>();
+
+    private void Start()
+    {
+        closeButton.onClick.AddListener(() => gameObject.SetActive(false));
+    }
+
+    public void OpenSubjectProgress(int subjectId)
+    {
+        currentSubjectId = subjectId;
+        subjectNameText.text = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
+        gameObject.SetActive(true);
+        StartCoroutine(FetchSubjectProgress(subjectId));
+    }
+
+    private IEnumerator FetchSubjectProgress(int subjectId)
+    {
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        WWWForm form = new WWWForm();
+        form.AddField("subject_id", subjectId);
+        form.AddField("student_id", PlayerPrefs.GetString("User ID"));
+
+        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "getSubjectProgress.php", form))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string jsonResponse = www.downloadHandler.text;
+                moduleProgressList = JsonConvert.DeserializeObject<List<ModuleProgressData>>(jsonResponse);
+                DisplayModuleProgress();
+            }
+            else
+            {
+                Debug.LogError("Error fetching subject progress: " + www.error);
+            }
+        }
+    }
+
+    private void DisplayModuleProgress()
+    {
+        foreach (var moduleProgress in moduleProgressList)
+        {
+            GameObject progressItem = Instantiate(moduleProgressPrefab, contentParent);
+            Text[] texts = progressItem.GetComponentsInChildren<Text>();
+            
+            texts[0].text = "Module " + moduleProgress.module_number;
+            
+            if (moduleProgress.completed_count >= 3)
+            {
+                texts[1].text = "Complete";
+                texts[1].color = Color.green;
+            }
+            else
+            {
+                texts[1].text = $"{moduleProgress.completed_count}/3";
+                texts[1].color = Color.yellow;
+            }
         }
     }
 }
