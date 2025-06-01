@@ -31,18 +31,18 @@ public class UserInfo : MonoBehaviour
         this.sectionName = sectionName;
         PlayerPrefs.SetString("SectionName", sectionName);
         PlayerPrefs.Save();
-        Debug.Log("SectionName: " + sectionName);
+        // Debug.Log("SectionName: " + sectionName);
     }
 
     public void SetId(string student_id)
     {
         userId = student_id;
-        Debug.Log("Set UserID: " + userId);
+        // Debug.Log("Set UserID: " + userId);
     }
     public void SetSectionId(string sectionId)
     {
         this.sectionId = sectionId;
-        Debug.Log("SectionID: " + sectionId);
+        // Debug.Log("SectionID: " + sectionId);
     }
 
     public void ClearData()
@@ -78,7 +78,7 @@ public class UserInfo : MonoBehaviour
         PlayerPrefs.SetString("Section ID", sectionId);
         PlayerPrefs.SetString("Section Name", sectionName);
         PlayerPrefs.Save();
-        Debug.Log("Player information saved.");
+        // Debug.Log("Player information saved.");
     }
 
     public void DeletePlayerInfo()
@@ -90,6 +90,6 @@ public class UserInfo : MonoBehaviour
         PlayerPrefs.DeleteKey("Section ID");
         PlayerPrefs.DeleteKey("Section Name");
         PlayerPrefs.Save();
-        Debug.Log("Player information deleted.");
+        // Debug.Log("Player information deleted.");
     }
 }

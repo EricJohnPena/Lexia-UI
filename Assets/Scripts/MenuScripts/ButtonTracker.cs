@@ -98,11 +98,11 @@ public class ButtonTracker : MonoBehaviour
             {
                 if (button == button1)
                 {
-                    buttonImage.color = new Color32(0, 31, 195, 255);
+                    buttonImage.color = new Color32(49, 49, 49, 255);
                 }
                 else if (button == button2)
                 {
-                    buttonImage.color = new Color32(8, 24, 13, 255);
+                    buttonImage.color = new Color32(49, 49, 49, 255);
                 }
             }
             else

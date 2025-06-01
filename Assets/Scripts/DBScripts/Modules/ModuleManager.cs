@@ -24,7 +24,7 @@ public class ModuleManager : MonoBehaviour
     public void SetCurrentModule(string moduleNumber)
     {
         currentModuleNumber = moduleNumber;
-        Debug.Log("Current Module Number: " + currentModuleNumber);
+        // Debug.Log("Current Module Number: " + currentModuleNumber);
     }
 
     public string GetCurrentModule()

@@ -89,14 +89,14 @@ public class GameProgressHandler : MonoBehaviour
         string upperWord = word.ToUpper();
         if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
-            Debug.Log("Complex word solved!");
+            // Debug.Log("Complex word solved!");
             complexWordAttemptCount++;
         }
-        else
-        {
-            Debug.Log("Non-complex word solved!");
-            Debug.Log($"Word: {word}");
-        }
+        // else
+        // {
+        //     // Debug.Log("Non-complex word solved!");
+        //     // Debug.Log($"Word: {word}");
+        // }
 
         // Track repeating word encounter
         if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
@@ -110,25 +110,25 @@ public class GameProgressHandler : MonoBehaviour
         string upperWord = word.ToUpper();
         if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
-            Debug.Log("Incorrect answer on complex word!");
+            // Debug.Log("Incorrect answer on complex word!");
             incorrectAnswerCount++;
         }
-        else
-        {
-            Debug.Log("Incorrect answer on non-complex word!");
-            Debug.Log($"Word: {word}");
-        }
+        // else
+        // {
+        //     Debug.Log("Incorrect answer on non-complex word!");
+        //     Debug.Log($"Word: {word}");
+        // }
 
         if (repeatingWordsHandler != null && repeatingWordsHandler.IsRepeatingWord(upperWord))
         {
             if (!encounteredRepeatingWords.Contains(upperWord))
             {
-                Debug.Log("First incorrect answer on repeating word. No retention penalty.");
+                // Debug.Log("First incorrect answer on repeating word. No retention penalty.");
                 encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
-                Debug.Log("Incorrect answer on repeating word!");
+                // Debug.Log("Incorrect answer on repeating word!");
                 incorrectRepeatingAnswerCount++;
             }
         }
@@ -139,7 +139,7 @@ public class GameProgressHandler : MonoBehaviour
         string upperWord = word.ToUpper();
         if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
-            Debug.Log("Hint used on complex word!");
+            // Debug.Log("Hint used on complex word!");
             hintUsageCount++;
         }
 
@@ -147,12 +147,12 @@ public class GameProgressHandler : MonoBehaviour
         {
             if (!encounteredRepeatingWords.Contains(upperWord))
             {
-                Debug.Log("First hint used on repeating word. No retention penalty.");
+                // Debug.Log("First hint used on repeating word. No retention penalty.");
                 encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
-                Debug.Log("Hint used on repeating word!");
+                // Debug.Log("Hint used on repeating word!");
                 hintOnRepeatingWordCount++;
             }
         }
@@ -163,7 +163,7 @@ public class GameProgressHandler : MonoBehaviour
         string upperWord = word.ToUpper();
         if (complexWordsHandler != null && complexWordsHandler.IsComplexWord(upperWord))
         {
-            Debug.Log("Skip used on complex word!");
+            // Debug.Log("Skip used on complex word!");
             skipUsageCount++;
         }
 
@@ -171,12 +171,12 @@ public class GameProgressHandler : MonoBehaviour
         {
             if (!encounteredRepeatingWords.Contains(upperWord))
             {
-                Debug.Log("First skip used on repeating word. No retention penalty.");
+                // Debug.Log("First skip used on repeating word. No retention penalty.");
                 encounteredRepeatingWords.Add(upperWord);
             }
             else
             {
-                Debug.Log("Skip used on repeating word!");
+                // Debug.Log("Skip used on repeating word!");
                 skipRepeatingUsageCount++;
             }
         }
@@ -225,9 +225,9 @@ public class GameProgressHandler : MonoBehaviour
         int speed = Mathf.Clamp(Mathf.CeilToInt((BaseTime / solveTime) * 10), 0, 10);
 
         // Log the parameters being sent for debugging
-        Debug.Log(
-            $"Sending UpdateSpeed request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, speed={speed}"
-        );
+        // Debug.Log(
+            // $"Sending UpdateSpeed request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, speed={speed}"
+        // );
 
         form.AddField("student_id", studentId);
         form.AddField("module_number", module_number);
@@ -295,9 +295,9 @@ public class GameProgressHandler : MonoBehaviour
             baseScore - (rareWordCount / 2) - (hintUsageCount / 2) - (incorrectAnswerCount / 2);
         int vocabularyRangeScore = Mathf.Clamp(score, 0, 10);
 
-        Debug.Log(
-            $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}, complexWordAttemptCount={complexWordAttemptCount}, hintUsageCount={hintUsageCount}, incorrectAnswerCount={incorrectAnswerCount}"
-        );
+        // Debug.Log(
+        //     $"Sending UpdateVocabularyRange request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, vocabularyRangeScore={vocabularyRangeScore}, complexWordAttemptCount={complexWordAttemptCount}, hintUsageCount={hintUsageCount}, incorrectAnswerCount={incorrectAnswerCount}"
+        // );
 
         form.AddField("student_id", studentId);
         form.AddField("module_number", module_number);
@@ -315,7 +315,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Vocabulary range attribute updated successfully.");
+                    // Debug.Log("Vocabulary range attribute updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -384,7 +384,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Accuracy attribute updated successfully.");
+                    // Debug.Log("Accuracy attribute updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -431,9 +431,9 @@ public class GameProgressHandler : MonoBehaviour
             10
         );
 
-        Debug.Log(
-            $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"
-        );
+        // Debug.Log(
+        //     $"Sending UpdateProblemSolving request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, problemSolvingScore={problemSolvingScore}"
+        // );
 
         form.AddField("student_id", studentId);
         form.AddField("module_number", module_number);
@@ -451,7 +451,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Problem-solving attribute updated successfully.");
+                    // Debug.Log("Problem-solving attribute updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -485,9 +485,9 @@ public class GameProgressHandler : MonoBehaviour
         WWWForm form = new WWWForm();
 
         // Log the parameters being sent for debugging
-        Debug.Log(
-            $"Sending UpdateConsistency request with parameters: studentId={studentId},currentScore={currentScore}"
-        );
+        // Debug.Log(
+        //     $"Sending UpdateConsistency request with parameters: studentId={studentId},currentScore={currentScore}"
+        // );
 
         form.AddField("student_id", studentId);
         form.AddField("current_score", currentScore);
@@ -502,7 +502,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Consistency attribute updated successfully.");
+                    // Debug.Log("Consistency attribute updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -559,9 +559,9 @@ public class GameProgressHandler : MonoBehaviour
         string url = $"{Web.BaseApiUrl}{UpdateRetentionUrl}";
         WWWForm form = new WWWForm();
 
-        Debug.Log(
-            $"Sending UpdateRetention request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, retentionScore={retentionScore}"
-        );
+        // Debug.Log(
+        //     $"Sending UpdateRetention request with parameters: studentId={studentId}, module_number={module_number}, gameModeId={gameModeId}, subjectId={subjectId}, retentionScore={retentionScore}"
+        // );
 
         form.AddField("student_id", studentId);
         form.AddField("module_number", module_number);
@@ -579,7 +579,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Retention attribute updated successfully.");
+                    // Debug.Log("Retention attribute updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -624,7 +624,7 @@ public class GameProgressHandler : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log("Game completion status updated successfully.");
+                    // Debug.Log("Game completion status updated successfully.");
                     yield break; // Exit the coroutine on success
                 }
                 else
@@ -717,9 +717,9 @@ public class GameProgressHandler : MonoBehaviour
         int module_number = int.Parse(LessonsLoader.moduleNumber);
         int gameModeId = 1; // Classic mode ID
         int subjectId = LessonsLoader.subjectId;
-        Debug.Log(
-            $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
-        );
+        // Debug.Log(
+        //     $"Updating attributes for studentId: {studentId}, module_number: {module_number}"
+        // );
 
         // Create a list of update operations
         var updateOperations = new List<IEnumerator>

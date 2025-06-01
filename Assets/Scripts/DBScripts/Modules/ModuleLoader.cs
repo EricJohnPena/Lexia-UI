@@ -57,7 +57,7 @@ public class ModuleLoader : MonoBehaviour
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     string jsonResponse = www.downloadHandler.text;
-                    Debug.Log("Modules received: " + jsonResponse);
+                    // Debug.Log("Modules received: " + jsonResponse);
                     modules.Clear();
                     modules = JsonConvert.DeserializeObject<List<ModuleData>>(jsonResponse);
                     string subjectName =

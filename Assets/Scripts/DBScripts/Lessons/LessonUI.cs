@@ -41,12 +41,11 @@ public class LessonUI : MonoBehaviour
         currentModule = moduleName;
         currentLessonNumber = lessonNumber;
         this.lessonId = lessonNumber; // Assign the lesson ID
-
         MenuManager.InstanceMenu.subjectName.text = subjectName;
 
-        Debug.Log(
-            $"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}"
-        );
+        // Debug.Log(
+        //     $"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}"
+        // );
 
         actionButton.onClick.RemoveAllListeners();
         Debug.Log("Removed all listeners from actionButton.");

@@ -47,7 +47,7 @@ public class ComplexWordsHandler : MonoBehaviour
                         complexWordsSet = new HashSet<string>(words);
                         IsLoaded = true;
                         OnComplexWordsLoaded?.Invoke();
-                        Debug.Log($"Loaded {complexWordsSet.Count} complex words.");
+                        // Debug.Log($"Loaded {complexWordsSet.Count} complex words.");
                     }
                     catch (Exception e)
                     {

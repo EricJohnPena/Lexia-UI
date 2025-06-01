@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class LessonsLoader : MonoBehaviour
 {
@@ -19,7 +20,15 @@ public class LessonsLoader : MonoBehaviour
     public List<LessonData> lessons = new List<LessonData>();
     public static string moduleNumber = "1"; // Default to "1" to avoid null issues
     public static int subjectId;
-    public UnityEngine.UI.Image subjectImage;
+
+    [SerializeField]
+    public Image subjectImage;
+
+    [SerializeField]
+    public Image subjectArrow; // Add reference to arrow image
+
+    [SerializeField]
+    public Text subjectText;
 
     //    public Transform parentTransform;
 
@@ -46,7 +55,7 @@ public class LessonsLoader : MonoBehaviour
         // Save the current tracking IDs
         // Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), 0); // Lesson ID is 0 initially
 
-        Debug.Log($"Loading lessons for Subject ID: {subjectId}, Module Number: {moduleNumber}");
+        // Debug.Log($"Loading lessons for Subject ID: {subjectId}, Module Number: {moduleNumber}");
         //start the coroutine to fetch and load modules
         StartCoroutine(LoadLessonsBySubject(subjectId, moduleNumber));
     }
@@ -105,6 +114,7 @@ public class LessonsLoader : MonoBehaviour
                         subjectId == 1
                             ? "EnglishArrow"
                             : (subjectId == 2 ? "ScienceArrow" : "LessonDefault");
+                    Sprite arrowSprite = Resources.Load<Sprite>(arrowName);
 
                     if (subjectSprite != null && subjectImage != null)
                     {
@@ -114,9 +124,34 @@ public class LessonsLoader : MonoBehaviour
                     {
                         Debug.LogError("Failed to load sprite: " + spriteName);
                     }
+
+                    if (arrowSprite != null && subjectArrow != null)
                     {
-                        subjectImage.sprite = subjectSprite;
+                        subjectArrow.sprite = arrowSprite;
                     }
+                    else
+                    {
+                        Debug.LogError("Failed to load arrow sprite: " + arrowName);
+                    }
+
+                    // Update subject name and color immediately
+                    if (
+                        MenuManager.InstanceMenu != null
+                        && MenuManager.InstanceMenu.subjectName != null
+                    )
+                    {
+                        MenuManager.InstanceMenu.subjectName.text = subjectName;
+                        MenuManager.InstanceMenu.subjectName.color =
+                            subjectId == 1
+                                ? new Color(16f / 255f, 40f / 255f, 110f / 255f) // #10286e
+                                : new Color(17f / 255f, 84f / 255f, 36f / 255f); // #115424
+
+                        subjectText.color =
+                            subjectId == 1
+                                ? new Color(16f / 255f, 40f / 255f, 110f / 255f) // #10286e
+                                : new Color(17f / 255f, 84f / 255f, 36f / 255f); // #115424
+                    }
+
                     foreach (Transform child in parentTransform)
                     {
                         Destroy(child.gameObject);
@@ -156,9 +191,9 @@ public class LessonsLoader : MonoBehaviour
                             {
                                 string clickedLessonId = lessonUI.GetLessonId(); // Retrieve the lesson ID from LessonUI
                                 // Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), int.Parse(clickedLessonId));
-                                Debug.Log(
-                                    $"Tracking updated: Subject ID: {subjectId}, Module Number: {moduleNumber}, Lesson ID: {clickedLessonId}"
-                                );
+                                // Debug.Log(
+                                //     $"Tracking updated: Subject ID: {subjectId}, Module Number: {moduleNumber}, Lesson ID: {clickedLessonId}"
+                                // );
                             });
                         }
                         else

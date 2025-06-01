@@ -105,7 +105,7 @@ public class ProfilePictureSelector : MonoBehaviour
         if (selectedButton != null)
         {
             string studentId = PlayerPrefs.GetString("User ID", "");
-            Debug.Log($"Updating profile picture for student {studentId} to picture {selectedButton.PictureData.picture_id}");
+            // Debug.Log($"Updating profile picture for student {studentId} to picture {selectedButton.PictureData.picture_id}");
             StartCoroutine(UpdateProfilePictureCoroutine(studentId, selectedButton.PictureData.picture_id));
         }
     }
@@ -125,7 +125,7 @@ public class ProfilePictureSelector : MonoBehaviour
 
             if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
             {
-                Debug.Log($"Update response: {www.downloadHandler.text}");
+                // Debug.Log($"Update response: {www.downloadHandler.text}");
                 try
                 {
                     var response = JsonConvert.DeserializeObject<UpdateProfilePictureResponse>(www.downloadHandler.text);

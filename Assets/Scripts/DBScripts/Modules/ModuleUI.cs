@@ -20,10 +20,10 @@ public class ModuleUI : MonoBehaviour
         {
             actionButton.onClick.AddListener(() => StartModule(moduleNumber));
         }
-        else
-        {
-            Debug.Log($"Module {moduleNumber} is locked.");
-        }
+        // else
+        // {
+        //     Debug.Log($"Module {moduleNumber} is locked.");
+        // }
     }
 
     private void StartModule(string moduleNumber)
@@ -34,7 +34,7 @@ public class ModuleUI : MonoBehaviour
             return;
         }
 
-        Debug.Log("Starting module: " + moduleNumber);
+        // Debug.Log("Starting module: " + moduleNumber);
         ModuleManager.Instance.SetCurrentModule(moduleNumber);
         MenuManager.InstanceMenu.ToLessonsPage();
     }

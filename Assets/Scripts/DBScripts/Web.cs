@@ -95,7 +95,7 @@ public class Web : MonoBehaviour
             else
             {
                 string response = www.downloadHandler.text;
-                Debug.Log("Login response: " + response);
+                // Debug.Log("Login response: " + response);
 
                 if (response.Contains("error"))
                 {
@@ -195,7 +195,7 @@ public class Web : MonoBehaviour
                     Debug.LogError(pages[page] + ": HTTP Error: " + webRequest.error);
                     break;
                 case UnityWebRequest.Result.Success:
-                    Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
+                    // Debug.Log(pages[page] + ":\nReceived: " + webRequest.downloadHandler.text);
                     break;
             }
         }
@@ -217,7 +217,7 @@ public class Web : MonoBehaviour
             else
             {
                 string jsonResponse = www.downloadHandler.text;
-                Debug.Log("Section Name Response: " + jsonResponse);
+                // Debug.Log("Section Name Response: " + jsonResponse);
 
                 try
                 {
@@ -255,27 +255,27 @@ public class Web : MonoBehaviour
         int moduleId = PlayerPrefs.GetInt("CurrentModuleId", 1); // Default to 1 if not set
         int lessonId = PlayerPrefs.GetInt("CurrentLessonId", 1); // Default to 1 if not set
 
-        Debug.Log(
-            $"GetCurrentTrackingIds called. Returning Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
-        ); // Debug log
+        // Debug.Log(
+        //     $"GetCurrentTrackingIds called. Returning Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
+        // ); // Debug log
         return (subjectId, moduleId, lessonId);
     }
 
     public static void SetCurrentTrackingIds(int subjectId, int moduleId, int lessonId)
     {
         string subjectName = subjectId == 1 ? "English" : (subjectId == 2 ? "Science" : "Unknown");
-        Debug.Log(
-            $"Setting Tracking IDs - Subject: {subjectName} ({subjectId}), Module: {moduleId}, Lesson: {lessonId}"
-        );
+        // Debug.Log(
+        //     $"Setting Tracking IDs - Subject: {subjectName} ({subjectId}), Module: {moduleId}, Lesson: {lessonId}"
+        // );
 
         PlayerPrefs.SetInt("CurrentSubjectId", subjectId);
         PlayerPrefs.SetInt("CurrentModuleId", moduleId);
         PlayerPrefs.SetInt("CurrentLessonId", lessonId);
         PlayerPrefs.Save();
 
-        Debug.Log(
-            $"SetCurrentTrackingIds called. Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
-        );
+        // Debug.Log(
+        //     $"SetCurrentTrackingIds called. Subject: {subjectId}, Module: {moduleId}, Lesson: {lessonId}"
+        // );
     }
 }
 

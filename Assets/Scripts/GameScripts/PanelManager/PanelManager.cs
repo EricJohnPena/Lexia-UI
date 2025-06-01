@@ -50,12 +50,6 @@ public class PanelManager : MonoBehaviour
 
         // Initially activate the Game Manager Panel
         ActivatePanel(GamePanel.GameManagerPanel);
-        UpdateButtonColors();
-    }
-
-    private void OnEnable()
-    {
-        UpdateButtonColors();
     }
 
     // Method to activate a specific panel
@@ -74,12 +68,6 @@ public class PanelManager : MonoBehaviour
         {
             panels[panelIndex].SetActive(true);
             Debug.Log($"Activated panel: {panelToActivate}");
-            
-            // Update button colors when switching to GameManagerPanel
-            if (panelToActivate == GamePanel.GameManagerPanel)
-            {
-                UpdateButtonColors();
-            }
         }
         else
         {
@@ -112,7 +100,7 @@ public class PanelManager : MonoBehaviour
         {
             case GamePanel.GameManagerPanel:
                 Debug.Log("Game Manager Panel initialized");
-                UpdateButtonColors();
+
                 break;
 
             case GamePanel.ClassicGamePanel:
@@ -157,7 +145,8 @@ public class PanelManager : MonoBehaviour
                 break;
 
             case GamePanel.CrosswordGamePanel:
-                CrosswordGridManager crosswordGridManager = FindObjectOfType<CrosswordGridManager>();
+                CrosswordGridManager crosswordGridManager =
+                    FindObjectOfType<CrosswordGridManager>();
                 crosswordGridManager?.ReplayGame();
                 break;
 
@@ -224,33 +213,4 @@ public class PanelManager : MonoBehaviour
     }
 
     // Game mode button color management
-    public void UpdateButtonColors()
-    {
-        Color outlineColor = Color.white;
-        if (LessonsLoader.subjectId == 1) // English
-        {
-            outlineColor = new Color32(0, 102, 204, 255); // Blue
-        }
-        else if (LessonsLoader.subjectId == 2) // Science
-        {
-            outlineColor = new Color32(0, 153, 0, 255); // Green
-        }
-
-        UpdateButtonOutline(classicGameButton, outlineColor);
-        UpdateButtonOutline(jumbledLettersButton, outlineColor);
-        UpdateButtonOutline(crosswordButton, outlineColor);
-        UpdateButtonOutline(backButton, outlineColor);
-    }
-
-    private void UpdateButtonOutline(Button button, Color color)
-    {
-        if (button != null)
-        {
-            var outline = button.GetComponent<Outline>();
-            if (outline != null)
-            {
-                outline.effectColor = color;
-            }
-        }
-    }
 }
