@@ -15,6 +15,7 @@ public class GameLoadingManager : MonoBehaviour
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
     private bool isSceneTransitioning = false;
+    private const float MINIMUM_LOADING_TIME = 3f; // Minimum loading time in seconds
     public event System.Action OnLoadingComplete;
 
     private void Awake()
@@ -69,8 +70,10 @@ public class GameLoadingManager : MonoBehaviour
         {
             StopCoroutine(loadingCoroutine);
         }
+        // Ensure the delay is at least MINIMUM_LOADING_TIME
+        float actualDelay = Mathf.Max(delay, MINIMUM_LOADING_TIME);
         loadingCoroutine = StartCoroutine(
-            ShowLoadingScreenCoroutine(delay, useAlternate, onComplete)
+            ShowLoadingScreenCoroutine(actualDelay, useAlternate, onComplete)
         );
     }
 

@@ -49,7 +49,7 @@ public class Login : MonoBehaviour
         if (GameLoadingManager.Instance != null)
         {
             GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
-                0.5f,
+                3f, // Use minimum loading time
                 false,
                 () =>
                 {

@@ -13,6 +13,16 @@ public class LeaderboardManager : MonoBehaviour
     public Button scienceButton;
     private int currentSubjectId = 1; // Default to English
 
+    [Header("Subject Images")]
+    [SerializeField]
+    private Image scienceSubjectImage; // Reference to Science subject image
+
+    [SerializeField]
+    private Image scienceControlPanelImage;
+
+    [SerializeField]
+    private Image scienceBgImage; // Reference to Science subject image
+
     [Header("Top 3 Players")]
     public Transform podiumContainer;
     public GameObject podiumEntryPrefab; // Default/fallback
@@ -62,36 +72,53 @@ public class LeaderboardManager : MonoBehaviour
 
     private void HighlightButton(Button selectedButton, Button otherButton)
     {
-        // Lower the opacity of the selected button's image
+        // Activate the selected button's image
         Image selectedImage = selectedButton.GetComponent<Image>();
         if (selectedImage != null)
         {
-            Color selectedColor = selectedImage.color;
-            selectedColor.a = 0.5f; // Set opacity to 50%
-            selectedImage.color = selectedColor;
+            selectedImage.enabled = true;
         }
-
-        // Reset the opacity of the other button's image
+        // Change text colors for both buttons
+        Text selectedText = selectedButton.GetComponentInChildren<Text>();
+        Text otherText = otherButton.GetComponentInChildren<Text>();
+        // Deactivate the other button's image
         Image otherImage = otherButton.GetComponent<Image>();
         if (otherImage != null)
         {
-            Color otherColor = otherImage.color;
-            otherColor.a = 1f; // Set opacity to 100%
-            otherImage.color = otherColor;
+            otherImage.enabled = false;
         }
 
-        // Change the text color of the selected button to black
-        Text selectedText = selectedButton.GetComponentInChildren<Text>();
-        if (selectedText != null)
+        // Update the subject images based on which button was selected
+        if (selectedButton == englishButton)
         {
-            selectedText.color = Color.black; // Selected text color
-        }
+            if (scienceSubjectImage != null)
+            {
+                scienceSubjectImage.enabled = false;
+                scienceBgImage.enabled = false;
+                scienceControlPanelImage.enabled = false;
+            }
 
-        // Change the text color of the other button to white
-        Text otherText = otherButton.GetComponentInChildren<Text>();
-        if (otherText != null)
+            // English button color (1E3A8A - dark blue)
+            if (selectedText != null)
+            {
+                selectedText.color = new Color(30f / 255f, 58f / 255f, 138f / 255f);
+                otherText.color = new Color(30f / 255f, 58f / 255f, 138f / 255f);
+            }
+        }
+        else if (selectedButton == scienceButton)
         {
-            otherText.color = Color.white; // Default text color
+            if (scienceSubjectImage != null)
+            {
+                scienceSubjectImage.enabled = true;
+                scienceBgImage.enabled = true;
+                scienceControlPanelImage.enabled = true;
+            }
+            // Science button color (115424 - dark green)
+            if (selectedText != null)
+            {
+                selectedText.color = new Color(17f / 255f, 84f / 255f, 36f / 255f);
+                otherText.color = new Color(17f / 255f, 84f / 255f, 36f / 255f);
+            }
         }
     }
 
@@ -222,10 +249,10 @@ public class LeaderboardManager : MonoBehaviour
                             podiumTransform.SetParent(podiumContainer, false); // Ensure it's a child of the container
                             // Calculate dynamic size and position
                             float containerWidth = ((RectTransform)podiumContainer).rect.width;
-                            float spacing = containerWidth / 4; // Divide into 4 parts for even spacing
-                            float prefabWidth = spacing * 0.8f; // Use 80% of the spacing for prefab width
+                            float spacing = containerWidth / 3; // Changed from 4 to 3 for wider bars
+                            float prefabWidth = spacing * 0.9f; // Changed from 0.8f to 0.9f for wider bars
                             // Adjust width and height based on rank
-                            float prefabHeight = 150 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
+                            float prefabHeight = 200 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
                             podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
                             
                             // Set positions: 1st (center), 2nd (left), 3rd (right)
@@ -236,10 +263,10 @@ public class LeaderboardManager : MonoBehaviour
                                     xPosition = 0;
                                     break;
                                 case 1: // 2nd place
-                                    xPosition = -spacing;
+                                    xPosition = -spacing * 0.95f; // Increased spacing for 2nd place
                                     break;
                                 case 2: // 3rd place
-                                    xPosition = spacing;
+                                    xPosition = spacing * 0.95f; // Increased spacing for 3rd place
                                     break;
                             }
 
@@ -247,7 +274,7 @@ public class LeaderboardManager : MonoBehaviour
                             podiumTransform.anchorMin = new Vector2(0.5f, 0f);
                             podiumTransform.anchorMax = new Vector2(0.5f, 0f);
                             podiumTransform.pivot = new Vector2(0.5f, 0f);
-                            
+
                             // Position the podium at the bottom with the calculated x offset
                             podiumTransform.anchoredPosition = new Vector2(xPosition, 0);
                         }

@@ -7,7 +7,7 @@ public class LoadingScreenManager : MonoBehaviour
 {
     public static LoadingScreenManager Instance { get; private set; }
 
-    public float loadingDelay = 2f; // Duration to show loading screen (2 seconds)
+    private const float MINIMUM_LOADING_TIME = 3f; // Minimum loading time in seconds
     private bool isLoading = false;
     private Coroutine loadingCoroutine;
 
@@ -82,10 +82,10 @@ public class LoadingScreenManager : MonoBehaviour
     IEnumerator LoadNextSceneAfterDelay()
     {
         float elapsed = 0f;
-        while (elapsed < loadingDelay)
+        while (elapsed < MINIMUM_LOADING_TIME)
         {
             elapsed += Time.deltaTime;
-            float progress = Mathf.Clamp01(elapsed / loadingDelay);
+            float progress = Mathf.Clamp01(elapsed / MINIMUM_LOADING_TIME);
             if (loadingBarFill != null)
                 loadingBarFill.fillAmount = progress;
             if (loadingText != null)
