@@ -225,8 +225,8 @@ public class SubjectProgressManager : MonoBehaviour
             GameLoadingManager.Instance.ShowLoadingScreen(true);
         }
 
-        // Clear existing progress items if showing modal
-        if (subjectProgressModalObject.activeSelf)
+        // Only clear and create prefabs if this is the currently selected subject
+        if (subjectProgressModalObject.activeSelf && subjectId == currentSubjectId)
         {
             foreach (Transform child in contentParent)
             {
@@ -266,7 +266,8 @@ public class SubjectProgressManager : MonoBehaviour
                         >(jsonResponse);
                         if (moduleProgressList != null)
                         {
-                            if (subjectProgressModalObject.activeSelf)
+                            // Only display progress if this is the currently selected subject
+                            if (subjectProgressModalObject.activeSelf && subjectId == currentSubjectId)
                             {
                                 DisplayModuleProgress(subjectId);
                             }
