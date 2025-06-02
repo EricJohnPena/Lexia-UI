@@ -416,9 +416,15 @@ public class CrosswordGridManager : MonoBehaviour
 
                         currentLevel = JsonUtility.FromJson<CrosswordLevel>(jsonText);
 
-                        if (currentLevel == null || currentLevel.fixedLayout == null || currentLevel.fixedLayout.Count == 0)
+                        if (
+                            currentLevel == null
+                            || currentLevel.fixedLayout == null
+                            || currentLevel.fixedLayout.Count == 0
+                        )
                         {
-                            Debug.LogWarning("No crossword data received from the server. Displaying an empty crossword.");
+                            Debug.LogWarning(
+                                "No crossword data received from the server. Displaying an empty crossword."
+                            );
                             timerManager?.StopTimer();
                             ClearGrid();
                             DisplayEmptyMessage();
@@ -426,7 +432,7 @@ public class CrosswordGridManager : MonoBehaviour
                         }
 
                         Debug.Log("Successfully loaded crossword data.");
-                        
+
                         // Clear and rebuild word trie
                         wordTrie = new Trie();
                         foreach (var placement in currentLevel.fixedLayout)
@@ -463,7 +469,9 @@ public class CrosswordGridManager : MonoBehaviour
                 }
                 else
                 {
-                    Debug.LogError($"Failed to fetch crossword data: {www.error} (Attempt {attempt}/{maxRetries})");
+                    Debug.LogError(
+                        $"Failed to fetch crossword data: {www.error} (Attempt {attempt}/{maxRetries})"
+                    );
                     if (attempt >= maxRetries)
                     {
                         timerManager?.StopTimer();
@@ -826,19 +834,6 @@ public class CrosswordGridManager : MonoBehaviour
             if (gameOver != null)
             {
                 gameOver.SetActive(true);
-                // Set game over panel color based on subject
-                var image = gameOver.GetComponent<Image>();
-                if (image != null)
-                {
-                    if (LessonsLoader.subjectId == 1) // English
-                    {
-                        image.color = new Color32(0, 102, 204, 255); // Blue
-                    }
-                    else if (LessonsLoader.subjectId == 2) // Science
-                    {
-                        image.color = new Color32(0, 153, 0, 255); // Green
-                    }
-                }
             }
 
             int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
@@ -894,7 +889,7 @@ public class CrosswordGridManager : MonoBehaviour
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
         yield return completionCoroutine;
-        
+
         if (completionCoroutine != null)
         {
             // Update attributes
@@ -1462,37 +1457,37 @@ public class CrosswordGridManager : MonoBehaviour
         totalAttempts = 0;
         hintCounter = 3;
         hintedCells.Clear(); // Clear the hinted cells when resetting the game
-        
+
         // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
-        
+
         // Clear grid and reset UI
         ClearGrid();
-        
+
         if (cluesPanelText != null)
         {
             cluesPanelText.text = "";
         }
-        
+
         if (currentClueText != null)
         {
             currentClueText.text = "";
         }
-        
+
         if (gameOver != null)
         {
             gameOver.SetActive(false);
         }
-        
+
         // Reset word tracking
         selectedCell = null;
         highlightedCells.Clear();
         currentWord = null;
         wordNumbers.Clear();
-        
+
         UpdateHintCounterUI();
     }
 }

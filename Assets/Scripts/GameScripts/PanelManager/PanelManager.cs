@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,10 +29,13 @@ public class PanelManager : MonoBehaviour
     // Game mode button references
     [SerializeField]
     private Button classicGameButton;
+
     [SerializeField]
     private Button jumbledLettersButton;
+
     [SerializeField]
     private Button crosswordButton;
+
     [SerializeField]
     private Button backButton;
 

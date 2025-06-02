@@ -89,6 +89,24 @@ public class MenuManager : MonoBehaviour
     [SerializeField]
     private Button scienceProgressButton;
 
+
+    [Header("Subject UI Elements")]
+    [SerializeField]
+    private Image[] subjectImages = new Image[8]; // Array of 8 UI images to change
+
+    [SerializeField]
+    private Text[] subjectTexts = new Text[7]; // Array of 7 text components to change
+
+    // Subject-specific colors
+    private readonly Color englishColor = new Color(16f/255f, 40f/255f, 110f/255f); // #10286e
+    private readonly Color scienceColor = new Color(17f/255f, 84f/255f, 36f/255f); // #115424
+
+    // Subject-specific sprites
+    [SerializeField]
+    private Sprite[] englishSprites = new Sprite[8];
+    [SerializeField]
+    private Sprite[] scienceSprites = new Sprite[8];
+
     void Start()
     {
         // Check if user is already logged in
@@ -144,13 +162,15 @@ public class MenuManager : MonoBehaviour
 
         // Add listeners for subject progress buttons
         if (englishProgressButton != null)
-            englishProgressButton.onClick.AddListener(
-                () => SubjectProgressManager.Instance.ShowSubjectProgress(1)
-            );
+            englishProgressButton.onClick.AddListener(() => {
+                SubjectProgressManager.Instance.ShowSubjectProgress(1);
+                
+            });
         if (scienceProgressButton != null)
-            scienceProgressButton.onClick.AddListener(
-                () => SubjectProgressManager.Instance.ShowSubjectProgress(2)
-            );
+            scienceProgressButton.onClick.AddListener(() => {
+                SubjectProgressManager.Instance.ShowSubjectProgress(2);
+                
+            });
     }
 
     public void OpenPage(Canvas canvas)
@@ -239,12 +259,25 @@ public class MenuManager : MonoBehaviour
     {
         LessonsPage.gameObject.SetActive(false); // Deactivate the lessons page
         GameScene.gameObject.SetActive(true); // Activate the game scene
-        if (subjectName.text == "English"){
-            
-        }
-        else{
 
+        // Get the current subject ID from ButtonTracker
+        int subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
+
+        if (subjectId == 1)
+        {
+            UpdateSubjectUI(1);
+            Debug.Log("Updated UI for English subject");
         }
+        else if (subjectId == 2)
+        {
+            UpdateSubjectUI(2);
+            Debug.Log("Updated UI for Science subject");
+        }
+        else
+        {
+            Debug.LogWarning("Invalid subject ID: " + subjectId);
+        }
+
         Debug.Log("Transitioned from LessonsPage to GameScene.");
     }
 
@@ -294,6 +327,34 @@ public class MenuManager : MonoBehaviour
     public void CloseSubjectProgress()
     {
         // This is now handled by the SubjectProgressManager
+    }
+
+    public void UpdateSubjectUI(int subjectId)
+    {
+        // Update images (8 images)
+        for (int i = 0; i < subjectImages.Length; i++)
+        {
+            if (subjectImages[i] != null && i < englishSprites.Length && i < scienceSprites.Length)
+            {
+                subjectImages[i].sprite = subjectId == 1 ? englishSprites[i] : scienceSprites[i];
+            }
+        }
+
+        // Update texts (7 texts)
+        for (int i = 0; i < subjectTexts.Length; i++)
+        {
+            if (subjectTexts[i] != null)
+            {
+                subjectTexts[i].color = subjectId == 1 ? englishColor : scienceColor;
+            }
+        }
+
+        // Update subject name text if it exists
+        if (subjectName != null)
+        {
+            subjectName.text = subjectId == 1 ? "English" : "Science";
+            subjectName.color = subjectId == 1 ? englishColor : scienceColor;
+        }
     }
 }
 

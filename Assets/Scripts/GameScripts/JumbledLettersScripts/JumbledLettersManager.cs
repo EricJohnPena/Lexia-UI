@@ -304,7 +304,6 @@ public class JumbledLettersManager : MonoBehaviour
             questionText.text = "Lesson Completed!";
             timerManager?.StopTimer();
             gameOver.SetActive(true);
-            UpdateGameOverPanelColor();
         }
         else
         {
@@ -334,18 +333,18 @@ public class JumbledLettersManager : MonoBehaviour
         correctlyAnsweredQuestions.Clear();
         wordHintedIndices.Clear(); // Clear hinted indices dictionary
         gameStatus = GameStatus.Playing;
-        
+
         // Reset GameProgressHandler counters
         if (gameProgressHandler != null)
         {
             gameProgressHandler.ResetVocabularyRangeCounters();
         }
-        
+
         if (questionText != null)
         {
             questionText.text = "";
         }
-        
+
         // Clear answer slots
         foreach (var word in answerWordList)
         {
@@ -353,7 +352,7 @@ public class JumbledLettersManager : MonoBehaviour
                 Destroy(word.gameObject);
         }
         answerWordList.Clear();
-        
+
         // Clear option slots
         foreach (var word in optionWordList)
         {
@@ -361,12 +360,12 @@ public class JumbledLettersManager : MonoBehaviour
                 Destroy(word.gameObject);
         }
         optionWordList.Clear();
-        
+
         if (gameOver != null)
         {
             gameOver.SetActive(false);
         }
-        
+
         // Update hint counter UI after reset
         UpdateHintCounterUI();
     }
@@ -405,7 +404,11 @@ public class JumbledLettersManager : MonoBehaviour
 
                         questionData = JsonUtility.FromJson<JLQuestionList>(jsonText);
 
-                        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+                        if (
+                            questionData == null
+                            || questionData.questions == null
+                            || questionData.questions.Count == 0
+                        )
                         {
                             Debug.LogWarning("No Jumbled Letters data received from the server.");
                             timerManager?.StopTimer();
@@ -414,7 +417,9 @@ public class JumbledLettersManager : MonoBehaviour
                         }
 
                         // Shuffle the questions
-                        questionData.questions = ShuffleList.ShuffleListItems(questionData.questions);
+                        questionData.questions = ShuffleList.ShuffleListItems(
+                            questionData.questions
+                        );
 
                         // Clear and rebuild word trie
                         wordTrie = new Trie();
@@ -425,7 +430,7 @@ public class JumbledLettersManager : MonoBehaviour
 
                         // Ensure we start from the first question
                         currentQuestionIndex = 0;
-                        
+
                         if (questionData != null && questionData.questions.Count > 0)
                         {
                             timerManager?.StartTimer(); // Start the timer when questions are loaded
@@ -868,7 +873,6 @@ public class JumbledLettersManager : MonoBehaviour
         Debug.Log("All questions answered correctly. Game over.");
         timerManager?.StopTimer();
         gameOver.SetActive(true);
-        UpdateGameOverPanelColor();
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int gameModeId = 2; // Jumbled Letters mode ID (adjust as needed)
@@ -922,7 +926,7 @@ public class JumbledLettersManager : MonoBehaviour
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
         yield return completionCoroutine;
-        
+
         if (completionCoroutine != null)
         {
             // Update attributes
@@ -1183,25 +1187,6 @@ public class JumbledLettersManager : MonoBehaviour
         else
         {
             Debug.LogError("LessonsLoader.moduleNumber is null. Cannot reload questions.");
-        }
-    }
-
-    private void UpdateGameOverPanelColor()
-    {
-        if (gameOver != null)
-        {
-            var image = gameOver.GetComponent<Image>();
-            if (image != null)
-            {
-                if (LessonsLoader.subjectId == 1) // English
-                {
-                    image.color = new Color32(0, 102, 204, 255); // Blue
-                }
-                else if (LessonsLoader.subjectId == 2) // Science
-                {
-                    image.color = new Color32(0, 153, 0, 255); // Green
-                }
-            }
         }
     }
 }

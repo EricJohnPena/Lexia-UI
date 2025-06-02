@@ -404,7 +404,6 @@ public class ClassicGameManager : MonoBehaviour
         questionText.text = "Lesson Completed!";
         timerManager?.StopTimer(); // Stop the timer when the lesson is completed
         gameOver.SetActive(true);
-        UpdateGameOverPanelColor();
     }
 
     private void HandleLessonState()
@@ -421,7 +420,7 @@ public class ClassicGameManager : MonoBehaviour
             questionText.text = "Lesson Completed!";
             timerManager?.StopTimer();
             gameOver.SetActive(true);
-            UpdateGameOverPanelColor();
+
             return; // Exit early to prevent further execution
         }
 
@@ -572,7 +571,7 @@ public class ClassicGameManager : MonoBehaviour
         {
             GameLoadingManager.Instance.ShowLoadingScreen();
         }
-        
+
         Debug.Log("LoadQuestionData called.");
         Debug.Log($"{subjectId}, {moduleId} from loadlessondata");
 
@@ -584,7 +583,7 @@ public class ClassicGameManager : MonoBehaviour
         float retryDelay = 2f; // seconds
         string url = $"{apiUrl}?subject_id={subjectId}&module_id={moduleId}";
         Debug.Log("Fetching questions from URL: " + url);
-        
+
         while (attempt < maxRetries)
         {
             attempt++;
@@ -601,18 +600,26 @@ public class ClassicGameManager : MonoBehaviour
                         Debug.Log("Raw JSON Response: " + jsonText);
                         questionData = JsonUtility.FromJson<KeyboardQuestionList>(jsonText);
 
-                        if (questionData == null || questionData.questions == null || questionData.questions.Count == 0)
+                        if (
+                            questionData == null
+                            || questionData.questions == null
+                            || questionData.questions.Count == 0
+                        )
                         {
-                            Debug.LogWarning("Loaded JSON is empty or invalid. Using default questions.");
+                            Debug.LogWarning(
+                                "Loaded JSON is empty or invalid. Using default questions."
+                            );
                             questionData = defaultQuestionData;
                         }
-                        
+
                         // Shuffle the questions
-                        questionData.questions = ShuffleList.ShuffleListItems(questionData.questions);
-                        
+                        questionData.questions = ShuffleList.ShuffleListItems(
+                            questionData.questions
+                        );
+
                         // Ensure we start from the first question
                         currentQuestionIndex = 0;
-                        
+
                         if (questionData != null && questionData.questions.Count > 0)
                         {
                             timerManager?.StartTimer(); // Start the timer when questions are loaded
@@ -1093,7 +1100,6 @@ public class ClassicGameManager : MonoBehaviour
         Debug.Log("All questions answered correctly. Game over.");
         timerManager?.StopTimer();
         gameOver.SetActive(true);
-        UpdateGameOverPanelColor();
 
         int studentId = int.Parse(PlayerPrefs.GetString("User ID"));
         int gameModeId = 1; // Classic mode ID
@@ -1148,7 +1154,7 @@ public class ClassicGameManager : MonoBehaviour
             UpdateGameCompletionStatus(studentId, module_number, gameModeId, subjectId, solveTime)
         );
         yield return completionCoroutine;
-        
+
         if (completionCoroutine != null)
         {
             // Update attributes
@@ -1317,25 +1323,6 @@ public class ClassicGameManager : MonoBehaviour
         StartCoroutine(
             LoadQuestionData(LessonsLoader.subjectId, int.Parse(LessonsLoader.moduleNumber))
         );
-    }
-
-    private void UpdateGameOverPanelColor()
-    {
-        if (gameOver != null)
-        {
-            var image = gameOver.GetComponent<Image>();
-            if (image != null)
-            {
-                if (LessonsLoader.subjectId == 1) // English
-                {
-                    image.color = new Color32(0, 102, 204, 255); // Blue
-                }
-                else if (LessonsLoader.subjectId == 2) // Science
-                {
-                    image.color = new Color32(0, 153, 0, 255); // Green
-                }
-            }
-        }
     }
 
     [System.Serializable]
