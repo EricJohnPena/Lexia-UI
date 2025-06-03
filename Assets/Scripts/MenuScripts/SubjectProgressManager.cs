@@ -115,21 +115,7 @@ public class SubjectProgressManager : MonoBehaviour
         StartCoroutine(LoadSubjectProgress(2)); // Science
     }
 
-    private void Update()
-    {
-        // Add button listeners if they haven't been added yet
-        if (englishButton != null && !englishButton.onClick.GetPersistentEventCount().Equals(0))
-        {
-            englishButton.onClick.RemoveAllListeners();
-            englishButton.onClick.AddListener(() => SwitchSubject(1));
-        }
-
-        if (scienceButton != null && !scienceButton.onClick.GetPersistentEventCount().Equals(0))
-        {
-            scienceButton.onClick.RemoveAllListeners();
-            scienceButton.onClick.AddListener(() => SwitchSubject(2));
-        }
-    }
+  
 
     public void ShowSubjectProgress(int subjectId)
     {
@@ -140,21 +126,22 @@ public class SubjectProgressManager : MonoBehaviour
         // Set initial button states
         if (englishButton != null && scienceButton != null)
         {
-            englishButton.interactable = false; // English selected by default
-            scienceButton.interactable = true;
+            englishButton.interactable = subjectId != 1;
+            scienceButton.interactable = subjectId != 2;
         }
 
-        currentSubjectId = 1; // Force English as default
-        UpdateSubjectUI(1); // Update UI for English
+        currentSubjectId = subjectId;
+        UpdateSubjectUI(subjectId);
 
-        // Load progress for both subjects
-        StartCoroutine(LoadSubjectProgress(1)); // Load English progress
-        StartCoroutine(LoadSubjectProgress(2)); // Load Science progress
-
-        // Load and display initial comments for English
-        if (englishProgressIndicator != null)
+        // Load progress and comments only for the selected subject
+        StartCoroutine(LoadSubjectProgress(subjectId));
+        
+        // Load and display comments for the selected subject
+        RadialProgressIndicator selectedIndicator =
+            subjectId == 1 ? englishProgressIndicator : scienceProgressIndicator;
+        if (selectedIndicator != null)
         {
-            StartCoroutine(LoadAndDisplayComments(1, englishProgressIndicator));
+            StartCoroutine(LoadAndDisplayComments(subjectId, selectedIndicator));
         }
     }
 
@@ -175,13 +162,14 @@ public class SubjectProgressManager : MonoBehaviour
         // Update UI
         UpdateSubjectUI(subjectId);
 
+        // Load progress and comments for the newly selected subject
+        StartCoroutine(LoadSubjectProgress(subjectId));
+        
         // Load and display comments for the selected subject
         RadialProgressIndicator selectedIndicator =
             subjectId == 1 ? englishProgressIndicator : scienceProgressIndicator;
         if (selectedIndicator != null)
         {
-            // Force UI update by setting empty comments first
-            selectedIndicator.SetComments("Loading...", "Loading...");
             StartCoroutine(LoadAndDisplayComments(subjectId, selectedIndicator));
         }
     }
@@ -334,33 +322,81 @@ public class SubjectProgressManager : MonoBehaviour
         // Calculate average progress across all modules
         float averageProgress = totalProgress / moduleProgressList.Count;
 
-        // Update the appropriate radial indicator and load comments
+        // Update the appropriate radial indicator
         if (subjectId == 1 && englishProgressIndicator != null)
         {
             englishProgressIndicator.SetProgress(averageProgress, "English");
-            StartCoroutine(LoadAndDisplayComments(subjectId, englishProgressIndicator));
+            // Only load comments if this is the currently selected subject
+            if (subjectId == currentSubjectId)
+            {
+                StartCoroutine(LoadAndDisplayComments(subjectId, englishProgressIndicator));
+            }
         }
         else if (subjectId == 2 && scienceProgressIndicator != null)
         {
             scienceProgressIndicator.SetProgress(averageProgress, "Science");
-            StartCoroutine(LoadAndDisplayComments(subjectId, scienceProgressIndicator));
+            // Only load comments if this is the currently selected subject
+            if (subjectId == currentSubjectId)
+            {
+                StartCoroutine(LoadAndDisplayComments(subjectId, scienceProgressIndicator));
+            }
         }
     }
 
     private void DisplayModuleProgress(int subjectId)
     {
+        if (moduleProgressList == null || moduleProgressList.Count == 0)
+        {
+            Debug.LogWarning("No module progress data available to display.");
+            return;
+        }
+
+        // Validate subject ID and get corresponding prefab
+        GameObject prefabToUse = null;
+        switch (subjectId)
+        {
+            case 1: // English
+                if (englishModuleProgressPrefab == null)
+                {
+                    Debug.LogError("English module progress prefab is not assigned!");
+                    return;
+                }
+                prefabToUse = englishModuleProgressPrefab;
+                break;
+            case 2: // Science
+                if (scienceModuleProgressPrefab == null)
+                {
+                    Debug.LogError("Science module progress prefab is not assigned!");
+                    return;
+                }
+                prefabToUse = scienceModuleProgressPrefab;
+                break;
+            default:
+                Debug.LogError($"Invalid subject ID: {subjectId}. Must be 1 (English) or 2 (Science).");
+                return;
+        }
+
         int index = subjectId - 1; // Convert to 0-based index
         Color completeColor = subjectColors[index];
         Color incompleteColor = new Color32(204, 0, 0, 255); // Red color for incomplete status
 
+        // Clear existing content
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // Create progress items using the subject-specific prefab
         foreach (var moduleProgress in moduleProgressList)
         {
-            Debug.Log(moduleProgress);
-            // Choose the appropriate prefab based on subject
-            GameObject prefabToUse =
-                subjectId == 1 ? englishModuleProgressPrefab : scienceModuleProgressPrefab;
             GameObject progressItem = Instantiate(prefabToUse, contentParent);
             Text[] texts = progressItem.GetComponentsInChildren<Text>();
+            
+            if (texts == null || texts.Length < 2)
+            {
+                Debug.LogError($"Module progress prefab for subject {subjectId} is missing required Text components");
+                continue;
+            }
 
             texts[0].text = "Week " + moduleProgress.module_number;
 

@@ -206,7 +206,7 @@ public class MenuManager : MonoBehaviour
             profileManager.UpdateProfileUI();
             radarChart.FetchItemsForCurrentUser();
 
-            // Load subject progress
+            // Load subject progress data without showing the modal
             if (SubjectProgressManager.Instance != null)
             {
                 StartCoroutine(SubjectProgressManager.Instance.LoadSubjectProgress(1)); // English
