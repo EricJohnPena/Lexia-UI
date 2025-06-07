@@ -40,6 +40,8 @@ public class Web : MonoBehaviour
     public IEnumerator CheckProfilePictureStatus(string studentId)
     {
         string url = BaseApiUrl + "checkProfilePictureStatus.php?student_id=" + studentId;
+        Debug.Log("Checking profile picture status for student: " + studentId);
+        
         using (UnityWebRequest www = UnityWebRequest.Get(url))
         {
             yield return www.SendWebRequest();
@@ -48,17 +50,19 @@ public class Web : MonoBehaviour
             {
                 try
                 {
+                    Debug.Log("Profile picture status response: " + www.downloadHandler.text);
                     var response = JsonConvert.DeserializeObject<ProfilePictureStatusResponse>(www.downloadHandler.text);
                     if (response.success)
                     {
-                        if (!response.has_profile_picture)
+                        Debug.Log($"Profile picture status - ID: '{response.profile_picture_id}', Has Picture: {response.has_profile_picture}");
+                        // Just log the status, don't show modal automatically
+                        if (string.IsNullOrEmpty(response.profile_picture_id))
                         {
-                            // Show profile picture selection modal
-                            var profileManager = FindObjectOfType<ProfileManager>();
-                            if (profileManager != null)
-                            {
-                                profileManager.ShowEditProfileModal();
-                            }
+                            Debug.Log("Profile picture ID is null or empty");
+                        }
+                        else
+                        {
+                            Debug.Log("Profile picture ID exists");
                         }
                     }
                     else
@@ -91,6 +95,12 @@ public class Web : MonoBehaviour
             if (www.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError(www.error);
+                // Show network error in UI
+                Login loginComponent = FindObjectOfType<Login>();
+                if (loginComponent != null)
+                {
+                    loginComponent.ShowError("Network error: " + www.error);
+                }
             }
             else
             {
@@ -102,6 +112,12 @@ public class Web : MonoBehaviour
                     // Handle error response
                     LoginErrorResponse errorResponse = JsonConvert.DeserializeObject<LoginErrorResponse>(response);
                     Debug.LogError("Login error: " + errorResponse.error);
+                    // Find the Login component and show the error
+                    Login loginComponent = FindObjectOfType<Login>();
+                    if (loginComponent != null)
+                    {
+                        loginComponent.ShowError(errorResponse.error);
+                    }
                 }
                 else
                 {
@@ -114,6 +130,12 @@ public class Web : MonoBehaviour
                     catch (JsonException ex)
                     {
                         Debug.LogError("JSON Parsing Error: " + ex.Message);
+                        // Show JSON parsing error in UI
+                        Login loginComponent = FindObjectOfType<Login>();
+                        if (loginComponent != null)
+                        {
+                            loginComponent.ShowError("Error processing server response. Please try again.");
+                        }
                         yield break; // Exit if parsing fails
                     }
 

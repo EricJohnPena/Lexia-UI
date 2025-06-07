@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .login-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 600px;
+            max-width: 100%;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        #response {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Login Test</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="loginUser" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="loginPass" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div id="response"></div>
+        <div id="debug" class="debug-info" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const debugDiv = document.getElementById('debug');
+            const responseDiv = document.getElementById('response');
+            
+            // Show loading state
+            responseDiv.style.display = 'block';
+            responseDiv.className = '';
+            responseDiv.textContent = 'Logging in...';
+            
+            fetch('test_login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                responseDiv.style.display = 'block';
+                debugDiv.style.display = 'block';
+                
+                if (data.error) {
+                    responseDiv.className = 'error';
+                    responseDiv.textContent = data.error;
+                } else {
+                    responseDiv.className = 'success';
+                    responseDiv.textContent = 'Login successful!';
+                }
+                
+                // Display debug information
+                debugDiv.textContent = JSON.stringify(data.debug, null, 2);
+            })
+            .catch(error => {
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'error';
+                responseDiv.textContent = 'Error: ' + error.message;
+                debugDiv.style.display = 'block';
+                debugDiv.textContent = 'Network error occurred. Please check the console for details.';
+            });
+        });
+    </script>
+</body>
+</html> 

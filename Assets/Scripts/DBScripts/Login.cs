@@ -76,4 +76,12 @@ public class Login : MonoBehaviour
             }
         }
     }
+
+    public void ShowError(string message)
+    {
+        if (errorText != null)
+        {
+            errorText.text = message;
+        }
+    }
 }

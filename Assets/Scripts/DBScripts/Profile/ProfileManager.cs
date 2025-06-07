@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 public class ProfileManager : MonoBehaviour
 {
@@ -12,19 +13,75 @@ public class ProfileManager : MonoBehaviour
     [SerializeField]
     public Button editProfilePicButton;
     [SerializeField]
+    public Button changePasswordButton;
+    [SerializeField]
     public GameObject editModal;
+    [SerializeField]
+    public ChangePasswordManager changePasswordManager;
 
     private void Start()
     {
         UpdateProfileUI();
-    }
-    private void Update()
-    {
-       editProfilePicButton.onClick.AddListener(() =>
+        
+        // Set up click listeners once
+        editProfilePicButton.onClick.AddListener(() =>
         {
-            // Show the LogoutPanel when the logout button is clicked
-            editModal.SetActive(true);
+            string userId = PlayerPrefs.GetString("User ID", "");
+            if (!string.IsNullOrEmpty(userId))
+            {
+                StartCoroutine(CheckProfilePictureStatus(userId));
+            }
         });
+
+        changePasswordButton.onClick.AddListener(() =>
+        {
+            changePasswordManager.ShowChangePasswordCanvas();
+        });
+    }
+
+    private IEnumerator CheckProfilePictureStatus(string studentId)
+    {
+        string url = Web.BaseApiUrl + "checkProfilePictureStatus.php?student_id=" + studentId;
+        Debug.Log("Checking profile picture status for student: " + studentId);
+        
+        using (UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    Debug.Log("Profile picture status response: " + www.downloadHandler.text);
+                    var response = JsonConvert.DeserializeObject<ProfilePictureStatusResponse>(www.downloadHandler.text);
+                    if (response.success)
+                    {
+                        Debug.Log($"Profile picture status - ID: '{response.profile_picture_id}', Has Picture: {response.has_profile_picture}");
+                        if (string.IsNullOrEmpty(response.profile_picture_id))
+                        {
+                            Debug.Log("Profile picture ID is null or empty, showing modal");
+                            editModal.SetActive(true);
+                        }
+                        else
+                        {
+                            Debug.Log("Profile picture ID exists, not showing modal");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Error checking profile picture status: " + response.error);
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error parsing profile picture status response: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("Error checking profile picture status: " + www.error);
+            }
+        }
     }
 
     public void ShowEditProfileModal()
