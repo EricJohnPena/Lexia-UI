@@ -49,8 +49,7 @@ public class FirstTimeUserManager : MonoBehaviour
         if (changePasswordButton != null) changePasswordButton.onClick.AddListener(OnChangePasswordClicked);
         if (welcomeNextButton != null) welcomeNextButton.onClick.AddListener(() => ShowCanvas(introductionCanvas));
         if (introductionNextButton != null) introductionNextButton.onClick.AddListener(() => ShowCanvas(featuresCanvas));
-        if (featuresNextButton != null) featuresNextButton.onClick.AddListener(() => ShowCanvas(gettingStartedCanvas));
-        if (getStartedButton != null) getStartedButton.onClick.AddListener(OnGetStartedClicked);
+        if (featuresNextButton != null) featuresNextButton.onClick.AddListener(OnFeaturesNextClicked);
 
         // Hide all canvases initially
         HideAllCanvases();
@@ -287,9 +286,9 @@ public class FirstTimeUserManager : MonoBehaviour
         Debug.Log("Showing canvas: " + canvas.name);
     }
 
-    private void OnGetStartedClicked()
+    private void OnFeaturesNextClicked()
     {
-        Debug.Log("Get Started clicked, transitioning to student dashboard");
+        Debug.Log("Features Next clicked, transitioning to student dashboard");
         
         // Hide all canvases
         HideAllCanvases();
