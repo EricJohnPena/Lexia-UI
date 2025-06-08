@@ -70,14 +70,58 @@ public class GameLoadingManager : MonoBehaviour
         {
             StopCoroutine(loadingCoroutine);
         }
-        loadingCoroutine = StartCoroutine(ShowLoadingScreenWithDelayCoroutine(delay, useAlternate, onComplete));
+        // Ensure the delay is at least MINIMUM_LOADING_TIME
+        float actualDelay = Mathf.Max(delay, MINIMUM_LOADING_TIME);
+        loadingCoroutine = StartCoroutine(
+            ShowLoadingScreenCoroutine(actualDelay, useAlternate, onComplete)
+        );
     }
 
-    private IEnumerator ShowLoadingScreenWithDelayCoroutine(float delay, bool useAlternate, System.Action onComplete)
+    public void ShowLoadingScreenUntilComplete(System.Action operation, System.Action onComplete = null)
+    {
+        if (loadingCoroutine != null)
+        {
+            StopCoroutine(loadingCoroutine);
+        }
+        loadingCoroutine = StartCoroutine(ShowLoadingScreenUntilCompleteCoroutine(operation, onComplete));
+    }
+
+    private IEnumerator ShowLoadingScreenUntilCompleteCoroutine(System.Action operation, System.Action onComplete)
+    {
+        ShowLoadingScreen();
+        float startTime = Time.time;
+        
+        // Execute the operation
+        operation?.Invoke();
+        
+        // Ensure minimum loading time
+        float elapsedTime = Time.time - startTime;
+        if (elapsedTime < MINIMUM_LOADING_TIME)
+        {
+            yield return new WaitForSeconds(MINIMUM_LOADING_TIME - elapsedTime);
+        }
+        
+        HideLoadingScreen();
+        onComplete?.Invoke();
+        OnLoadingComplete?.Invoke();
+    }
+
+    private IEnumerator ShowLoadingScreenCoroutine(
+        float delay,
+        bool useAlternate,
+        System.Action onComplete
+    )
     {
         ShowLoadingScreen(useAlternate);
         yield return new WaitForSeconds(delay);
+        HideLoadingScreen();
         onComplete?.Invoke();
+        OnLoadingComplete?.Invoke();
+        if (useAlternate && !isSceneTransitioning)
+        {
+            isSceneTransitioning = true;
+            GoToLoginPage();
+        }
     }
 
     private void GoToLoginPage()

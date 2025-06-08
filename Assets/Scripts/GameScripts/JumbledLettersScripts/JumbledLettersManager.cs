@@ -674,7 +674,7 @@ public class JumbledLettersManager : MonoBehaviour
             // Check if the game is complete
             if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
             {
-                CheckGameCompletion(); // Complete the game immediately
+                HandleGameCompletion(); // Complete the game immediately
             }
             else
             {
@@ -864,11 +864,11 @@ public class JumbledLettersManager : MonoBehaviour
         else
         {
             Debug.Log("All questions answered correctly. Completing the game...");
-            CheckGameCompletion();
+            HandleGameCompletion();
         }
     }
 
-    private void CheckGameCompletion()
+    private void HandleGameCompletion()
     {
         Debug.Log("All questions answered correctly. Game over.");
         timerManager?.StopTimer();
@@ -882,9 +882,7 @@ public class JumbledLettersManager : MonoBehaviour
 
         if (GameLoadingManager.Instance != null)
         {
-            GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
-                0.5f,
-                false,
+            GameLoadingManager.Instance.ShowLoadingScreenUntilComplete(
                 () =>
                 {
                     StartCoroutine(

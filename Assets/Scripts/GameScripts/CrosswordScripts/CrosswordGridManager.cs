@@ -844,22 +844,18 @@ public class CrosswordGridManager : MonoBehaviour
 
             if (GameLoadingManager.Instance != null)
             {
-                GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
-                    0.5f,
-                    false,
-                    () =>
-                    {
-                        StartCoroutine(
-                            UpdateGameCompletionAndAttributes(
-                                studentId,
-                                module_number,
-                                gameModeId,
-                                subjectId,
-                                solveTime
-                            )
-                        );
-                    }
-                );
+                GameLoadingManager.Instance.ShowLoadingScreenUntilComplete(() =>
+                {
+                    StartCoroutine(
+                        UpdateGameCompletionAndAttributes(
+                            studentId,
+                            module_number,
+                            gameModeId,
+                            subjectId,
+                            solveTime
+                        )
+                    );
+                });
             }
             else
             {

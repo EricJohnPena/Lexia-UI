@@ -979,7 +979,7 @@ public class ClassicGameManager : MonoBehaviour
 
             if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
             {
-                CheckGameCompletion();
+                HandleGameCompletion();
             }
             else if (skippedQuestions.Count > 0)
             {
@@ -1086,16 +1086,16 @@ public class ClassicGameManager : MonoBehaviour
             }
             else if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
             {
-                CheckGameCompletion(); // Complete the game if all questions are answered correctly
+                HandleGameCompletion(); // Complete the game if all questions are answered correctly
             }
         }
         else if (correctlyAnsweredQuestions.Count == questionData.questions.Count)
         {
-            CheckGameCompletion(); // Complete the game if all questions are answered correctly
+            HandleGameCompletion(); // Complete the game if all questions are answered correctly
         }
     }
 
-    private void CheckGameCompletion()
+    private void HandleGameCompletion()
     {
         Debug.Log("All questions answered correctly. Game over.");
         timerManager?.StopTimer();
@@ -1110,9 +1110,7 @@ public class ClassicGameManager : MonoBehaviour
         // Show loading screen and update status/attributes, then hide loading screen when done
         if (GameLoadingManager.Instance != null)
         {
-            GameLoadingManager.Instance.ShowLoadingScreenWithDelay(
-                0.5f,
-                false,
+            GameLoadingManager.Instance.ShowLoadingScreenUntilComplete(
                 () =>
                 {
                     StartCoroutine(
