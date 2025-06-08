@@ -7,25 +7,53 @@ $subject_id = isset($_POST['subject_id']) ? $_POST['subject_id'] : 1;
 
 // SQL to get the leaderboard data
 // Now counts the number of completed modules per student in the given subject
-$sql = "SELECT 
-            s.student_id,
-            s.username,
-            s.first_name,
-            s.last_name,
-            COUNT(DISTINCT sp.module_number) AS completed_modules
+$sql = "WITH subject_filtered_data AS (
+            SELECT 
+                s.student_id,
+                s.username,
+                s.first_name,
+                s.last_name,
+                sp.module_number,
+                spa.avg_accuracy,
+                spa.avg_speed,
+                spa.avg_consistency,
+                spa.avg_vocabulary_range,
+                spa.avg_problem_solving_skills,
+                spa.avg_retention
+            FROM 
+                students_tbl s
+            JOIN 
+                students_progress_tbl sp ON s.student_id = sp.student_id
+            JOIN 
+                modules_tbl m ON sp.module_number = m.module_number
+            LEFT JOIN 
+                student_progress_avg spa ON s.student_id = spa.student_id 
+                AND m.fk_subject_id = spa.fk_subject_id
+            WHERE 
+                m.fk_subject_id = ?
+                AND sp.completion_status = 'completed'
+        )
+        SELECT 
+            student_id,
+            username,
+            first_name,
+            last_name,
+            COUNT(DISTINCT module_number) AS completed_modules,
+            ROUND((
+                COALESCE(AVG(avg_accuracy), 0) +
+                COALESCE(AVG(avg_speed), 0) +
+                COALESCE(AVG(avg_consistency), 0) +
+                COALESCE(AVG(avg_vocabulary_range), 0) +
+                COALESCE(AVG(avg_problem_solving_skills), 0) +
+                COALESCE(AVG(avg_retention), 0)
+            ) / 6, 2) AS average_score
         FROM 
-            students_tbl s
-        JOIN 
-            students_progress_tbl sp ON s.student_id = sp.student_id
-        JOIN 
-            modules_tbl m ON sp.module_number = m.module_number
-        WHERE 
-            m.fk_subject_id = ?
-            AND sp.completion_status = 'completed'
+            subject_filtered_data
         GROUP BY 
-            s.student_id, s.username, s.first_name, s.last_name
+            student_id, username, first_name, last_name
         ORDER BY 
-            completed_modules DESC
+            completed_modules DESC,
+            average_score DESC
         LIMIT 10";
 
 // Prepare statement

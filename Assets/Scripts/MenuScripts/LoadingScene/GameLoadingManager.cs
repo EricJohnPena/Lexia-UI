@@ -70,29 +70,14 @@ public class GameLoadingManager : MonoBehaviour
         {
             StopCoroutine(loadingCoroutine);
         }
-        // Ensure the delay is at least MINIMUM_LOADING_TIME
-        float actualDelay = Mathf.Max(delay, MINIMUM_LOADING_TIME);
-        loadingCoroutine = StartCoroutine(
-            ShowLoadingScreenCoroutine(actualDelay, useAlternate, onComplete)
-        );
+        loadingCoroutine = StartCoroutine(ShowLoadingScreenWithDelayCoroutine(delay, useAlternate, onComplete));
     }
 
-    private IEnumerator ShowLoadingScreenCoroutine(
-        float delay,
-        bool useAlternate,
-        System.Action onComplete
-    )
+    private IEnumerator ShowLoadingScreenWithDelayCoroutine(float delay, bool useAlternate, System.Action onComplete)
     {
         ShowLoadingScreen(useAlternate);
         yield return new WaitForSeconds(delay);
-        HideLoadingScreen();
         onComplete?.Invoke();
-        OnLoadingComplete?.Invoke();
-        if (useAlternate && !isSceneTransitioning)
-        {
-            isSceneTransitioning = true;
-            GoToLoginPage();
-        }
     }
 
     private void GoToLoginPage()

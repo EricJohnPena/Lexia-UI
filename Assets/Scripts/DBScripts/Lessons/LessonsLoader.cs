@@ -30,12 +30,22 @@ public class LessonsLoader : MonoBehaviour
     [SerializeField]
     public Text subjectText;
 
+    [SerializeField]
+    public Text moduleNumberText; // Add reference to module number text
+
     //    public Transform parentTransform;
 
     private void Start()
     {
         moduleNumber = ModuleManager.Instance.GetCurrentModule();
-
+        if (moduleNumberText != null)
+        {
+            moduleNumberText.text = "Week " + moduleNumber;
+            // Set text color based on subject
+            moduleNumberText.color = subjectId == 1
+                ? new Color(16f / 255f, 40f / 255f, 110f / 255f) // #10286e for English
+                : new Color(17f / 255f, 84f / 255f, 36f / 255f); // #115424 for Science
+        }
         LoadLessonsForSelectedModuleAndSubject();
     }
 
@@ -51,6 +61,16 @@ public class LessonsLoader : MonoBehaviour
         //get the selected module_number and fk_subject_id from ButtonTracker
         subjectId = ButtonTracker.Instance.GetCurrentSubjectId();
         moduleNumber = ModuleManager.Instance.GetCurrentModule();
+
+        // Update module number text
+        if (moduleNumberText != null)
+        {
+            moduleNumberText.text = "Week " + moduleNumber;
+            // Set text color based on subject
+            moduleNumberText.color = subjectId == 1
+                ? new Color(16f / 255f, 40f / 255f, 110f / 255f) // #10286e for English
+                : new Color(17f / 255f, 84f / 255f, 36f / 255f); // #115424 for Science
+        }
 
         // Save the current tracking IDs
         // Web.SetCurrentTrackingIds(subjectId, int.Parse(moduleNumber), 0); // Lesson ID is 0 initially
@@ -178,12 +198,22 @@ public class LessonsLoader : MonoBehaviour
 
                         if (lessonUI != null)
                         {
+                            // Ensure the image component is properly assigned
+                            if (lessonUI.lessonImage == null)
+                            {
+                                Debug.LogWarning("Image component not found in prefab. Please assign it in the Unity Inspector.");
+                            }
+                            
+                            // Determine if this is the first lesson being instantiated
+                            bool isFirstLesson = (lessons.IndexOf(lesson) == 0);
+
                             lessonUI.SetLessonData(
                                 lessonName,
                                 lessonNumber,
                                 subjectName,
                                 moduleNumber,
-                                lessonLink
+                                lessonLink,
+                                isFirstLesson // Pass the new parameter
                             );
 
                             // Add a listener to track the clicked lesson

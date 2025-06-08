@@ -357,6 +357,7 @@ MonoBehaviour:
   actionButton: {fileID: 3087388346609493291}
   playMenuButton: {fileID: 1918430748113671973}
   curentLessonLink: 
+  lessonImage: {fileID: 4096464155176891165}
 --- !u!1 &5229198119921110248
 GameObject:
   m_ObjectHideFlags: 0

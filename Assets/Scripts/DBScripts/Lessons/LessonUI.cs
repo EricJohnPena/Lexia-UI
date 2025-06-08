@@ -9,6 +9,7 @@ public class LessonUI : MonoBehaviour
     public Button actionButton;
     public Button playMenuButton;
     public string curentLessonLink; // Field to store the current lesson link
+    public Image lessonImage; // Reference to the image component
 
     private bool isLessonDataSet = false;
 
@@ -24,7 +25,8 @@ public class LessonUI : MonoBehaviour
         string lessonNumber,
         string subjectName,
         string moduleName,
-        string lessonLink
+        string lessonLink,
+        bool isFirstLesson = false // New parameter
     )
     {
         if (isLessonDataSet)
@@ -42,6 +44,23 @@ public class LessonUI : MonoBehaviour
         currentLessonNumber = lessonNumber;
         this.lessonId = lessonNumber; // Assign the lesson ID
         MenuManager.InstanceMenu.subjectName.text = subjectName;
+
+        // Activate image based on isFirstLesson parameter
+        if (lessonImage != null)
+        {
+            lessonImage.gameObject.SetActive(isFirstLesson);
+            Debug.Log($"LessonUI: Setting image active state to {isFirstLesson}");
+        }
+        else
+        {
+            Debug.LogWarning("LessonUI: Image component is not assigned!");
+        }
+
+        // Debug log for image state
+        if (lessonImage != null)
+        {
+            Debug.Log($"Image state after SetLessonData: {lessonImage.gameObject.activeSelf}");
+        }
 
         // Debug.Log(
         //     $"Setting lesson data. Subject: {subjectName}, Module: {moduleName}, Lesson number: {lessonNumber}"

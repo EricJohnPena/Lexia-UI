@@ -22,6 +22,7 @@ public class ChangePasswordManager : MonoBehaviour
     public InputField newPasswordInput;
     public InputField confirmPasswordInput;
     public Button changePasswordButton;
+    public Button backButton;
     public Text passwordErrorText;
 
     private Action onPasswordChangeSuccess;
@@ -44,6 +45,20 @@ public class ChangePasswordManager : MonoBehaviour
         // Set up button listeners
         firstTimeChangePasswordButton.onClick.AddListener(OnFirstTimeChangePasswordClicked);
         changePasswordButton.onClick.AddListener(OnRegularChangePasswordClicked);
+        backButton.onClick.AddListener(OnBackButtonClicked);
+    }
+
+    private void OnBackButtonClicked()
+    {
+        // Hide the password change canvas
+        regularPasswordCanvas.gameObject.SetActive(false);
+        
+        // Find and show the profile picture change modal
+        ProfileManager profileManager = FindObjectOfType<ProfileManager>();
+        if (profileManager != null && profileManager.editModal != null)
+        {
+            profileManager.editModal.SetActive(true);
+        }
     }
 
     public void ShowFirstTimePasswordChange(Action onSuccess)

@@ -255,7 +255,7 @@ public class FirstTimeUserManager : MonoBehaviour
         }
 
         string studentName = PlayerPrefs.GetString("Fullname", "Student");
-        welcomeText.text = $"Welcome to Lexia, {studentName}!";
+        welcomeText.text = $"{studentName}!";
         ShowCanvas(welcomeCanvas);
     }
 
