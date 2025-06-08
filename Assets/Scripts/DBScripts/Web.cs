@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -105,7 +106,7 @@ public class Web : MonoBehaviour
             else
             {
                 string response = www.downloadHandler.text;
-                // Debug.Log("Login response: " + response);
+                Debug.Log("Login response: " + response);
 
                 if (response.Contains("error"))
                 {
@@ -156,18 +157,80 @@ public class Web : MonoBehaviour
                         UserInfo.Instance.SetId(loginData.student_id);
                         StartCoroutine(GetSectionName(loginData.fk_section_id));
 
-                        // Check profile picture status
-                        yield return StartCoroutine(CheckProfilePictureStatus(loginData.student_id));
-
-                        // Proceed to the next menu/page
-                        MenuManager.InstanceMenu.LogintoPage();
-                        MenuManager.InstanceMenu.usernameText.text = "Hi " + User + ",";
-
-                        // Call the OnLoginSuccess method
-                        Login loginComponent = FindObjectOfType<Login>();
-                        loginComponent?.OnLoginSuccess();
+                        // Check if this is the user's first time
+                        yield return StartCoroutine(CheckFirstTimeUser(loginData.student_id));
                     }
                 }
+            }
+        }
+    }
+
+    private IEnumerator CheckFirstTimeUser(string studentId)
+    {
+        string url = BaseApiUrl + "checkFirstTimeUser.php?student_id=" + studentId;
+        Debug.Log("Checking first-time status for student: " + studentId);
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                try
+                {
+                    Debug.Log("First time check response: " + www.downloadHandler.text);
+                    var response = JsonConvert.DeserializeObject<FirstTimeUserResponse>(www.downloadHandler.text);
+                    if (response.success)
+                    {
+                        if (response.is_first_time)
+                        {
+                            Debug.Log("User is first time user, initializing first time experience");
+                            
+                            // Find or create FirstTimeUserManager
+                            FirstTimeUserManager firstTimeManager = FindObjectOfType<FirstTimeUserManager>();
+                            if (firstTimeManager == null)
+                            {
+                                Debug.LogError("FirstTimeUserManager not found in scene. Please add the FirstTimeUserManager prefab to your scene.");
+                                MenuManager.InstanceMenu.LogintoPage();
+                                MenuManager.InstanceMenu.usernameText.text = "Hi " + PlayerPrefs.GetString("Username", "Guest User") + ",";
+                                yield break;
+                            }
+
+                            // Ensure the manager is active
+                            firstTimeManager.gameObject.SetActive(true);
+                            
+                            // Hide login canvas
+                            if (MenuManager.InstanceMenu != null && MenuManager.InstanceMenu.LoginPage != null)
+                            {
+                                MenuManager.InstanceMenu.LoginPage.gameObject.SetActive(false);
+                            }
+                            
+                            // Start first time user flow
+                            firstTimeManager.StartFirstTimeUserFlow();
+                        }
+                        else
+                        {
+                            Debug.Log("User is not first time user, proceeding to dashboard");
+                            MenuManager.InstanceMenu.LogintoPage();
+                            MenuManager.InstanceMenu.usernameText.text = "Hi " + PlayerPrefs.GetString("Username", "Guest User") + ",";
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Error checking first-time status: " + response.error);
+                        MenuManager.InstanceMenu.LogintoPage();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Error parsing first-time status response: " + e.Message + "\nResponse: " + www.downloadHandler.text);
+                    MenuManager.InstanceMenu.LogintoPage();
+                }
+            }
+            else
+            {
+                Debug.LogError("Error checking first-time status: " + www.error + "\nURL: " + www.url);
+                MenuManager.InstanceMenu.LogintoPage();
             }
         }
     }
@@ -330,5 +393,13 @@ public class ProfilePictureStatusResponse
 [System.Serializable]
 public class LoginErrorResponse
 {
+    public string error;
+}
+
+[Serializable]
+public class FirstTimeUserResponse
+{
+    public bool success;
+    public bool is_first_time;
     public string error;
 }

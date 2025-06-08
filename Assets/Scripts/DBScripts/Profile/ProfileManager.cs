@@ -23,20 +23,30 @@ public class ProfileManager : MonoBehaviour
     {
         UpdateProfileUI();
         
-        // Set up click listeners once
-        editProfilePicButton.onClick.AddListener(() =>
-        {
-            string userId = PlayerPrefs.GetString("User ID", "");
-            if (!string.IsNullOrEmpty(userId))
-            {
-                StartCoroutine(CheckProfilePictureStatus(userId));
-            }
-        });
+        // Set up button listeners
+        editProfilePicButton.onClick.AddListener(OnEditProfilePictureClicked);
+        changePasswordButton.onClick.AddListener(OnChangePasswordClicked);
 
-        changePasswordButton.onClick.AddListener(() =>
+        // Hide the edit modal initially
+        editModal.SetActive(false);
+    }
+
+    private void OnEditProfilePictureClicked()
+    {
+        // Show the modal directly when edit button is clicked
+        editModal.SetActive(true);
+    }
+
+    private void OnChangePasswordClicked()
+    {
+        if (ChangePasswordManager.Instance != null)
         {
-            changePasswordManager.ShowChangePasswordCanvas();
-        });
+            ChangePasswordManager.Instance.ShowRegularPasswordChange();
+        }
+        else
+        {
+            Debug.LogError("ChangePasswordManager not found. Please add it to your scene.");
+        }
     }
 
     private IEnumerator CheckProfilePictureStatus(string studentId)
@@ -57,14 +67,15 @@ public class ProfileManager : MonoBehaviour
                     if (response.success)
                     {
                         Debug.Log($"Profile picture status - ID: '{response.profile_picture_id}', Has Picture: {response.has_profile_picture}");
+                        // Only show modal automatically if no profile picture exists
                         if (string.IsNullOrEmpty(response.profile_picture_id))
                         {
-                            Debug.Log("Profile picture ID is null or empty, showing modal");
+                            Debug.Log("Profile picture ID is null or empty, showing modal automatically");
                             editModal.SetActive(true);
                         }
                         else
                         {
-                            Debug.Log("Profile picture ID exists, not showing modal");
+                            Debug.Log("Profile picture ID exists, not showing modal automatically");
                         }
                     }
                     else

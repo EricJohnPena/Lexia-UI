@@ -4,74 +4,98 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-include 'db_connection.php';
+require_once 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $student_id = isset($_POST['student_id']) ? $_POST['student_id'] : null;
-    $old_password = isset($_POST['old_password']) ? $_POST['old_password'] : null;
-    $new_password = isset($_POST['new_password']) ? $_POST['new_password'] : null;
+    // Get the POST data
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    // If no JSON data, try regular POST
+    if ($data === null) {
+        $data = $_POST;
+    }
 
-    if ($student_id === null || $old_password === null || $new_password === null) {
+    // Check if student_id and new_password are provided
+    if (!isset($data['student_id']) || !isset($data['new_password'])) {
         echo json_encode([
             'success' => false,
-            'error' => 'Missing required fields'
+            'error' => 'Student ID and new password are required'
         ]);
         exit;
     }
 
+    $student_id = $data['student_id'];
+    $new_password = $data['new_password'];
+    $old_password = isset($data['old_password']) ? $data['old_password'] : null;
+
     try {
-        // First verify the old password
-        $query = "SELECT loginPass FROM students_tbl WHERE student_id = ?";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("i", $student_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        // Start transaction
+        $conn->begin_transaction();
 
-        if ($result->num_rows === 0) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'User not found'
-            ]);
-            exit;
-        }
+        // If old_password is provided, verify it first
+        if ($old_password !== null) {
+            $stmt = $conn->prepare("SELECT password FROM students_tbl WHERE student_id = ?");
+            $stmt->bind_param("s", $student_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                throw new Exception("Student not found");
+            }
 
-        $row = $result->fetch_assoc();
-        if (!password_verify($old_password, $row['loginPass'])) {
-            echo json_encode([
-                'success' => false,
-                'error' => 'Current password is incorrect'
-            ]);
-            exit;
+            $row = $result->fetch_assoc();
+            if (!password_verify($old_password, $row['password'])) {
+                throw new Exception("Current password is incorrect");
+            }
         }
 
         // Hash the new password
         $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
         // Update the password
-        $update_query = "UPDATE students_tbl SET loginPass = ? WHERE student_id = ?";
-        $update_stmt = $conn->prepare($update_query);
-        $update_stmt->bind_param("si", $hashed_password, $student_id);
+        $stmt = $conn->prepare("UPDATE students_tbl SET password = ? WHERE student_id = ?");
+        $stmt->bind_param("ss", $hashed_password, $student_id);
         
-        if ($update_stmt->execute()) {
-            echo json_encode([
-                'success' => true
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'error' => 'Failed to update password'
-            ]);
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to update password");
         }
+
+        // If this is a first-time password change (no old_password provided)
+        if ($old_password === null) {
+            // Update is_first_time to false
+            $stmt = $conn->prepare("UPDATE students_tbl SET is_first_time = 0 WHERE student_id = ?");
+            $stmt->bind_param("s", $student_id);
+            
+            if (!$stmt->execute()) {
+                throw new Exception("Failed to update first-time status");
+            }
+        }
+
+        // Commit transaction
+        $conn->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Password updated successfully'
+        ]);
+
     } catch (Exception $e) {
+        // Rollback transaction on error
+        $conn->rollback();
+        
         echo json_encode([
             'success' => false,
             'error' => $e->getMessage()
         ]);
     }
+
+    $stmt->close();
 } else {
     echo json_encode([
         'success' => false,
         'error' => 'Invalid request method'
     ]);
 }
+
+$conn->close();
 ?> 
