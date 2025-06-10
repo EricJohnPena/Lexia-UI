@@ -1297,7 +1297,7 @@ public class ClassicGameManager : MonoBehaviour
     {
         if (hintCounterText != null)
         {
-            hintCounterText.text = $"Hints Remaining: {hintCounter}";
+            hintCounterText.text = $"Hints: {hintCounter}";
         }
     }
 

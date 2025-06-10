@@ -252,7 +252,7 @@ public class LeaderboardManager : MonoBehaviour
                             float spacing = containerWidth / 3; // Changed from 4 to 3 for wider bars
                             float prefabWidth = spacing * 0.9f; // Changed from 0.8f to 0.9f for wider bars
                             // Adjust width and height based on rank
-                            float prefabHeight = 200 + (3 - i) * 50; // Vary height: 1st tallest, 3rd shortest
+                            float prefabHeight = 200 + (3 - i) * 80; // Vary height: 1st tallest, 3rd shortest
                             podiumTransform.sizeDelta = new Vector2(prefabWidth, prefabHeight);
                             
                             // Set positions: 1st (center), 2nd (left), 3rd (right)
@@ -316,24 +316,24 @@ public class LeaderboardManager : MonoBehaviour
                 }
 
                 // Adjust the size of the list container dynamically
-                RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
-                GridLayoutGroup gridLayout = listContainer.GetComponent<GridLayoutGroup>();
-                if (listContainerRect != null && gridLayout != null)
-                {
-                    float itemHeight = gridLayout.cellSize.y;
-                    float spacing = gridLayout.spacing.y;
-                    int columns = Mathf.Max(
-                        1,
-                        Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x)
-                    );
-                    int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
-                    // Calculate the new height based on the number of rows
-                    float newHeight = (itemHeight + spacing) * rows - spacing; // Subtract spacing for the last row
-                    listContainerRect.sizeDelta = new Vector2(
-                        listContainerRect.sizeDelta.x,
-                        newHeight
-                    );
-                }
+                // RectTransform listContainerRect = listContainer.GetComponent<RectTransform>();
+                // GridLayoutGroup gridLayout = listContainer.GetComponent<GridLayoutGroup>();
+                // if (listContainerRect != null && gridLayout != null)
+                // {
+                //     float itemHeight = gridLayout.cellSize.y;
+                //     float spacing = gridLayout.spacing.y;
+                //     int columns = Mathf.Max(
+                //         1,
+                //         Mathf.FloorToInt(listContainerRect.rect.width / gridLayout.cellSize.x)
+                //     );
+                //     int rows = Mathf.CeilToInt((float)leaderboardEntries.Count / columns);
+                //     // Calculate the new height based on the number of rows
+                //     float newHeight = (itemHeight + spacing) * rows - spacing; // Subtract spacing for the last row
+                //     listContainerRect.sizeDelta = new Vector2(
+                //         listContainerRect.sizeDelta.x,
+                //         newHeight
+                //     );
+                //}
                 // Hide loading screen if there's an error
                 if (GameLoadingManager.Instance != null)
                 {

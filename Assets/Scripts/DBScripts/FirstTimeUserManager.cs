@@ -1,9 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
-using UnityEngine.Networking;
-using Newtonsoft.Json;
 using System;
+using System.Collections;
+using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class FirstTimeUserManager : MonoBehaviour
 {
@@ -18,7 +18,6 @@ public class FirstTimeUserManager : MonoBehaviour
 
     [Header("Welcome Canvas")]
     public Canvas welcomeCanvas;
-    public Text welcomeText;
     public Button welcomeNextButton;
 
     [Header("Introduction Canvas")]
@@ -46,10 +45,14 @@ public class FirstTimeUserManager : MonoBehaviour
     private void InitializeManager()
     {
         // Set up button listeners
-        if (changePasswordButton != null) changePasswordButton.onClick.AddListener(OnChangePasswordClicked);
-        if (welcomeNextButton != null) welcomeNextButton.onClick.AddListener(() => ShowCanvas(introductionCanvas));
-        if (introductionNextButton != null) introductionNextButton.onClick.AddListener(() => ShowCanvas(featuresCanvas));
-        if (featuresNextButton != null) featuresNextButton.onClick.AddListener(OnFeaturesNextClicked);
+        if (changePasswordButton != null)
+            changePasswordButton.onClick.AddListener(OnChangePasswordClicked);
+        if (welcomeNextButton != null)
+            welcomeNextButton.onClick.AddListener(() => ShowCanvas(introductionCanvas));
+        if (introductionNextButton != null)
+            introductionNextButton.onClick.AddListener(() => ShowCanvas(featuresCanvas));
+        if (featuresNextButton != null)
+            featuresNextButton.onClick.AddListener(OnFeaturesNextClicked);
 
         // Hide all canvases initially
         HideAllCanvases();
@@ -73,11 +76,16 @@ public class FirstTimeUserManager : MonoBehaviour
         }
 
         Debug.Log("Checking first time status for student ID: " + studentId);
-        
+
         WWWForm form = new WWWForm();
         form.AddField("student_id", studentId);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "checkFirstTimeUser.php", form))
+        using (
+            UnityWebRequest www = UnityWebRequest.Post(
+                Web.BaseApiUrl + "checkFirstTimeUser.php",
+                form
+            )
+        )
         {
             yield return www.SendWebRequest();
 
@@ -87,7 +95,9 @@ public class FirstTimeUserManager : MonoBehaviour
                 try
                 {
                     Debug.Log("First time check response: " + www.downloadHandler.text);
-                    var response = JsonConvert.DeserializeObject<FirstTimeResponse>(www.downloadHandler.text);
+                    var response = JsonConvert.DeserializeObject<FirstTimeResponse>(
+                        www.downloadHandler.text
+                    );
                     isFirstTime = response.is_first_time;
                 }
                 catch (Exception e)
@@ -99,7 +109,9 @@ public class FirstTimeUserManager : MonoBehaviour
 
                 if (isFirstTime)
                 {
-                    Debug.Log("User is confirmed first time user. Calling ShowFirstTimePasswordCanvas()");
+                    Debug.Log(
+                        "User is confirmed first time user. Calling ShowFirstTimePasswordCanvas()"
+                    );
                     // No need for WaitForEndOfFrame here, as UI operations should be fine immediately after web request.
                     ShowFirstTimePasswordCanvas();
                 }
@@ -120,7 +132,7 @@ public class FirstTimeUserManager : MonoBehaviour
     private void ShowFirstTimePasswordCanvas()
     {
         Debug.Log("Entering ShowFirstTimePasswordCanvas method.");
-        
+
         if (firstTimePasswordCanvas == null)
         {
             Debug.LogError("First time password canvas reference is missing in the Inspector!");
@@ -165,7 +177,9 @@ public class FirstTimeUserManager : MonoBehaviour
         // Final verification
         if (!firstTimePasswordCanvas.gameObject.activeInHierarchy)
         {
-            Debug.LogError("Failed to activate first time password canvas in hierarchy after all attempts!");
+            Debug.LogError(
+                "Failed to activate first time password canvas in hierarchy after all attempts!"
+            );
             return;
         }
 
@@ -174,7 +188,10 @@ public class FirstTimeUserManager : MonoBehaviour
 
     private void OnChangePasswordClicked()
     {
-        if (string.IsNullOrEmpty(newPasswordInput.text) || string.IsNullOrEmpty(confirmPasswordInput.text))
+        if (
+            string.IsNullOrEmpty(newPasswordInput.text)
+            || string.IsNullOrEmpty(confirmPasswordInput.text)
+        )
         {
             ShowPasswordError("Please fill in all fields");
             return;
@@ -211,7 +228,9 @@ public class FirstTimeUserManager : MonoBehaviour
         form.AddField("student_id", studentId);
         form.AddField("new_password", newPassword);
 
-        using (UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "changePassword.php", form))
+        using (
+            UnityWebRequest www = UnityWebRequest.Post(Web.BaseApiUrl + "changePassword.php", form)
+        )
         {
             yield return www.SendWebRequest();
 
@@ -220,8 +239,10 @@ public class FirstTimeUserManager : MonoBehaviour
                 try
                 {
                     Debug.Log("Change password response: " + www.downloadHandler.text);
-                    var response = JsonConvert.DeserializeObject<PasswordChangeResponse>(www.downloadHandler.text);
-                    
+                    var response = JsonConvert.DeserializeObject<PasswordChangeResponse>(
+                        www.downloadHandler.text
+                    );
+
                     if (response.success)
                     {
                         ShowWelcomeCanvas();
@@ -247,30 +268,32 @@ public class FirstTimeUserManager : MonoBehaviour
 
     private void ShowWelcomeCanvas()
     {
-        if (welcomeCanvas == null || welcomeText == null)
+        if (welcomeCanvas == null)
         {
             Debug.LogError("Welcome canvas or text reference is missing!");
             return;
         }
 
-        string studentName = PlayerPrefs.GetString("Fullname", "Student");
-        welcomeText.text = $"{studentName}!";
         ShowCanvas(welcomeCanvas);
     }
 
     private void HideAllCanvases()
     {
         Debug.Log("Hiding all canvases.");
-        
+
         // Only set to inactive, leave CanvasGroup properties to ShowCanvas or specific Show methods
         if (firstTimePasswordCanvas != null)
         {
             firstTimePasswordCanvas.gameObject.SetActive(false);
         }
-        if (welcomeCanvas != null) welcomeCanvas.gameObject.SetActive(false);
-        if (introductionCanvas != null) introductionCanvas.gameObject.SetActive(false);
-        if (featuresCanvas != null) featuresCanvas.gameObject.SetActive(false);
-        if (gettingStartedCanvas != null) gettingStartedCanvas.gameObject.SetActive(false);
+        if (welcomeCanvas != null)
+            welcomeCanvas.gameObject.SetActive(false);
+        if (introductionCanvas != null)
+            introductionCanvas.gameObject.SetActive(false);
+        if (featuresCanvas != null)
+            featuresCanvas.gameObject.SetActive(false);
+        if (gettingStartedCanvas != null)
+            gettingStartedCanvas.gameObject.SetActive(false);
     }
 
     private void ShowCanvas(Canvas canvas)
@@ -289,16 +312,17 @@ public class FirstTimeUserManager : MonoBehaviour
     private void OnFeaturesNextClicked()
     {
         Debug.Log("Features Next clicked, transitioning to student dashboard");
-        
+
         // Hide all canvases
         HideAllCanvases();
-        
+
         // Navigate to student dashboard
         if (MenuManager.InstanceMenu != null)
         {
             MenuManager.InstanceMenu.LoginPage.gameObject.SetActive(false);
             MenuManager.InstanceMenu.LogintoPage();
-            MenuManager.InstanceMenu.usernameText.text = "Hi " + PlayerPrefs.GetString("Username", "Guest User") + ",";
+            MenuManager.InstanceMenu.usernameText.text =
+                "Hi " + PlayerPrefs.GetString("Username", "Guest User") + ",";
         }
         else
         {
@@ -312,4 +336,4 @@ public class FirstTimeResponse
 {
     public bool is_first_time;
     public string error;
-} 
+}
