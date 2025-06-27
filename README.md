@@ -49,15 +49,18 @@ Lexia-UI/
 ## 🎮 Game Modes
 
 ### 1. Classic Mode
+![Classic game Screenshot](/screenshots_/classic.png)
 - Traditional word-based questions with keyboard input
 - Image-based questions with hint system
 - Progress tracking and skip functionality
 
 ### 2. Jumbled Letters
+![Jumbled letters game Screenshot](/screenshots_/jumbled.png)
 - Unscramble letters to form correct words
 - Multiple difficulty levels with complex word detection
 
 ### 3. Crossword
+![Crossword game Screenshot](/screenshots_/crossword.png)
 - Interactive crossword puzzles
 - Dynamic grid generation with clue-based hints
 
@@ -151,8 +154,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/your-username/Lexia-UI/issues)
-- **Email**: support@lexia-ui.com
+- **Issues**: [GitHub Issues](https://github.com/EricJohnPena/Lexia-UI/issues)
+- **Email**: eric.john.pena@gmail.com
 
 ---
 
